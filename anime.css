@@ -1,193 +1,35 @@
 /* ============================================================
-   ANIME MAX ZONE — Anime Details Page Styles (anime.css)
+   ANIME MAX ZONE — Anime Details Page Styles
    ============================================================ */
 
-/* ---------- RESET & BASE (From global) ---------- */
-* { 
-    margin: 0; 
-    padding: 0; 
-    box-sizing: border-box; 
-}
+/* Importing base styles for Navbar, Bottom Nav and Colors */
+@import url('style.css');
 
-:root {
-    --bg: #0a0a0f;
-    --bg-2: #12121a;
-    --card: #1a1a24;
-    --border: #262633;
-    --primary: #9d4edd; 
-    --primary-hover: #c77dff;
-    --text: #ffffff;
-    --text-muted: #a0a0b0;
-}
-
-body {
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background: var(--bg);
-    color: var(--text);
+/* ============================================================
+   ANIME DETAILS PAGE SPECIFIC
+   ============================================================ */
+#animeDetailsContainer {
+    padding-bottom: 80px; /* Bottom Nav ke liye */
     min-height: 100vh;
-    overflow-x: hidden;
-    padding-bottom: 70px; 
 }
 
-a { color: inherit; text-decoration: none; }
-img { display: block; max-width: 100%; }
-button { font-family: inherit; cursor: pointer; border: none; background: none; }
-
-/* ============================================================
-   ANIMATED MAX LOGO
-   ============================================================ */
-.animated-max-text {
-    animation: maxGlowPulse 7s infinite ease-in-out;
-}
-
-@keyframes maxGlowPulse {
-    0%, 80%, 100% { 
-        filter: drop-shadow(0 0 2px rgba(168, 85, 247, 0.4));
-    }
-    90% { 
-        filter: drop-shadow(0 0 10px rgba(226, 160, 255, 1)) 
-                drop-shadow(0 0 25px rgba(168, 85, 247, 0.8));
-    }
-}
-
-/* ============================================================
-   NAVBAR
-   ============================================================ */
-.navbar {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.8rem 2rem;
-    background: rgba(10, 10, 15, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border);
-}
-
-.logo-link {
-    display: flex;
-    align-items: center;
-}
-
-.nav-logo-svg {
-    height: 38px;
-    width: auto;
-    display: block;
-}
-
-.nav-actions { 
-    display: flex; 
-    align-items: center; 
-    gap: 1rem; 
-}
-
-.btn-icon {
-    display: flex; 
-    align-items: center; 
-    justify-content: center;
-    width: 40px; 
-    height: 40px; 
-    border-radius: 50%;
-    color: var(--text); 
-    background: var(--bg-2);
-    border: 1px solid var(--border); 
-    transition: all 0.2s;
-}
-
-.btn-icon:hover { 
-    background: var(--primary); 
-    border-color: var(--primary); 
-}
-
-.btn-icon svg { 
-    width: 20px; 
-    height: 20px; 
-}
-
-/* ============================================================
-   BOTTOM NAVIGATION BAR
-   ============================================================ */
-.bottom-nav {
-    position: fixed; 
-    bottom: 0; 
-    left: 0; 
-    width: 100%;
-    background: rgba(18, 18, 26, 0.95); 
-    backdrop-filter: blur(15px); 
-    -webkit-backdrop-filter: blur(15px);
-    border-top: 1px solid var(--border);
-    display: flex; 
-    justify-content: space-around; 
-    align-items: center;
-    padding: 0.5rem 0; 
-    padding-bottom: env(safe-area-inset-bottom);
-    z-index: 900;
-}
-
-.nav-item {
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    justify-content: center;
-    color: var(--text-muted); 
-    text-decoration: none; 
-    font-size: 0.7rem; 
-    font-weight: 500;
-    transition: color 0.2s; 
-    gap: 4px; 
-    width: 25%; 
-    padding: 5px 0;
-}
-
-.nav-item svg { 
-    width: 22px; 
-    height: 22px; 
-}
-
-.nav-item:hover, .nav-item.active { 
-    color: var(--primary); 
-}
-
-.nav-item.active svg { 
-    filter: drop-shadow(0 0 5px rgba(157, 78, 221, 0.5)); 
-}
-
-/* ============================================================
-   SKELETON LOADER
-   ============================================================ */
-.skeleton {
-    background: linear-gradient(90deg, var(--card) 25%, var(--bg-2) 50%, var(--card) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.4s infinite;
-    border-radius: 12px;
-}
-
-@keyframes shimmer { 
-    to { background-position: -200% 0; } 
-}
-
-/* ============================================================
-   ANIME DETAILS PAGE
-   ============================================================ */
 .anime-hero {
     position: relative;
     width: 100%;
-    min-height: 400px;
+    min-height: 450px;
     background-size: cover;
-    background-position: center;
+    background-position: center 20%;
     display: flex;
     align-items: flex-end;
     padding: 2rem;
+    margin-bottom: 2rem;
 }
 
 .anime-hero::before {
     content: '';
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: linear-gradient(to top, var(--bg) 0%, rgba(10, 10, 15, 0.7) 50%, rgba(10, 10, 15, 0.2) 100%);
+    background: linear-gradient(to top, var(--bg) 0%, rgba(10, 10, 15, 0.8) 40%, rgba(10, 10, 15, 0.2) 100%);
     z-index: 1;
 }
 
@@ -203,7 +45,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 
 .anime-poster {
-    width: 200px;
+    width: 220px;
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.8);
     border: 2px solid var(--border);
@@ -211,10 +53,11 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 
 .anime-info h1 {
-    font-size: 2.5rem;
+    font-size: 2.8rem;
     font-weight: 800;
     margin-bottom: 0.5rem;
     line-height: 1.1;
+    color: var(--text);
 }
 
 .anime-meta-badges {
@@ -266,7 +109,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 /* Episodes Section */
 .episodes-section {
     max-width: 1200px;
-    margin: 3rem auto;
+    margin: 0 auto 3rem;
     padding: 0 2rem;
 }
 
@@ -275,6 +118,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
     margin-bottom: 1.5rem;
     border-left: 4px solid var(--primary);
     padding-left: 10px;
+    color: var(--text);
 }
 
 .episode-grid {
@@ -302,36 +146,58 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 
 /* ============================================================
-   RESPONSIVE (Mobile)
+   MOBILE RESPONSIVE (FIXED CUT-OFF ISSUE)
    ============================================================ */
 @media (max-width: 768px) {
-    .navbar { padding: 0.8rem 1rem; }
-    .nav-logo-svg { height: 30px; }
-
     .anime-hero {
-        padding: 1.5rem 1rem;
+        padding: 2rem 1rem 1.5rem;
         flex-direction: column;
         align-items: center;
         text-align: center;
+        min-height: 400px; /* Height badha di taaki image fit ho sake */
+        background-position: center;
+        margin-bottom: 1rem;
     }
+    
     .anime-hero-content {
         flex-direction: column;
         gap: 1rem;
         align-items: center;
+        margin-top: auto; /* Content ko niche shift kiya */
     }
+    
     .anime-poster {
         width: 160px;
-        margin-top: -100px; /* Overlap effect for mobile */
+        margin-top: 0; /* Negative margin hata diya jo image kaat raha tha */
+        border-radius: 10px;
+        border: 3px solid var(--bg-2);
     }
+    
     .anime-info h1 {
         font-size: 1.8rem;
+        margin-top: 0.5rem;
     }
+    
     .anime-meta-badges {
         justify-content: center;
     }
+
+    .anime-description {
+        font-size: 0.9rem;
+        line-height: 1.5;
+        padding: 0 0.5rem;
+    }
+
+    .btn-watch-now {
+        width: 100%;
+        justify-content: center;
+        padding: 0.9rem 1rem;
+    }
+    
     .episodes-section {
         padding: 0 1rem;
     }
+    
     .episode-grid {
         grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
     }
