@@ -1,0 +1,177 @@
+/* ============================================================
+   ANIME MAX ZONE — Settings Page Styles
+   ============================================================ */
+
+/* Importing base styles for Navbar, Bottom Nav and Colors */
+@import url('style.css');
+
+/* Settings Container */
+.settings-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    min-height: 70vh;
+}
+
+/* Profile Card */
+.profile-card {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    background: var(--card);
+    padding: 1.5rem;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.profile-avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), #4cc9f0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 800;
+    color: white;
+    flex-shrink: 0;
+}
+
+.profile-info h2 {
+    font-size: 1.3rem;
+    margin-bottom: 0.2rem;
+    color: var(--text);
+}
+
+.profile-info p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* Settings Group Box */
+.settings-group {
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.settings-group-title {
+    padding: 1rem 1.5rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-2);
+}
+
+/* Settings Item Row */
+.settings-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.settings-item:last-child {
+    border-bottom: none;
+}
+
+.settings-item:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.settings-item-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.settings-icon {
+    width: 22px;
+    height: 22px;
+    color: var(--primary);
+}
+
+.settings-item-left span {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text);
+}
+
+.version-text {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    width: 46px;
+    height: 24px;
+    background: var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.3s;
+    flex-shrink: 0;
+}
+
+.toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.3s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.toggle-switch.active {
+    background: var(--primary);
+}
+
+.toggle-switch.active::after {
+    transform: translateX(22px);
+}
+
+/* Danger Buttons (Clear Watchlist) */
+.btn-danger span {
+    color: #ff6b6b !important;
+}
+
+.btn-danger .settings-icon {
+    color: #ff6b6b;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .settings-container {
+        margin: 1rem auto;
+    }
+    
+    .profile-card {
+        padding: 1.2rem;
+    }
+
+    .profile-avatar {
+        width: 60px;
+        height: 60px;
+        font-size: 1.6rem;
+    }
+
+    .settings-item {
+        padding: 1rem 1.2rem;
+    }
+}
