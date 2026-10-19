@@ -142,11 +142,110 @@ function renderList(list) {
 }
 
 // ============================================================
-// ---------- 8. Live Suggestions Renderer ----------
+// ---------- 8. HERO SLIDER LOGIC (Card Style) ----------
+// ============================================================
+let slideInterval;
+let currentSlide = 0;
+let sliderAnimeList = [];
+
+function renderHeroSlider(animeList) {
+    const sliderContainer = document.getElementById("heroSlider");
+    if (!sliderContainer) return;
+
+    sliderAnimeList = animeList.slice(0, 5); // Top 5 Anime
+    if (sliderAnimeList.length === 0) return;
+
+    sliderContainer.innerHTML = ""; // Placeholder remove
+
+    // Slides Generate karein
+    sliderAnimeList.forEach((anime, index) => {
+        const title = escapeHTML(anime.title || "Untitled");
+        const bannerImg = safeImageUrl(anime.coverImageUrl) || FALLBACK_POSTER;
+        const genres = Array.isArray(anime.genres) ? anime.genres.map(escapeHTML).join(" • ") : escapeHTML(anime.genres || "Action");
+        const status = escapeHTML(anime.status || "Anime");
+        
+        const slide = document.createElement("a");
+        slide.className = `slide ${index === 0 ? 'active' : ''}`;
+        slide.href = `/anime.html?id=${encodeURIComponent(anime.id)}`;
+        slide.style.backgroundImage = `url('${bannerImg}')`;
+
+        slide.innerHTML = `
+            <div class="slide-content">
+                <h1>${title}</h1>
+                <p>${genres}</p>
+                <div class="meta-info">
+                    <span>${status}</span> • <span>Latest Episodes</span>
+                </div>
+            </div>
+        `;
+        sliderContainer.appendChild(slide);
+    });
+
+    // Dots Container
+    const dotsContainer = document.createElement("div");
+    dotsContainer.className = "slider-dots";
+    sliderAnimeList.forEach((_, index) => {
+        const dot = document.createElement("div");
+        dot.className = `dot ${index === 0 ? 'active' : ''}`;
+        dot.addEventListener("click", (e) => { e.preventDefault(); goToSlide(index); });
+        dotsContainer.appendChild(dot);
+    });
+    sliderContainer.appendChild(dotsContainer);
+
+    // Arrows Container
+    const arrowsContainer = document.createElement("div");
+    arrowsContainer.className = "slider-arrows";
+    arrowsContainer.innerHTML = `
+        <button class="arrow-btn" id="prevBtn" aria-label="Previous">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+        </button>
+        <button class="arrow-btn" id="nextBtn" aria-label="Next">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+        </button>
+    `;
+    sliderContainer.appendChild(arrowsContainer);
+
+    // Arrow Event Listeners
+    document.getElementById("prevBtn").addEventListener("click", (e) => { e.preventDefault(); prevSlide(); });
+    document.getElementById("nextBtn").addEventListener("click", (e) => { e.preventDefault(); nextSlide(); });
+
+    startSlideShow();
+}
+
+function goToSlide(index) {
+    const slides = document.querySelectorAll(".slide");
+    const dots = document.querySelectorAll(".dot");
+    if (slides.length === 0) return;
+
+    slides[currentSlide].classList.remove("active");
+    dots[currentSlide].classList.remove("active");
+
+    currentSlide = (index + slides.length) % slides.length; // Loop
+
+    slides[currentSlide].classList.add("active");
+    dots[currentSlide].classList.add("active");
+
+    resetSlideTimer();
+}
+
+function nextSlide() { goToSlide(currentSlide + 1); }
+function prevSlide() { goToSlide(currentSlide - 1); }
+
+function startSlideShow() {
+    slideInterval = setInterval(nextSlide, 5000); // Har 5 sec me change hoga
+}
+
+function resetSlideTimer() {
+    clearInterval(slideInterval);
+    startSlideShow();
+}
+
+// ============================================================
+// ---------- 9. Live Suggestions Renderer ----------
 // ============================================================
 function renderSuggestions(term) {
     liveSuggestions.innerHTML = "";
-    liveSuggestions.style.display = "block"; // Box ko hamesha show rakho jab search khula ho
+    liveSuggestions.style.display = "block"; 
 
     let filtered = [];
 
@@ -193,7 +292,7 @@ function renderSuggestions(term) {
     });
 }
 
-// ---------- 9. Firestore Loader ----------
+// ---------- 10. Firestore Loader ----------
 async function loadAnime() {
     try {
         const q = query(collection(db, "anime"), orderBy("createdAt", "desc"), limit(60));
@@ -211,12 +310,13 @@ async function loadAnime() {
         // Agar error aata hai, tab bhi demo data load karo
         allAnime = demoData; 
     } finally {
-        // Data ready hone ke baad main grid render karo
+        // Data ready hone ke baad Main Grid aur Hero Slider dono render karo
         renderList(allAnime);
+        renderHeroSlider(allAnime); // <--- Slider Logic Call
     }
 }
 
-// ---------- 10. Search Panel Logic ----------
+// ---------- 11. Search Panel Logic ----------
 function openSearch() {
     searchOverlay.classList.add("active");
     searchInput.focus();
@@ -262,5 +362,5 @@ searchInput.addEventListener("input", (e) => {
     }, 250);
 });
 
-// ---------- 11. Boot ----------
+// ---------- 12. Boot ----------
 loadAnime();
