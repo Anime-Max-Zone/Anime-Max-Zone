@@ -106,7 +106,7 @@ function renderCard(anime) {
     const safeId = encodeURIComponent(anime.id || "");
     
     // BUG FIX: Added backtick (`) for template literal
-    card.dataset.href = `/anime.html?id=${safeId}`;
+    card.dataset.href = `/Anime-Max-Zone/anime.html?id=${safeId}`;
 
     card.innerHTML = `
         <div class="poster">
@@ -168,7 +168,7 @@ function renderHeroSlider(animeList) {
         
         const slide = document.createElement("a");
         slide.className = `slide ${index === 0 ? 'active' : ''}`;
-        slide.href = `/anime.html?id=${encodeURIComponent(anime.id)}`;
+        slide.href = `/Anime-Max-Zone/anime.html?id=${encodeURIComponent(anime.id)}`;
         slide.style.backgroundImage = `url('${bannerImg}')`;
 
         slide.innerHTML = `
