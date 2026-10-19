@@ -35,25 +35,30 @@ img { display: block; max-width: 100%; }
 button { font-family: inherit; cursor: pointer; border: none; background: none; }
 
 /* ============================================================
-   ANIMATED MAX LOGO (Neon Glow & Pulse Effect)
+   ANIMATED MAX LOGO (3D Left-to-Right Flip & Glow)
    ============================================================ */
 .animated-max-text {
-    animation: maxGlowPulse 2.5s infinite alternate ease-in-out;
+    /* SVG Text ko uske center se flip karne ke liye zaroori hai */
+    transform-box: fill-box;
     transform-origin: center;
+    animation: maxFlip 4s infinite ease-in-out;
 }
 
-@keyframes maxGlowPulse {
-    0% { 
+@keyframes maxFlip {
+    /* Start (Front) */
+    0%, 10% { 
+        transform: perspective(800px) rotateY(0deg); 
         filter: drop-shadow(0 0 2px rgba(168, 85, 247, 0.6));
-        opacity: 0.9;
     }
-    50% {
-        filter: drop-shadow(0 0 12px rgba(199, 125, 255, 1));
-        opacity: 1;
+    /* Flip to Back */
+    25%, 35% { 
+        transform: perspective(800px) rotateY(180deg); 
+        filter: drop-shadow(0 0 15px rgba(199, 125, 255, 1));
     }
-    100% { 
-        filter: drop-shadow(0 0 4px rgba(126, 34, 206, 0.8));
-        opacity: 0.9;
+    /* Flip back to Front */
+    50%, 100% { 
+        transform: perspective(800px) rotateY(360deg); 
+        filter: drop-shadow(0 0 5px rgba(126, 34, 206, 0.8));
     }
 }
 
