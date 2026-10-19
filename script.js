@@ -35,6 +35,15 @@ const liveSuggestions = document.getElementById("liveSuggestions");
 
 let allAnime = [];
 
+// Demo Data (Agar Firebase khali ho ya error aaye toh yeh use hoga)
+const demoData = [
+    { id: '1', title: 'Demon Slayer', genres: ['Action', 'Fantasy'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1286/99889.jpg', status: 'Ongoing' },
+    { id: '2', title: 'Jujutsu Kaisen', genres: ['Action', 'Supernatural'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1171/109222.jpg', status: 'Completed' },
+    { id: '3', title: 'One Piece', genres: ['Action', 'Adventure'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/6/73245.jpg', status: 'Ongoing' },
+    { id: '4', title: 'Attack on Titan', genres: ['Action', 'Drama'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/10/47347.jpg', status: 'Completed' },
+    { id: '5', title: 'Naruto', genres: ['Action', 'Adventure'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/13/17405.jpg', status: 'Completed' }
+];
+
 // ============================================================
 // ---------- 4. PRELOADER LOGIC ----------
 // ============================================================
@@ -45,13 +54,11 @@ function hidePreloader() {
     }
 }
 
-// Check if user is visiting for the first time in this session
+// First time visit par 2.5s, baad me 0.5s
 if (!sessionStorage.getItem("hasVisited")) {
-    // First time: Show loader for 2.5 seconds
     sessionStorage.setItem("hasVisited", "true");
     setTimeout(hidePreloader, 2500);
 } else {
-    // If page reloads: Hide quickly (0.5 seconds)
     setTimeout(hidePreloader, 500);
 }
 
@@ -126,7 +133,7 @@ function renderCard(anime) {
 function renderList(list) {
     grid.innerHTML = "";
     if (!list.length) {
-        grid.innerHTML = `<div class="message">No anime found 😕</div>`; // Translated
+        grid.innerHTML = `<div class="message">No anime found 😕</div>`; 
         return;
     }
     const frag = document.createDocumentFragment();
@@ -135,33 +142,34 @@ function renderList(list) {
 }
 
 // ============================================================
-// ---------- 8. Live Suggestions Renderer (FIXED) ----------
+// ---------- 8. Live Suggestions Renderer ----------
 // ============================================================
 function renderSuggestions(term) {
     liveSuggestions.innerHTML = "";
-    
-    // Agar input khali hai, toh box ko hide kar do
+    liveSuggestions.style.display = "block"; // Box ko hamesha show rakho jab search khula ho
+
+    let filtered = [];
+
+    // Agar search khali hai, toh "Trending Now" dikhao
     if (!term) {
-        liveSuggestions.style.display = "none";
-        return;
+        liveSuggestions.innerHTML = `<div class="suggestion-title">Trending Now</div>`;
+        filtered = allAnime.slice(0, 5); // Top 5
+    } else {
+        // Agar user ne kuch type kiya hai, toh filter karo
+        filtered = allAnime.filter((a) => {
+            const t = (a.title || "").toLowerCase();
+            const g = Array.isArray(a.genres) ? a.genres.join(" ").toLowerCase() : String(a.genres || "").toLowerCase();
+            return t.includes(term) || g.includes(term);
+        }).slice(0, 10); // Max 10 results
     }
 
-    const filtered = allAnime.filter((a) => {
-        const t = (a.title || "").toLowerCase();
-        const g = Array.isArray(a.genres) ? a.genres.join(" ").toLowerCase() : String(a.genres || "").toLowerCase();
-        return t.includes(term) || g.includes(term);
-    }).slice(0, 5); // Max 5 suggestions
-
-    // Agar kuch nahi mila, toh box show karke message dikhao
-    if (filtered.length === 0) {
-        liveSuggestions.style.display = "block";
+    // Agar type kiya hua kuch nahi mila
+    if (filtered.length === 0 && term) {
         liveSuggestions.innerHTML = `<p class="empty-msg">No results found for "${escapeHTML(term)}"</p>`;
         return;
     }
 
-    // Agar result mila, toh box show karo aur items daalo
-    liveSuggestions.style.display = "block";
-
+    // Results render karo
     filtered.forEach(anime => {
         const title = escapeHTML(anime.title || "Untitled");
         const poster = safeImageUrl(anime.coverImageUrl) || FALLBACK_POSTER;
@@ -193,19 +201,18 @@ async function loadAnime() {
 
         allAnime = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
         
-        // Fallback for testing if DB is empty
+        // Agar database khali hai, toh demo data load karo
         if(allAnime.length === 0) {
-            allAnime = [
-                { id: '1', title: 'Demon Slayer', genres: ['Action', 'Fantasy'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1286/99889.jpg', status: 'Ongoing' },
-                { id: '2', title: 'Jujutsu Kaisen', genres: ['Action', 'Supernatural'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1171/109222.jpg', status: 'Completed' },
-                { id: '3', title: 'One Piece', genres: ['Action', 'Adventure'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/6/73245.jpg', status: 'Ongoing' }
-            ];
+            allAnime = demoData;
         }
 
-        renderList(allAnime);
     } catch (err) {
         console.error("Firestore error:", err);
-        grid.innerHTML = `<div class="message error">Failed to load anime. Please check your internet or Firebase connection.</div>`; // Translated
+        // Agar error aata hai, tab bhi demo data load karo
+        allAnime = demoData; 
+    } finally {
+        // Data ready hone ke baad main grid render karo
+        renderList(allAnime);
     }
 }
 
@@ -215,8 +222,8 @@ function openSearch() {
     searchInput.focus();
     document.body.style.overflow = "hidden";
     
-    // Search khulte hi box ko hide karo
-    liveSuggestions.style.display = "none"; 
+    // Search khulte hi "Trending Now" load karo (khali string pass karke)
+    renderSuggestions(""); 
 }
 
 function closeSearch() {
@@ -227,6 +234,7 @@ function closeSearch() {
     document.body.style.overflow = "";
 }
 
+// Event Listeners
 openSearchBtn.addEventListener("click", openSearch);
 if(navSearchBtn) navSearchBtn.addEventListener("click", openSearch);
 closeSearchBtn.addEventListener("click", closeSearch);
