@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Anime Max Zone — Watch Anime Online</title>
     <meta name="description" content="Anime Max Zone - Watch your favorite anime in HD quality." />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
@@ -16,9 +16,7 @@
     <!-- ================= LOADING SCREEN ================= -->
     <div id="preloader">
         <div class="loader-container">
-            <!-- Spinning Ring -->
             <div class="spinner-ring"></div>
-            <!-- Center Logo -->
             <img src="Loading.png" alt="Loading..." class="loader-logo" />
         </div>
         <div class="loading-text">Loading...</div>
@@ -26,22 +24,39 @@
 
     <!-- ================= NAVBAR ================= -->
     <header class="navbar">
-        <!-- Navbar Logo Text Image -->
         <a href="/" class="logo-link">
             <img src="main-logo.png" alt="Anime Max Zone" class="nav-logo" />
         </a>
 
-        <div class="search-box">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
-            </svg>
-            <input id="searchInput" type="search" placeholder="Search anime..." aria-label="Search anime" />
-        </div>
-
         <div class="nav-actions">
-            <button class="btn-login" id="loginBtn">Login</button>
+            <!-- Search Icon Button -->
+            <button class="btn-icon" id="openSearchBtn" aria-label="Search">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
+                </svg>
+            </button>
         </div>
     </header>
+
+    <!-- ================= SEARCH OVERLAY PANEL ================= -->
+    <div id="searchOverlay" class="search-overlay">
+        <div class="search-panel">
+            <div class="search-header">
+                <div class="search-input-group">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
+                    </svg>
+                    <input id="searchInput" type="search" placeholder="Search anime, genres..." autocomplete="off" />
+                </div>
+                <button id="closeSearchBtn" class="btn-close">Cancel</button>
+            </div>
+            
+            <!-- Live Suggestions -->
+            <div id="liveSuggestions" class="live-suggestions">
+                <p class="empty-msg">Type to search...</p>
+            </div>
+        </div>
+    </div>
 
     <!-- ================= HERO ================= -->
     <section class="hero">
@@ -73,6 +88,38 @@
     <footer>
         &copy; 2026 <strong>Anime Max Zone</strong>. Built with &hearts; for anime fans.
     </footer>
+
+    <!-- ================= BOTTOM NAVIGATION BAR ================= -->
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item active">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span>Home</span>
+        </a>
+        
+        <button class="nav-item" id="navSearchBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
+            </svg>
+            <span>Search</span>
+        </button>
+
+        <a href="/watchlist.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+            </svg>
+            <span>Watchlist</span>
+        </a>
+
+        <a href="/settings.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span>Settings</span>
+        </a>
+    </nav>
 
     <script type="module" src="script.js"></script>
 </body>
