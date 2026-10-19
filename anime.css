@@ -2,7 +2,7 @@
    ANIME MAX ZONE — Anime Details Page Styles
    ============================================================ */
 
-/* Importing base styles for Navbar, Bottom Nav and Colors */
+/* Importing base styles for Navbar, Bottom Nav, Search Overlay and Colors */
 @import url('style.css');
 
 /* ============================================================
@@ -106,7 +106,9 @@
     box-shadow: 0 5px 15px rgba(157, 78, 221, 0.4);
 }
 
-/* Episodes Section */
+/* ============================================================
+   EPISODES SECTION
+   ============================================================ */
 .episodes-section {
     max-width: 1200px;
     margin: 0 auto 3rem;
@@ -150,16 +152,18 @@
    ============================================================ */
 @media (max-width: 768px) {
     .anime-hero {
-        /* Increased top padding to prevent the poster from clipping into the navbar */
-        padding: 4rem 1rem 2rem;
+        /* 
+         * FIX: Added top padding to ensure the poster 
+         * does not hide behind the sticky navbar. 
+         */
+        padding: 6rem 1rem 2rem;
         flex-direction: column;
         justify-content: flex-end;
         align-items: center;
         text-align: center;
-        /* Set min-height to auto so content dictates the height */
         min-height: auto; 
         height: auto;
-        background-position: center;
+        background-position: center top; /* Keeps the top of the poster image visible */
         margin-bottom: 1rem;
     }
     
@@ -172,7 +176,7 @@
     
     .anime-poster {
         width: 180px; 
-        margin-top: 0; /* Removed negative margin */
+        margin-top: 0; 
         border-radius: 12px;
         border: 3px solid var(--border);
         box-shadow: 0 10px 25px rgba(0,0,0,0.5);
