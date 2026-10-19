@@ -4,16 +4,32 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Anime Max Zone — Watch Anime Online</title>
-    <meta name="description" content="Anime Max Zone - Watch your favorite anime in HD quality. Latest episodes, trending anime, and more." />
+    <meta name="description" content="Anime Max Zone - Watch your favorite anime in HD quality." />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
 
+    <!-- Favicon (A Logo) -->
+    <link rel="icon" type="image/png" href="logo-icon.png" />
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
+    <!-- ================= PRELOADER / LOADING SCREEN ================= -->
+    <div id="preloader">
+        <div class="loader-container">
+            <!-- Spinning Ring -->
+            <div class="spinner-ring"></div>
+            <!-- Center Logo -->
+            <img src="logo-icon.png" alt="Anime Max Zone Logo" class="loader-logo" />
+        </div>
+        <div class="loading-text">Loading...</div>
+    </div>
+
     <!-- ================= NAVBAR ================= -->
     <header class="navbar">
-        <a href="/" class="logo">Anime<span>Max</span>Zone</a>
+        <!-- Navbar Logo Text Image -->
+        <a href="/" class="logo-link">
+            <img src="logo-text.png" alt="Anime Max Zone" class="nav-logo" />
+        </a>
 
         <div class="search-box">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
