@@ -27,7 +27,7 @@ const searchOverlay = document.getElementById("searchOverlay");
 const searchInput = document.getElementById("searchInput");
 const liveSuggestions = document.getElementById("liveSuggestions");
 
-let allAnimeForSearch = []; // Global list for search panel
+let allAnimeForSearch = []; 
 
 // ---------- 4. Security Helpers ----------
 function escapeHTML(str) {
@@ -51,7 +51,6 @@ const FALLBACK_POSTER = "data:image/svg+xml;utf8," + encodeURIComponent(
      </svg>`
 );
 
-// Demo Data (Fallback)
 const demoData = [
     { id: '1', title: 'Demon Slayer', genres: ['Action', 'Fantasy'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1286/99889.jpg', status: 'Ongoing', description: 'Tanjiro Kamado sets out to become a demon slayer after his family is slaughtered and his sister is turned into a demon.' },
     { id: '2', title: 'Jujutsu Kaisen', genres: ['Action', 'Supernatural'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1171/109222.jpg', status: 'Completed', description: 'A boy swallows a cursed talisman - the finger of a demon - and becomes cursed himself.' },
@@ -121,6 +120,7 @@ function renderSuggestions(term) {
 }
 
 function openSearch() {
+    if(!searchOverlay) return;
     searchOverlay.classList.add("active");
     searchInput.focus();
     document.body.style.overflow = "hidden";
@@ -128,6 +128,7 @@ function openSearch() {
 }
 
 function closeSearch() {
+    if(!searchOverlay) return;
     searchOverlay.classList.remove("active");
     searchInput.value = "";
     liveSuggestions.style.display = "none"; 
@@ -135,30 +136,32 @@ function closeSearch() {
     document.body.style.overflow = "";
 }
 
-// Event Listeners for Search
-openSearchBtn.addEventListener("click", openSearch);
+if(openSearchBtn) openSearchBtn.addEventListener("click", openSearch);
 if(navSearchBtn) navSearchBtn.addEventListener("click", openSearch);
-closeSearchBtn.addEventListener("click", closeSearch);
+if(closeSearchBtn) closeSearchBtn.addEventListener("click", closeSearch);
 
-searchOverlay.addEventListener("click", (e) => {
-    if (e.target === searchOverlay) closeSearch();
-});
+if(searchOverlay) {
+    searchOverlay.addEventListener("click", (e) => {
+        if (e.target === searchOverlay) closeSearch();
+    });
+}
 
 document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && searchOverlay.classList.contains("active")) {
+    if (e.key === "Escape" && searchOverlay && searchOverlay.classList.contains("active")) {
         closeSearch();
     }
 });
 
 let searchTimer;
-searchInput.addEventListener("input", (e) => {
-    clearTimeout(searchTimer);
-    const term = e.target.value.trim().toLowerCase();
-    searchTimer = setTimeout(() => {
-        renderSuggestions(term);
-    }, 250);
-});
-
+if(searchInput) {
+    searchInput.addEventListener("input", (e) => {
+        clearTimeout(searchTimer);
+        const term = e.target.value.trim().toLowerCase();
+        searchTimer = setTimeout(() => {
+            renderSuggestions(term);
+        }, 250);
+    });
+}
 
 // ============================================================
 // ---------- 6. DETAILS PAGE LOGIC ----------
@@ -265,5 +268,5 @@ function renderDetailsUI(anime) {
 }
 
 // ---------- 7. Boot ----------
-fetchAnimeForSearch(); // Load data for search overlay
-loadAnimeDetails();    // Load specific anime details
+fetchAnimeForSearch(); 
+loadAnimeDetails();    
