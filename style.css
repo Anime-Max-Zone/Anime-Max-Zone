@@ -35,30 +35,35 @@ img { display: block; max-width: 100%; }
 button { font-family: inherit; cursor: pointer; border: none; background: none; }
 
 /* ============================================================
-   ANIMATED MAX LOGO (3D Left-to-Right Flip & Glow)
+   ANIMATED MAX LOGO (Left Hinge Flip & Pause)
    ============================================================ */
 .animated-max-text {
-    /* SVG Text ko uske center se flip karne ke liye zaroori hai */
+    /* SVG Text ko uske left edge se flip karne ke liye */
     transform-box: fill-box;
-    transform-origin: center;
-    animation: maxFlip 4s infinite ease-in-out;
+    transform-origin: left center; 
+    animation: maxFlipLeft 20s infinite ease-in-out;
 }
 
-@keyframes maxFlip {
+@keyframes maxFlipLeft {
     /* Start (Front) */
-    0%, 10% { 
+    0% { 
         transform: perspective(800px) rotateY(0deg); 
         filter: drop-shadow(0 0 2px rgba(168, 85, 247, 0.6));
     }
-    /* Flip to Back */
-    25%, 35% { 
+    /* Flip open to 180 degrees */
+    5% { 
         transform: perspective(800px) rotateY(180deg); 
         filter: drop-shadow(0 0 15px rgba(199, 125, 255, 1));
     }
-    /* Flip back to Front */
-    50%, 100% { 
-        transform: perspective(800px) rotateY(360deg); 
-        filter: drop-shadow(0 0 5px rgba(126, 34, 206, 0.8));
+    /* Flip back to Left (Front) */
+    10% { 
+        transform: perspective(800px) rotateY(0deg); 
+        filter: drop-shadow(0 0 10px rgba(157, 78, 221, 0.8));
+    }
+    /* Stays still for the remaining 18 seconds */
+    100% { 
+        transform: perspective(800px) rotateY(0deg); 
+        filter: drop-shadow(0 0 2px rgba(168, 85, 247, 0.6));
     }
 }
 
