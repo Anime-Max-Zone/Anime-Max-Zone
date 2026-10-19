@@ -8,7 +8,7 @@ import {
     getFirestore, collection, getDocs, query, orderBy, limit
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// ---------- 2. Firebase Config (apni values daalein) ----------
+// ---------- 2. Firebase Config ----------
 const firebaseConfig = {
     apiKey: "AIzaSyCpfrluxsBhnz48ve9RykIy1IxzbBfk7dA",
     authDomain: "sm-studio-7.firebaseapp.com",
@@ -23,10 +23,15 @@ const db = getFirestore(app);
 
 // ---------- 3. DOM References ----------
 const grid = document.getElementById("animeGrid");
+const preloader = document.getElementById("preloader");
+
+// Search Overlay Elements
+const openSearchBtn = document.getElementById("openSearchBtn");
+const navSearchBtn = document.getElementById("navSearchBtn");
+const closeSearchBtn = document.getElementById("closeSearchBtn");
+const searchOverlay = document.getElementById("searchOverlay");
 const searchInput = document.getElementById("searchInput");
-const sectionTitle = document.getElementById("sectionTitle");
-const loginBtn = document.getElementById("loginBtn");
-const preloader = document.getElementById("preloader"); // Preloader DOM
+const liveSuggestions = document.getElementById("liveSuggestions");
 
 let allAnime = [];
 
@@ -52,7 +57,7 @@ const FALLBACK_POSTER = "data:image/svg+xml;utf8," + encodeURIComponent(
      </svg>`
 );
 
-// ---------- 5. Card Renderer ----------
+// ---------- 5. Main Grid Card Renderer ----------
 function renderCard(anime) {
     const title = escapeHTML(anime.title || "Untitled");
     const genres = Array.isArray(anime.genres) ? anime.genres.map(escapeHTML).join(", ") : escapeHTML(anime.genres || "");
@@ -93,7 +98,7 @@ function renderCard(anime) {
     return card;
 }
 
-// ---------- 6. List Renderer ----------
+// ---------- 6. Main Grid List Renderer ----------
 function renderList(list) {
     grid.innerHTML = "";
     if (!list.length) {
@@ -105,58 +110,127 @@ function renderList(list) {
     grid.appendChild(frag);
 }
 
-// ---------- 7. Hide Preloader ----------
+// ---------- 7. Live Suggestions Renderer (Search Overlay ke andar) ----------
+function renderSuggestions(term) {
+    liveSuggestions.innerHTML = "";
+    
+    if (!term) {
+        liveSuggestions.innerHTML = `<p class="empty-msg">Type to search...</p>`;
+        return;
+    }
+
+    const filtered = allAnime.filter((a) => {
+        const t = (a.title || "").toLowerCase();
+        const g = Array.isArray(a.genres) ? a.genres.join(" ").toLowerCase() : String(a.genres || "").toLowerCase();
+        return t.includes(term) || g.includes(term);
+    }).slice(0, 5); // Max 5 suggestions dikhayenge
+
+    if (filtered.length === 0) {
+        liveSuggestions.innerHTML = `<p class="empty-msg">No results found for "${escapeHTML(term)}"</p>`;
+        return;
+    }
+
+    filtered.forEach(anime => {
+        const title = escapeHTML(anime.title || "Untitled");
+        const poster = safeImageUrl(anime.coverImageUrl) || FALLBACK_POSTER;
+        const safeId = encodeURIComponent(anime.id || "");
+
+        const div = document.createElement("div");
+        div.className = "suggestion-item";
+        div.innerHTML = `
+            <img src="${poster}" alt="${title}" />
+            <div class="suggestion-info">
+                <h4>${title}</h4>
+                <p>${Array.isArray(anime.genres) ? anime.genres.map(escapeHTML).join(", ") : escapeHTML(anime.genres || "")}</p>
+            </div>
+        `;
+        
+        // Click karne par anime page par le jayega
+        div.addEventListener("click", () => {
+            window.location.href = `/anime.html?id=${safeId}`;
+        });
+
+        liveSuggestions.appendChild(div);
+    });
+}
+
+// ---------- 8. Hide Preloader ----------
 function hidePreloader() {
     if (preloader) {
         preloader.classList.add("hidden");
-        // Remove from DOM after transition
         setTimeout(() => { preloader.style.display = 'none'; }, 500);
     }
 }
 
-// ---------- 8. Firestore Loader ----------
+// ---------- 9. Firestore Loader ----------
 async function loadAnime() {
     try {
         const q = query(collection(db, "anime"), orderBy("createdAt", "desc"), limit(60));
         const snap = await getDocs(q);
 
         allAnime = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        
+        // Agar database khali ho toh testing ke liye dummy data (Optional)
+        if(allAnime.length === 0) {
+            allAnime = [
+                { id: '1', title: 'Demon Slayer', genres: ['Action', 'Fantasy'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1286/99889.jpg', status: 'Ongoing' },
+                { id: '2', title: 'Jujutsu Kaisen', genres: ['Action', 'Supernatural'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1171/109222.jpg', status: 'Completed' },
+                { id: '3', title: 'One Piece', genres: ['Action', 'Adventure'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/6/73245.jpg', status: 'Ongoing' }
+            ];
+        }
+
         renderList(allAnime);
     } catch (err) {
         console.error("Firestore error:", err);
-        grid.innerHTML = `<div class="message error">Anime load nahi ho paye. Thodi der baad try karein.</div>`;
+        grid.innerHTML = `<div class="message error">Anime load nahi ho paye. Internet ya Firebase check karein.</div>`;
     } finally {
-        // Data load hone ke baad (ya error aane par) Loading Screen hatao
-        // Ek chota sa delay taaki loading animation acchi dikhe
         setTimeout(hidePreloader, 1000); 
     }
 }
 
-// ---------- 9. Search (debounced) ----------
+// ---------- 10. Search Panel Logic ----------
+function openSearch() {
+    searchOverlay.classList.add("active");
+    searchInput.focus();
+    document.body.style.overflow = "hidden"; // Background scroll roko
+}
+
+function closeSearch() {
+    searchOverlay.classList.remove("active");
+    searchInput.value = "";
+    renderSuggestions("");
+    document.body.style.overflow = ""; // Background scroll wapas chalu karo
+}
+
+// Overlay Open Buttons
+openSearchBtn.addEventListener("click", openSearch);
+if(navSearchBtn) navSearchBtn.addEventListener("click", openSearch);
+
+// Overlay Close Button
+closeSearchBtn.addEventListener("click", closeSearch);
+
+// Overlay ke bahar click karne par band ho
+searchOverlay.addEventListener("click", (e) => {
+    if (e.target === searchOverlay) closeSearch();
+});
+
+// Escape key dabane par band ho
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && searchOverlay.classList.contains("active")) {
+        closeSearch();
+    }
+});
+
+// Live Search Input Handler (Debounce)
 let searchTimer;
 searchInput.addEventListener("input", (e) => {
     clearTimeout(searchTimer);
-    const rawTerm = e.target.value.trim();
-    const term = rawTerm.toLowerCase();
+    const term = e.target.value.trim().toLowerCase();
 
     searchTimer = setTimeout(() => {
-        if (!term) {
-            sectionTitle.textContent = "Trending Now";
-            renderList(allAnime);
-            return;
-        }
-        sectionTitle.textContent = `Results for "${rawTerm}"`;
-        const filtered = allAnime.filter((a) => {
-            const t = (a.title || "").toLowerCase();
-            const g = Array.isArray(a.genres) ? a.genres.join(" ").toLowerCase() : String(a.genres || "").toLowerCase();
-            return t.includes(term) || g.includes(term);
-        });
-        renderList(filtered);
+        renderSuggestions(term);
     }, 250);
 });
-
-// ---------- 10. Login Button ----------
-loginBtn.addEventListener("click", () => { window.location.href = "/login.html"; });
 
 // ---------- 11. Boot ----------
 loadAnime();
