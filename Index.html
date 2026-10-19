@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Anime Max Zone — Watch Anime Online</title>
+    <meta name="description" content="Anime Max Zone - Watch your favorite anime in HD quality. Latest episodes, trending anime, and more." />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+    <!-- ================= NAVBAR ================= -->
+    <header class="navbar">
+        <a href="/" class="logo">Anime<span>Max</span>Zone</a>
+
+        <div class="search-box">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
+            </svg>
+            <input id="searchInput" type="search" placeholder="Search anime..." aria-label="Search anime" />
+        </div>
+
+        <div class="nav-actions">
+            <button class="btn-login" id="loginBtn">Login</button>
+        </div>
+    </header>
+
+    <!-- ================= HERO ================= -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Watch Your Favourite <span>Anime</span><br />Anytime, Anywhere.</h1>
+            <p>HD quality streaming, latest episodes, and a huge collection of anime — all in one place.</p>
+            <a href="#animeSection" class="btn-primary">Browse Anime</a>
+        </div>
+    </section>
+
+    <!-- ================= MAIN ================= -->
+    <main>
+        <div class="section-header" id="animeSection">
+            <h2 id="sectionTitle">Trending Now</h2>
+        </div>
+
+        <div class="anime-grid" id="animeGrid">
+            <!-- Skeleton loaders -->
+            <div class="skeleton" style="aspect-ratio:2/3;"></div>
+            <div class="skeleton" style="aspect-ratio:2/3;"></div>
+            <div class="skeleton" style="aspect-ratio:2/3;"></div>
+            <div class="skeleton" style="aspect-ratio:2/3;"></div>
+            <div class="skeleton" style="aspect-ratio:2/3;"></div>
+            <div class="skeleton" style="aspect-ratio:2/3;"></div>
+        </div>
+    </main>
+
+    <!-- ================= FOOTER ================= -->
+    <footer>
+        &copy; 2026 <strong>Anime Max Zone</strong>. Built with &hearts; for anime fans.
+    </footer>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
