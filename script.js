@@ -23,7 +23,7 @@ const db = getFirestore(app);
 
 // ---------- 3. DOM References ----------
 const grid = document.getElementById("animeGrid");
-const preloader = document.getElementById("preloader");
+const preloader = document.getElementById("preloader"); // Preloader DOM
 
 // Search Overlay Elements
 const openSearchBtn = document.getElementById("openSearchBtn");
@@ -35,7 +35,31 @@ const liveSuggestions = document.getElementById("liveSuggestions");
 
 let allAnime = [];
 
-// ---------- 4. Security Helpers ----------
+// ============================================================
+// ---------- 4. PRELOADER LOGIC (FIXED) ----------
+// ============================================================
+function hidePreloader() {
+    if (preloader && !preloader.classList.contains("hidden")) {
+        preloader.classList.add("hidden");
+        setTimeout(() => { preloader.style.display = 'none'; }, 500);
+    }
+}
+
+// Check if user is visiting for the first time in this session
+if (!sessionStorage.getItem("hasVisited")) {
+    // First time: Show loader for 2.5 seconds
+    sessionStorage.setItem("hasVisited", "true");
+    setTimeout(hidePreloader, 2500);
+} else {
+    // If page reloads: Hide quickly (0.5 seconds)
+    setTimeout(hidePreloader, 500);
+}
+
+// Emergency Backup: Agar kisi wajah se upar wala fail ho jaye, toh 5 second baad pakka hatega
+setTimeout(hidePreloader, 5000);
+
+
+// ---------- 5. Security Helpers ----------
 function escapeHTML(str) {
     if (str == null) return "";
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -57,7 +81,7 @@ const FALLBACK_POSTER = "data:image/svg+xml;utf8," + encodeURIComponent(
      </svg>`
 );
 
-// ---------- 5. Main Grid Card Renderer ----------
+// ---------- 6. Main Grid Card Renderer ----------
 function renderCard(anime) {
     const title = escapeHTML(anime.title || "Untitled");
     const genres = Array.isArray(anime.genres) ? anime.genres.map(escapeHTML).join(", ") : escapeHTML(anime.genres || "");
@@ -98,7 +122,7 @@ function renderCard(anime) {
     return card;
 }
 
-// ---------- 6. Main Grid List Renderer ----------
+// ---------- 7. Main Grid List Renderer ----------
 function renderList(list) {
     grid.innerHTML = "";
     if (!list.length) {
@@ -110,7 +134,7 @@ function renderList(list) {
     grid.appendChild(frag);
 }
 
-// ---------- 7. Live Suggestions Renderer (Search Overlay ke andar) ----------
+// ---------- 8. Live Suggestions Renderer ----------
 function renderSuggestions(term) {
     liveSuggestions.innerHTML = "";
     
@@ -123,7 +147,7 @@ function renderSuggestions(term) {
         const t = (a.title || "").toLowerCase();
         const g = Array.isArray(a.genres) ? a.genres.join(" ").toLowerCase() : String(a.genres || "").toLowerCase();
         return t.includes(term) || g.includes(term);
-    }).slice(0, 5); // Max 5 suggestions dikhayenge
+    }).slice(0, 5); // Max 5 suggestions
 
     if (filtered.length === 0) {
         liveSuggestions.innerHTML = `<p class="empty-msg">No results found for "${escapeHTML(term)}"</p>`;
@@ -145,7 +169,6 @@ function renderSuggestions(term) {
             </div>
         `;
         
-        // Click karne par anime page par le jayega
         div.addEventListener("click", () => {
             window.location.href = `/anime.html?id=${safeId}`;
         });
@@ -154,15 +177,7 @@ function renderSuggestions(term) {
     });
 }
 
-// ---------- 8. Hide Preloader ----------
-function hidePreloader() {
-    if (preloader) {
-        preloader.classList.add("hidden");
-        setTimeout(() => { preloader.style.display = 'none'; }, 500);
-    }
-}
-
-// ---------- 9. Firestore Loader ----------
+// ---------- 9. Firestore Loader (Data Fetching Only) ----------
 async function loadAnime() {
     try {
         const q = query(collection(db, "anime"), orderBy("createdAt", "desc"), limit(60));
@@ -170,7 +185,7 @@ async function loadAnime() {
 
         allAnime = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
         
-        // Agar database khali ho toh testing ke liye dummy data (Optional)
+        // Fallback for testing if DB is empty
         if(allAnime.length === 0) {
             allAnime = [
                 { id: '1', title: 'Demon Slayer', genres: ['Action', 'Fantasy'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1286/99889.jpg', status: 'Ongoing' },
@@ -183,8 +198,6 @@ async function loadAnime() {
     } catch (err) {
         console.error("Firestore error:", err);
         grid.innerHTML = `<div class="message error">Anime load nahi ho paye. Internet ya Firebase check karein.</div>`;
-    } finally {
-        setTimeout(hidePreloader, 1000); 
     }
 }
 
@@ -192,36 +205,31 @@ async function loadAnime() {
 function openSearch() {
     searchOverlay.classList.add("active");
     searchInput.focus();
-    document.body.style.overflow = "hidden"; // Background scroll roko
+    document.body.style.overflow = "hidden";
 }
 
 function closeSearch() {
     searchOverlay.classList.remove("active");
     searchInput.value = "";
     renderSuggestions("");
-    document.body.style.overflow = ""; // Background scroll wapas chalu karo
+    document.body.style.overflow = "";
 }
 
-// Overlay Open Buttons
 openSearchBtn.addEventListener("click", openSearch);
 if(navSearchBtn) navSearchBtn.addEventListener("click", openSearch);
-
-// Overlay Close Button
 closeSearchBtn.addEventListener("click", closeSearch);
 
-// Overlay ke bahar click karne par band ho
 searchOverlay.addEventListener("click", (e) => {
     if (e.target === searchOverlay) closeSearch();
 });
 
-// Escape key dabane par band ho
 document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && searchOverlay.classList.contains("active")) {
         closeSearch();
     }
 });
 
-// Live Search Input Handler (Debounce)
+// Live Search Input Handler
 let searchTimer;
 searchInput.addEventListener("input", (e) => {
     clearTimeout(searchTimer);
