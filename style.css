@@ -35,6 +35,29 @@ img { display: block; max-width: 100%; }
 button { font-family: inherit; cursor: pointer; border: none; background: none; }
 
 /* ============================================================
+   ANIMATED MAX LOGO (Neon Glow & Pulse Effect)
+   ============================================================ */
+.animated-max-text {
+    animation: maxGlowPulse 2.5s infinite alternate ease-in-out;
+    transform-origin: center;
+}
+
+@keyframes maxGlowPulse {
+    0% { 
+        filter: drop-shadow(0 0 2px rgba(168, 85, 247, 0.6));
+        opacity: 0.9;
+    }
+    50% {
+        filter: drop-shadow(0 0 12px rgba(199, 125, 255, 1));
+        opacity: 1;
+    }
+    100% { 
+        filter: drop-shadow(0 0 4px rgba(126, 34, 206, 0.8));
+        opacity: 0.9;
+    }
+}
+
+/* ============================================================
    PRELOADER / LOADING SCREEN
    ============================================================ */
 #preloader {
@@ -204,6 +227,19 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
     transform: translateY(0); 
 }
 
+/* Search Overlay Logo (Left Aligned) */
+.search-logo-container {
+    display: flex;
+    justify-content: flex-start; 
+    margin-bottom: 1.5rem;
+    padding-left: 0.2rem;
+}
+
+.search-logo-svg {
+    height: 35px;
+    width: auto;
+}
+
 .search-header { 
     display: flex; 
     gap: 1rem; 
@@ -244,7 +280,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
     padding: 0.5rem 0;
 }
 
-/* ---------- UPDATED CLOSE BUTTON (X Icon) ---------- */
+/* ---------- CLOSE BUTTON (X Icon) ---------- */
 .btn-close { 
     display: flex;
     align-items: center;
@@ -271,7 +307,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
     height: 20px;
 }
 
-/* Live Suggestions */
+/* Live Suggestions Box */
 .live-suggestions {
     background: var(--bg-2); 
     border: 1px solid var(--border); 
@@ -279,7 +315,15 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
     max-height: 60vh; 
     overflow-y: auto; 
     padding: 1rem;
-    display: none; /* Default me hide rahega (JS se handle hoga) */
+}
+
+/* Search ke andar heading ke liye (Trending Now) */
+.suggestion-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 0.8rem;
+    padding-left: 0.5rem;
 }
 
 .empty-msg { 
@@ -574,6 +618,9 @@ footer strong {
     }
     .nav-logo-svg { 
         height: 30px; 
+    }
+    .search-logo-svg {
+        height: 28px;
     }
     .hero { 
         padding: 2.5rem 1rem; 
