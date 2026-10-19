@@ -38,7 +38,7 @@
                 </defs>
                 <g font-family="'Arial Black', 'Impact', sans-serif" font-weight="900" font-size="180" letter-spacing="2" dominant-baseline="central">
                     <text x="50" y="150" fill="#ffffff">ANIME</text>
-                    <text x="740" y="150" fill="url(#maxGradient)">MAX</text>
+                    <text x="740" y="150" fill="url(#maxGradient)" class="animated-max-text">MAX</text>
                 </g>
             </svg>
         </a>
@@ -56,6 +56,24 @@
     <!-- ================= SEARCH OVERLAY PANEL ================= -->
     <div id="searchOverlay" class="search-overlay">
         <div class="search-panel">
+            
+            <!-- Search ke upar Logo (Left Aligned) -->
+            <div class="search-logo-container">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 300" class="search-logo-svg">
+                    <defs>
+                        <linearGradient id="maxGradientSearch" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#e2a0ff" />
+                            <stop offset="50%" stop-color="#a855f7" />
+                            <stop offset="100%" stop-color="#7e22ce" />
+                        </linearGradient>
+                    </defs>
+                    <g font-family="'Arial Black', 'Impact', sans-serif" font-weight="900" font-size="180" letter-spacing="2" dominant-baseline="central">
+                        <text x="50" y="150" fill="#ffffff">ANIME</text>
+                        <text x="740" y="150" fill="url(#maxGradientSearch)" class="animated-max-text">MAX</text>
+                    </g>
+                </svg>
+            </div>
+
             <div class="search-header">
                 <div class="search-input-group">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -63,7 +81,7 @@
                     </svg>
                     <input id="searchInput" type="search" placeholder="Search anime, genres..." autocomplete="off" />
                 </div>
-                <!-- Close Icon instead of Cancel Text -->
+                <!-- Close Icon -->
                 <button id="closeSearchBtn" class="btn-close" aria-label="Close search">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -73,7 +91,7 @@
             
             <!-- Live Suggestions -->
             <div id="liveSuggestions" class="live-suggestions">
-                <p class="empty-msg">Type to search...</p>
+                <!-- JS will populate this -->
             </div>
         </div>
     </div>
