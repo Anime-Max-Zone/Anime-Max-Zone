@@ -58,7 +58,7 @@ async function loadAnimeDetails() {
 
     if (!animeId) {
         // Agar URL me ID nahi hai, toh home page par bhej do
-        window.location.href = "/"; 
+        window.location.href = "index.html"; // FIXED: Relative path
         return;
     }
 
@@ -87,9 +87,9 @@ async function loadAnimeDetails() {
             <div style="padding: 4rem 2rem; text-align: center;">
                 <h2 style="color: #ff6b6b; margin-bottom: 1rem;">Anime Not Found</h2>
                 <p style="color: var(--text-muted); margin-bottom: 1.5rem;">The anime you are looking for does not exist or has been removed.</p>
-                <a href="/" class="btn-watch-now" style="display: inline-flex;">Go Back Home</a>
+                <a href="index.html" class="btn-watch-now" style="display: inline-flex;">Go Back Home</a>
             </div>
-        `;
+        `; // FIXED: Relative path
         return;
     }
 
