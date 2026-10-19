@@ -105,7 +105,7 @@ function renderCard(anime) {
 
     const safeId = encodeURIComponent(anime.id || "");
     
-    // FIXED URL: Relative path jo GitHub Pages aur Localhost dono par chalega
+    // RELATIVE PATH (No leading slash) -> Fix for GitHub Pages
     card.dataset.href = `anime.html?id=${safeId}`;
 
     card.innerHTML = `
@@ -169,7 +169,7 @@ function renderHeroSlider(animeList) {
         const slide = document.createElement("a");
         slide.className = `slide ${index === 0 ? 'active' : ''}`;
         
-        // FIXED URL
+        // RELATIVE PATH (No leading slash) -> Fix for GitHub Pages
         slide.href = `anime.html?id=${encodeURIComponent(anime.id)}`;
         slide.style.backgroundImage = `url('${bannerImg}')`;
 
@@ -289,7 +289,7 @@ function renderSuggestions(term) {
         `;
         
         div.addEventListener("click", () => {
-            // FIXED URL
+            // RELATIVE PATH (No leading slash) -> Fix for GitHub Pages
             window.location.href = `anime.html?id=${safeId}`;
         });
 
