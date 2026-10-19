@@ -104,7 +104,7 @@ function renderCard(anime) {
     card.setAttribute("tabindex", "0");
 
     const safeId = encodeURIComponent(anime.id || "");
-    card.dataset.href = `/anime.html?id=${safeId}`;
+    card.dataset.href = /anime.html?id=${safeId}`;
 
     card.innerHTML = `
         <div class="poster">
@@ -285,7 +285,7 @@ function renderSuggestions(term) {
         `;
         
         div.addEventListener("click", () => {
-            window.location.href = `/anime.html?id=${safeId}`;
+            window.location.href = /anime.html?id=${safeId}`;
         });
 
         liveSuggestions.appendChild(div);
