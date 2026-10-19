@@ -15,12 +15,12 @@ import {
 
 // ---------- 2. Firebase Config (apni values daalein) ----------
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyCpfrluxsBhnz48ve9RykIy1IxzbBfk7dA",
+    authDomain: "sm-studio-7.firebaseapp.com",
+    projectId: "sm-studio-7",
+    storageBucket: "sm-studio-7.firebasestorage.app",
+    messagingSenderId: "126291501472",
+    appId: "1:126291501472:web:47386660af8ec3a57204c5"
 };
 
 const app = initializeApp(firebaseConfig);
