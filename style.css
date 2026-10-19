@@ -35,33 +35,29 @@ img { display: block; max-width: 100%; }
 button { font-family: inherit; cursor: pointer; border: none; background: none; }
 
 /* ============================================================
-   ANIMATED MAX LOGO (Left Hinge Flip & Pause)
+   ANIMATED MAX LOGO (Left Hinge Flip - Every 6 Seconds)
    ============================================================ */
 .animated-max-text {
     /* SVG Text ko uske left edge se flip karne ke liye */
     transform-box: fill-box;
     transform-origin: left center; 
-    animation: maxFlipLeft 20s infinite ease-in-out;
+    /* 6 second ka cycle */
+    animation: maxFlipLeft 6s infinite ease-in-out;
 }
 
 @keyframes maxFlipLeft {
-    /* Start (Front) */
-    0% { 
+    /* Thoda ruk kar start hoga */
+    0%, 5% { 
         transform: perspective(800px) rotateY(0deg); 
         filter: drop-shadow(0 0 2px rgba(168, 85, 247, 0.6));
     }
-    /* Flip open to 180 degrees */
-    5% { 
+    /* Khulega (Left to 180deg) */
+    15% { 
         transform: perspective(800px) rotateY(180deg); 
         filter: drop-shadow(0 0 15px rgba(199, 125, 255, 1));
     }
-    /* Flip back to Left (Front) */
-    10% { 
-        transform: perspective(800px) rotateY(0deg); 
-        filter: drop-shadow(0 0 10px rgba(157, 78, 221, 0.8));
-    }
-    /* Stays still for the remaining 18 seconds */
-    100% { 
+    /* Wapas band hoga (Left par hi) */
+    25%, 100% { 
         transform: perspective(800px) rotateY(0deg); 
         filter: drop-shadow(0 0 2px rgba(168, 85, 247, 0.6));
     }
