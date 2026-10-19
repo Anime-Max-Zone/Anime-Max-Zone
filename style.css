@@ -366,17 +366,19 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 
 /* ============================================================
-   HERO SLIDER (Auto-Slide)
+   HERO SLIDER (Card Style - Auto Slide)
    ============================================================ */
 .hero-slider {
     position: relative;
-    width: 100%;
-    height: 60vh;
-    min-height: 400px;
-    max-height: 600px;
-    background: var(--bg-2);
+    width: calc(100% - 2rem);
+    max-width: 1100px; /* Zyada bada nahi dikhega */
+    margin: 1.5rem auto;
+    height: 380px; /* Perfect landscape height */
+    border-radius: 16px;
     overflow: hidden;
-    border-bottom: 1px solid var(--border);
+    background: var(--bg-2);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--border);
 }
 
 /* Individual Slide */
@@ -384,10 +386,12 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
     opacity: 0;
-    transition: opacity 0.8s ease-in-out;
+    transition: opacity 0.6s ease-in-out;
     background-size: cover;
-    background-position: center 20%;
+    background-position: center;
     z-index: 1;
+    cursor: pointer;
+    display: block;
 }
 
 .slide.active {
@@ -395,52 +399,60 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
     z-index: 2;
 }
 
-/* Dark Gradient Overlay taaki text saaf dikhe */
+/* Dark Gradient Overlay (Niche se upar) */
 .slide::before {
     content: '';
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
     background: linear-gradient(
-        to right,
-        rgba(10, 10, 15, 0.95) 0%,
-        rgba(10, 10, 15, 0.7) 40%,
-        rgba(10, 10, 15, 0.1) 100%
-    ),
-    linear-gradient(
         to top,
-        var(--bg) 0%,
-        transparent 40%
+        rgba(10, 10, 15, 0.95) 0%,
+        rgba(10, 10, 15, 0.6) 40%,
+        rgba(10, 10, 15, 0.1) 100%
     );
+    z-index: 1;
 }
 
 /* Content inside Slide */
 .slide-content {
-    position: relative;
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%;
+    padding: 2rem;
     z-index: 3;
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 0 2rem;
-    height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-end;
     align-items: flex-start;
 }
 
 .slide-content h1 {
-    font-size: clamp(2rem, 4vw, 3.5rem);
-    font-weight: 800;
-    line-height: 1.1;
-    margin-bottom: 1rem;
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+    color: var(--text);
     text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
-    max-width: 600px;
 }
 
 .slide-content p {
-    font-size: 1.1rem;
-    color: #ddd;
-    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+    color: #ccc;
+    margin-bottom: 0.8rem;
     text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    max-width: 80%;
+}
+
+.slide-content .meta-info {
+    font-size: 0.8rem;
+    color: #888;
+    display: flex;
+    gap: 10px;
+    align-items: center;
 }
 
 /* Slider Placeholder (Skeleton) */
@@ -450,31 +462,63 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
     border-radius: 0 !important;
 }
 
-/* Slider ke Dots (Niche ke dots) */
+/* Slider ke Dots (Niche Left me) */
 .slider-dots {
     position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
+    bottom: 1.5rem;
+    left: 2rem;
     display: flex;
-    gap: 8px;
-    z-index: 4;
+    gap: 6px;
+    z-index: 5;
 }
 
 .dot {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.3);
     cursor: pointer;
     transition: all 0.3s;
 }
 
 .dot.active {
-    background: var(--primary);
-    width: 24px;
+    background: #4cc9f0; /* Blue accent */
+    width: 20px;
     border-radius: 10px;
-    box-shadow: 0 0 10px rgba(157, 78, 221, 0.8);
+}
+
+/* Slider Arrows (Niche Right me) */
+.slider-arrows {
+    position: absolute;
+    bottom: 1.5rem;
+    right: 2rem;
+    display: flex;
+    gap: 8px;
+    z-index: 5;
+}
+
+.arrow-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: background 0.2s;
+}
+
+.arrow-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.arrow-btn svg {
+    width: 16px;
+    height: 16px;
 }
 
 /* Generic Button Primary */
@@ -694,19 +738,32 @@ footer strong {
         height: 28px;
     }
     .hero-slider {
-        height: 50vh;
-        min-height: 300px;
+        width: calc(100% - 1.5rem);
+        height: 250px;
+        margin: 1rem auto;
+        border-radius: 12px;
     }
     .slide-content {
-        padding: 0 1.5rem;
-        justify-content: flex-end;
-        padding-bottom: 3rem;
+        padding: 1.2rem;
     }
     .slide-content h1 {
-        font-size: 1.8rem;
+        font-size: 1.3rem;
     }
-    .slide::before {
-        background: linear-gradient(to top, var(--bg) 10%, rgba(10, 10, 15, 0.6) 60%, transparent 100%);
+    .slide-content p {
+        font-size: 0.8rem;
+        display: none; /* Mobile par description hide kar sakte hain */
+    }
+    .slider-dots {
+        bottom: 1rem;
+        left: 1.2rem;
+    }
+    .slider-arrows {
+        bottom: 1rem;
+        right: 1.2rem;
+    }
+    .arrow-btn {
+        width: 30px;
+        height: 30px;
     }
     main { 
         padding: 1.5rem 1rem 2rem; 
