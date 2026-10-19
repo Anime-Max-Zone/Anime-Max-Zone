@@ -35,31 +35,22 @@ img { display: block; max-width: 100%; }
 button { font-family: inherit; cursor: pointer; border: none; background: none; }
 
 /* ============================================================
-   ANIMATED MAX LOGO (Left Hinge Flip - Every 6 Seconds)
+   ANIMATED MAX LOGO (Neon Glow Pulse - Every 7 Seconds)
    ============================================================ */
 .animated-max-text {
-    /* SVG Text ko uske left edge se flip karne ke liye */
-    transform-box: fill-box;
-    transform-origin: left center; 
-    /* 6 second ka cycle */
-    animation: maxFlipLeft 6s infinite ease-in-out;
+    /* 7 second ka cycle */
+    animation: maxGlowPulse 7s infinite ease-in-out;
 }
 
-@keyframes maxFlipLeft {
-    /* Thoda ruk kar start hoga */
-    0%, 5% { 
-        transform: perspective(800px) rotateY(0deg); 
-        filter: drop-shadow(0 0 2px rgba(168, 85, 247, 0.6));
+@keyframes maxGlowPulse {
+    /* 0% se 80% tak normal rahega */
+    0%, 80%, 100% { 
+        filter: drop-shadow(0 0 2px rgba(168, 85, 247, 0.4));
     }
-    /* Khulega (Left to 180deg) */
-    15% { 
-        transform: perspective(800px) rotateY(180deg); 
-        filter: drop-shadow(0 0 15px rgba(199, 125, 255, 1));
-    }
-    /* Wapas band hoga (Left par hi) */
-    25%, 100% { 
-        transform: perspective(800px) rotateY(0deg); 
-        filter: drop-shadow(0 0 2px rgba(168, 85, 247, 0.6));
+    /* 90% par ekdum bright neon glow hoga (Image jaisa) */
+    90% { 
+        filter: drop-shadow(0 0 10px rgba(226, 160, 255, 1)) 
+                drop-shadow(0 0 25px rgba(168, 85, 247, 0.8));
     }
 }
 
