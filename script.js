@@ -105,8 +105,8 @@ function renderCard(anime) {
 
     const safeId = encodeURIComponent(anime.id || "");
     
-    // BUG FIX: Added backtick (`) for template literal
-    card.dataset.href = `/Anime-Max-Zone/anime.html?id=${safeId}`;
+    // FIXED URL: Relative path jo GitHub Pages aur Localhost dono par chalega
+    card.dataset.href = `anime.html?id=${safeId}`;
 
     card.innerHTML = `
         <div class="poster">
@@ -168,7 +168,9 @@ function renderHeroSlider(animeList) {
         
         const slide = document.createElement("a");
         slide.className = `slide ${index === 0 ? 'active' : ''}`;
-        slide.href = `/Anime-Max-Zone/anime.html?id=${encodeURIComponent(anime.id)}`;
+        
+        // FIXED URL
+        slide.href = `anime.html?id=${encodeURIComponent(anime.id)}`;
         slide.style.backgroundImage = `url('${bannerImg}')`;
 
         slide.innerHTML = `
@@ -287,8 +289,8 @@ function renderSuggestions(term) {
         `;
         
         div.addEventListener("click", () => {
-            // BUG FIX: Added backtick (`) for template literal
-            window.location.href = `/anime.html?id=${safeId}`;
+            // FIXED URL
+            window.location.href = `anime.html?id=${safeId}`;
         });
 
         liveSuggestions.appendChild(div);
@@ -315,7 +317,7 @@ async function loadAnime() {
     } finally {
         // Data ready hone ke baad Main Grid aur Hero Slider dono render karo
         renderList(allAnime);
-        renderHeroSlider(allAnime); // <--- Slider Logic Call
+        renderHeroSlider(allAnime);
     }
 }
 
