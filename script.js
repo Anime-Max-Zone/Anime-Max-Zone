@@ -35,7 +35,7 @@ const liveSuggestions = document.getElementById("liveSuggestions");
 
 let allAnime = [];
 
-// Demo Data (Agar Firebase khali ho ya error aaye toh yeh use hoga)
+// Demo Data (Used if Firebase is empty or throws an error)
 const demoData = [
     { id: '1', title: 'Demon Slayer', genres: ['Action', 'Fantasy'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1286/99889.jpg', status: 'Ongoing' },
     { id: '2', title: 'Jujutsu Kaisen', genres: ['Action', 'Supernatural'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1171/109222.jpg', status: 'Completed' },
@@ -54,7 +54,7 @@ function hidePreloader() {
     }
 }
 
-// First time visit par 2.5s, baad me 0.5s
+// Show for 2.5s on first visit, then 0.5s on subsequent visits
 if (!sessionStorage.getItem("hasVisited")) {
     sessionStorage.setItem("hasVisited", "true");
     setTimeout(hidePreloader, 2500);
@@ -157,9 +157,9 @@ function renderHeroSlider(animeList) {
     sliderAnimeList = animeList.slice(0, 5); // Top 5 Anime
     if (sliderAnimeList.length === 0) return;
 
-    sliderContainer.innerHTML = ""; // Placeholder remove
+    sliderContainer.innerHTML = ""; // Remove placeholder
 
-    // Slides Generate karein
+    // Generate Slides
     sliderAnimeList.forEach((anime, index) => {
         const title = escapeHTML(anime.title || "Untitled");
         const bannerImg = safeImageUrl(anime.coverImageUrl) || FALLBACK_POSTER;
@@ -236,7 +236,7 @@ function nextSlide() { goToSlide(currentSlide + 1); }
 function prevSlide() { goToSlide(currentSlide - 1); }
 
 function startSlideShow() {
-    slideInterval = setInterval(nextSlide, 5000); // Har 5 sec me change hoga
+    slideInterval = setInterval(nextSlide, 5000); // Changes every 5 seconds
 }
 
 function resetSlideTimer() {
@@ -253,12 +253,12 @@ function renderSuggestions(term) {
 
     let filtered = [];
 
-    // Agar search khali hai, toh "Trending Now" dikhao
+    // If search is empty, show "Trending Now"
     if (!term) {
         liveSuggestions.innerHTML = `<div class="suggestion-title">Trending Now</div>`;
         filtered = allAnime.slice(0, 5); // Top 5
     } else {
-        // Agar user ne kuch type kiya hai, toh filter karo
+        // If user has typed something, filter the results
         filtered = allAnime.filter((a) => {
             const t = (a.title || "").toLowerCase();
             const g = Array.isArray(a.genres) ? a.genres.join(" ").toLowerCase() : String(a.genres || "").toLowerCase();
@@ -266,13 +266,13 @@ function renderSuggestions(term) {
         }).slice(0, 10); // Max 10 results
     }
 
-    // Agar type kiya hua kuch nahi mila
+    // If nothing matches the typed query
     if (filtered.length === 0 && term) {
         liveSuggestions.innerHTML = `<p class="empty-msg">No results found for "${escapeHTML(term)}"</p>`;
         return;
     }
 
-    // Results render karo
+    // Render results
     filtered.forEach(anime => {
         const title = escapeHTML(anime.title || "Untitled");
         const poster = safeImageUrl(anime.coverImageUrl) || FALLBACK_POSTER;
@@ -305,17 +305,17 @@ async function loadAnime() {
 
         allAnime = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
         
-        // Agar database khali hai, toh demo data load karo
+        // If database is empty, load demo data
         if(allAnime.length === 0) {
             allAnime = demoData;
         }
 
     } catch (err) {
         console.error("Firestore error:", err);
-        // Agar error aata hai, tab bhi demo data load karo
+        // If an error occurs, also load demo data
         allAnime = demoData; 
     } finally {
-        // Data ready hone ke baad Main Grid aur Hero Slider dono render karo
+        // Render Main Grid and Hero Slider after data is ready
         renderList(allAnime);
         renderHeroSlider(allAnime);
     }
@@ -327,7 +327,7 @@ function openSearch() {
     searchInput.focus();
     document.body.style.overflow = "hidden";
     
-    // Search khulte hi "Trending Now" load karo (khali string pass karke)
+    // Load "Trending Now" as soon as search opens (pass empty string)
     renderSuggestions(""); 
 }
 
@@ -344,12 +344,12 @@ openSearchBtn.addEventListener("click", openSearch);
 if(navSearchBtn) navSearchBtn.addEventListener("click", openSearch);
 closeSearchBtn.addEventListener("click", closeSearch);
 
-// Overlay ke bahar click karne par band karo
+// Close when clicking outside the overlay
 searchOverlay.addEventListener("click", (e) => {
     if (e.target === searchOverlay) closeSearch();
 });
 
-// Escape key se band karo
+// Close on Escape key
 document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && searchOverlay.classList.contains("active")) {
         closeSearch();
