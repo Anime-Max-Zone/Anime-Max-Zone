@@ -2,7 +2,7 @@
    ANIME MAX ZONE — Watchlist Page Styles (watchlist.css)
    ============================================================ */
 
-/* Base styles import kar rahe hain taaki navbar, grid aur colors same rahein */
+/* Importing base styles for Navbar, Grid, and Colors */
 @import url('style.css'); 
 
 /* ============================================================
@@ -12,23 +12,29 @@
 /* Main Container */
 main {
     min-height: 80vh;
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
-/* Empty State (Jab Watchlist khali ho) */
-.empty-watchlist {
+/* ============================================================
+   EMPTY STATE UI (When Watchlist is Empty)
+   ============================================================ */
+.empty-state {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 5rem 1rem;
+    padding: 4rem 1.5rem;
     text-align: center;
     background: var(--bg-2);
     border-radius: 16px;
     border: 1px dashed var(--border);
     margin-top: 2rem;
+    animation: fadeIn 0.4s ease-in-out;
 }
 
-.empty-watchlist svg {
+.empty-icon {
     width: 80px;
     height: 80px;
     color: var(--text-muted);
@@ -36,20 +42,37 @@ main {
     opacity: 0.5;
 }
 
-.empty-watchlist h3 {
+.empty-state h3 {
     color: var(--text);
     margin-bottom: 0.5rem;
     font-size: 1.5rem;
     font-weight: 700;
 }
 
-.empty-watchlist p {
+.empty-state p {
     color: var(--text-muted);
     margin-bottom: 2rem;
     font-size: 1rem;
 }
 
-/* Remove Button (Jo card ke upar dikhega) */
+.empty-state .btn-primary {
+    display: inline-block;
+    padding: 0.8rem 2rem;
+    background: var(--primary);
+    color: white;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.empty-state .btn-primary:hover {
+    background: var(--primary-hover);
+}
+
+/* ============================================================
+   REMOVE BUTTON (Displayed on top of the card)
+   ============================================================ */
 .remove-btn {
     position: absolute;
     top: 10px;
@@ -82,7 +105,31 @@ main {
     stroke-width: 2.5;
 }
 
-/* Agar Watchlist grid khali ho toh usko hide karne ke liye */
+/* Hide grid if empty */
 #watchlistGrid:empty {
     display: none;
+}
+
+/* ============================================================
+   ANIMATIONS & RESPONSIVE
+   ============================================================ */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+    main {
+        padding: 1.5rem 1rem;
+    }
+    .empty-state {
+        padding: 3rem 1rem;
+    }
+    .empty-icon {
+        width: 60px;
+        height: 60px;
+    }
+    .empty-state h3 {
+        font-size: 1.3rem;
+    }
 }
