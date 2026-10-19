@@ -23,7 +23,7 @@ const db = getFirestore(app);
 
 // ---------- 3. DOM References ----------
 const grid = document.getElementById("animeGrid");
-const preloader = document.getElementById("preloader"); // Preloader DOM
+const preloader = document.getElementById("preloader");
 
 // Search Overlay Elements
 const openSearchBtn = document.getElementById("openSearchBtn");
@@ -36,7 +36,7 @@ const liveSuggestions = document.getElementById("liveSuggestions");
 let allAnime = [];
 
 // ============================================================
-// ---------- 4. PRELOADER LOGIC (FIXED) ----------
+// ---------- 4. PRELOADER LOGIC ----------
 // ============================================================
 function hidePreloader() {
     if (preloader && !preloader.classList.contains("hidden")) {
@@ -55,7 +55,7 @@ if (!sessionStorage.getItem("hasVisited")) {
     setTimeout(hidePreloader, 500);
 }
 
-// Emergency Backup: Agar kisi wajah se upar wala fail ho jaye, toh 5 second baad pakka hatega
+// Emergency Backup: Force hide after 5 seconds
 setTimeout(hidePreloader, 5000);
 
 
@@ -126,7 +126,7 @@ function renderCard(anime) {
 function renderList(list) {
     grid.innerHTML = "";
     if (!list.length) {
-        grid.innerHTML = `<div class="message">Koi anime nahi mila 😕</div>`;
+        grid.innerHTML = `<div class="message">No anime found 😕</div>`; // Translated
         return;
     }
     const frag = document.createDocumentFragment();
@@ -134,12 +134,15 @@ function renderList(list) {
     grid.appendChild(frag);
 }
 
-// ---------- 8. Live Suggestions Renderer ----------
+// ============================================================
+// ---------- 8. Live Suggestions Renderer (FIXED) ----------
+// ============================================================
 function renderSuggestions(term) {
     liveSuggestions.innerHTML = "";
     
+    // Agar input khali hai, toh box ko hide kar do
     if (!term) {
-        liveSuggestions.innerHTML = `<p class="empty-msg">Type to search...</p>`;
+        liveSuggestions.style.display = "none";
         return;
     }
 
@@ -149,10 +152,15 @@ function renderSuggestions(term) {
         return t.includes(term) || g.includes(term);
     }).slice(0, 5); // Max 5 suggestions
 
+    // Agar kuch nahi mila, toh box show karke message dikhao
     if (filtered.length === 0) {
+        liveSuggestions.style.display = "block";
         liveSuggestions.innerHTML = `<p class="empty-msg">No results found for "${escapeHTML(term)}"</p>`;
         return;
     }
+
+    // Agar result mila, toh box show karo aur items daalo
+    liveSuggestions.style.display = "block";
 
     filtered.forEach(anime => {
         const title = escapeHTML(anime.title || "Untitled");
@@ -177,7 +185,7 @@ function renderSuggestions(term) {
     });
 }
 
-// ---------- 9. Firestore Loader (Data Fetching Only) ----------
+// ---------- 9. Firestore Loader ----------
 async function loadAnime() {
     try {
         const q = query(collection(db, "anime"), orderBy("createdAt", "desc"), limit(60));
@@ -197,7 +205,7 @@ async function loadAnime() {
         renderList(allAnime);
     } catch (err) {
         console.error("Firestore error:", err);
-        grid.innerHTML = `<div class="message error">Anime load nahi ho paye. Internet ya Firebase check karein.</div>`;
+        grid.innerHTML = `<div class="message error">Failed to load anime. Please check your internet or Firebase connection.</div>`; // Translated
     }
 }
 
@@ -206,12 +214,16 @@ function openSearch() {
     searchOverlay.classList.add("active");
     searchInput.focus();
     document.body.style.overflow = "hidden";
+    
+    // Search khulte hi box ko hide karo
+    liveSuggestions.style.display = "none"; 
 }
 
 function closeSearch() {
     searchOverlay.classList.remove("active");
     searchInput.value = "";
-    renderSuggestions("");
+    liveSuggestions.style.display = "none"; 
+    liveSuggestions.innerHTML = "";
     document.body.style.overflow = "";
 }
 
@@ -219,10 +231,12 @@ openSearchBtn.addEventListener("click", openSearch);
 if(navSearchBtn) navSearchBtn.addEventListener("click", openSearch);
 closeSearchBtn.addEventListener("click", closeSearch);
 
+// Overlay ke bahar click karne par band karo
 searchOverlay.addEventListener("click", (e) => {
     if (e.target === searchOverlay) closeSearch();
 });
 
+// Escape key se band karo
 document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && searchOverlay.classList.contains("active")) {
         closeSearch();
