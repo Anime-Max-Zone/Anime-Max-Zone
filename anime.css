@@ -9,7 +9,7 @@
    ANIME DETAILS PAGE SPECIFIC
    ============================================================ */
 #animeDetailsContainer {
-    padding-bottom: 80px; /* Bottom Nav ke liye */
+    padding-bottom: 80px; /* Space for Bottom Nav */
     min-height: 100vh;
 }
 
@@ -150,27 +150,32 @@
    ============================================================ */
 @media (max-width: 768px) {
     .anime-hero {
-        padding: 2rem 1rem 1.5rem;
+        /* Increased top padding to prevent the poster from clipping into the navbar */
+        padding: 4rem 1rem 2rem;
         flex-direction: column;
+        justify-content: flex-end;
         align-items: center;
         text-align: center;
-        min-height: 400px; /* Height badha di taaki image fit ho sake */
+        /* Set min-height to auto so content dictates the height */
+        min-height: auto; 
+        height: auto;
         background-position: center;
         margin-bottom: 1rem;
     }
     
     .anime-hero-content {
         flex-direction: column;
-        gap: 1rem;
+        gap: 1.5rem;
         align-items: center;
-        margin-top: auto; /* Content ko niche shift kiya */
+        margin-top: 0; 
     }
     
     .anime-poster {
-        width: 160px;
-        margin-top: 0; /* Negative margin hata diya jo image kaat raha tha */
-        border-radius: 10px;
-        border: 3px solid var(--bg-2);
+        width: 180px; 
+        margin-top: 0; /* Removed negative margin */
+        border-radius: 12px;
+        border: 3px solid var(--border);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
     }
     
     .anime-info h1 {
