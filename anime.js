@@ -41,7 +41,7 @@ const FALLBACK_POSTER = "data:image/svg+xml;utf8," + encodeURIComponent(
      </svg>`
 );
 
-// Demo Data (Fallback ke liye)
+// Demo Data (Fallback)
 const demoData = [
     { id: '1', title: 'Demon Slayer', genres: ['Action', 'Fantasy'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1286/99889.jpg', status: 'Ongoing', description: 'Tanjiro Kamado sets out to become a demon slayer after his family is slaughtered and his sister is turned into a demon.' },
     { id: '2', title: 'Jujutsu Kaisen', genres: ['Action', 'Supernatural'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1171/109222.jpg', status: 'Completed', description: 'A boy swallows a cursed talisman - the finger of a demon - and becomes cursed himself.' },
@@ -52,36 +52,36 @@ const demoData = [
 
 // ---------- 4. Main Logic ----------
 async function loadAnimeDetails() {
-    // URL se ID nikalna (jaise anime.html?id=1)
+    // Extract ID from URL (e.g., anime.html?id=1)
     const urlParams = new URLSearchParams(window.location.search);
     const animeId = urlParams.get('id');
 
     if (!animeId) {
-        // Agar URL me ID nahi hai, toh home page par bhej do
-        window.location.href = "index.html"; // FIXED: Relative path
+        // If no ID in URL, redirect to home page
+        window.location.href = "index.html";
         return;
     }
 
     let animeData = null;
 
     try {
-        // Firebase Firestore se data fetch karo
+        // Fetch data from Firebase Firestore
         const docRef = doc(db, "anime", animeId);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
             animeData = { id: docSnap.id, ...docSnap.data() };
         } else {
-            // Agar Firebase me nahi mila, toh Demo data me dhoondo
+            // If not found in Firebase, search in Demo data
             animeData = demoData.find(a => a.id === animeId);
         }
     } catch (err) {
         console.error("Error fetching details:", err);
-        // Error aane par Demo data me dhoondo
+        // On error, search in Demo data
         animeData = demoData.find(a => a.id === animeId);
     }
 
-    // Agar data phir bhi nahi mila
+    // If data still not found
     if (!animeData) {
         document.getElementById('detailsLoading').innerHTML = `
             <div style="padding: 4rem 2rem; text-align: center;">
@@ -89,19 +89,22 @@ async function loadAnimeDetails() {
                 <p style="color: var(--text-muted); margin-bottom: 1.5rem;">The anime you are looking for does not exist or has been removed.</p>
                 <a href="index.html" class="btn-watch-now" style="display: inline-flex;">Go Back Home</a>
             </div>
-        `; // FIXED: Relative path
+        `;
         return;
     }
 
-    // Data mil gaya, UI render karo
+    // Data found, render UI
     renderDetailsUI(animeData);
 }
 
 function renderDetailsUI(anime) {
-    // Loader hide karo aur Content show karo
+    // Hide loader and show content
     document.getElementById('detailsLoading').style.display = 'none';
     const container = document.getElementById('detailsContent');
     container.style.display = 'block';
+
+    // Change the browser tab title dynamically
+    document.title = `${anime.title || "Anime"} — Anime Max Zone`;
 
     const title = escapeHTML(anime.title || "Untitled");
     const desc = escapeHTML(anime.description || "No description available for this anime yet. Stay tuned!");
@@ -109,17 +112,17 @@ function renderDetailsUI(anime) {
     const status = escapeHTML(anime.status || "Unknown");
     const genres = Array.isArray(anime.genres) ? anime.genres : [];
 
-    // Genres HTML format karo
+    // Format Genres HTML
     const genresHTML = genres.map(g => `<span>${escapeHTML(g)}</span>`).join("");
 
-    // Episodes Generate karo (Abhi ke liye dummy 1 se 12)
-    // Future me aap Firebase se 'episodes' ka array mangwa kar yahan loop chala sakte hain
+    // Generate Episodes (Dummy 1 to 12 for now)
+    // In the future, you can fetch an 'episodes' array from Firebase and loop here
     let episodesHTML = "";
     for (let i = 1; i <= 12; i++) {
         episodesHTML += `<div class="ep-btn">${i}</div>`;
     }
 
-    // Poora HTML structure inject karo
+    // Inject the full HTML structure
     container.innerHTML = `
         <section class="anime-hero" style="background-image: url('${poster}');">
             <div class="anime-hero-content">
@@ -147,25 +150,25 @@ function renderDetailsUI(anime) {
         </section>
     `;
 
-    // Episode Buttons par click event add karo (UI change ke liye)
+    // Add click events to episode buttons (for UI change)
     const epBtns = document.querySelectorAll('.ep-btn');
     epBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
-            // Sabhi buttons se active hatao
+            // Remove active from all buttons
             epBtns.forEach(b => b.classList.remove('active'));
-            // Jispe click kiya usko active karo
+            // Make the clicked one active
             e.target.classList.add('active');
             
-            // Future me yahan video player open hoga
+            // Video player will open here in the future
             // alert(`Playing Episode ${e.target.innerText}`);
         });
     });
 
-    // "Watch Episode 1" button par click event
+    // Click event for "Watch Episode 1" button
     document.getElementById('playFirstBtn').addEventListener('click', () => {
         if(epBtns.length > 0) {
-            epBtns[0].click(); // Pehle episode par click simulate karo
-            // Future: yahan direct player open karne ka logic aayega
+            epBtns[0].click(); // Simulate click on the first episode
+            // Future: direct player open logic will go here
         }
     });
 }
