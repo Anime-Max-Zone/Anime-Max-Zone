@@ -4,7 +4,7 @@
 
 // ---------- 1. Firebase Imports ----------
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // ---------- 2. Firebase Config ----------
 const firebaseConfig = {
@@ -19,7 +19,17 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ---------- 3. Security Helpers ----------
+// ---------- 3. DOM References ----------
+const openSearchBtn = document.getElementById("openSearchBtn");
+const navSearchBtn = document.getElementById("navSearchBtn");
+const closeSearchBtn = document.getElementById("closeSearchBtn");
+const searchOverlay = document.getElementById("searchOverlay");
+const searchInput = document.getElementById("searchInput");
+const liveSuggestions = document.getElementById("liveSuggestions");
+
+let allAnimeForSearch = []; // Global list for search panel
+
+// ---------- 4. Security Helpers ----------
 function escapeHTML(str) {
     if (str == null) return "";
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -50,38 +60,134 @@ const demoData = [
     { id: '5', title: 'Naruto', genres: ['Action', 'Adventure'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/13/17405.jpg', status: 'Completed', description: 'Naruto Uzumaki, a mischievous adolescent ninja, struggles as he searches for recognition and dreams of becoming the Hokage.' }
 ];
 
-// ---------- 4. Main Logic ----------
+// ============================================================
+// ---------- 5. SEARCH OVERLAY LOGIC ----------
+// ============================================================
+async function fetchAnimeForSearch() {
+    try {
+        const q = query(collection(db, "anime"), orderBy("createdAt", "desc"), limit(60));
+        const snap = await getDocs(q);
+        allAnimeForSearch = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        if(allAnimeForSearch.length === 0) allAnimeForSearch = demoData;
+    } catch (err) {
+        console.error("Search Fetch error:", err);
+        allAnimeForSearch = demoData;
+    }
+}
+
+function renderSuggestions(term) {
+    liveSuggestions.innerHTML = "";
+    liveSuggestions.style.display = "block"; 
+
+    let filtered = [];
+
+    if (!term) {
+        liveSuggestions.innerHTML = `<div class="suggestion-title">Trending Now</div>`;
+        filtered = allAnimeForSearch.slice(0, 5);
+    } else {
+        filtered = allAnimeForSearch.filter((a) => {
+            const t = (a.title || "").toLowerCase();
+            const g = Array.isArray(a.genres) ? a.genres.join(" ").toLowerCase() : String(a.genres || "").toLowerCase();
+            return t.includes(term) || g.includes(term);
+        }).slice(0, 10);
+    }
+
+    if (filtered.length === 0 && term) {
+        liveSuggestions.innerHTML = `<p class="empty-msg">No results found for "${escapeHTML(term)}"</p>`;
+        return;
+    }
+
+    filtered.forEach(anime => {
+        const title = escapeHTML(anime.title || "Untitled");
+        const poster = safeImageUrl(anime.coverImageUrl) || FALLBACK_POSTER;
+        const safeId = encodeURIComponent(anime.id || "");
+
+        const div = document.createElement("div");
+        div.className = "suggestion-item";
+        div.innerHTML = `
+            <img src="${poster}" alt="${title}" />
+            <div class="suggestion-info">
+                <h4>${title}</h4>
+                <p>${Array.isArray(anime.genres) ? anime.genres.map(escapeHTML).join(", ") : escapeHTML(anime.genres || "")}</p>
+            </div>
+        `;
+        
+        div.addEventListener("click", () => {
+            window.location.href = `anime.html?id=${safeId}`;
+        });
+
+        liveSuggestions.appendChild(div);
+    });
+}
+
+function openSearch() {
+    searchOverlay.classList.add("active");
+    searchInput.focus();
+    document.body.style.overflow = "hidden";
+    renderSuggestions(""); 
+}
+
+function closeSearch() {
+    searchOverlay.classList.remove("active");
+    searchInput.value = "";
+    liveSuggestions.style.display = "none"; 
+    liveSuggestions.innerHTML = "";
+    document.body.style.overflow = "";
+}
+
+// Event Listeners for Search
+openSearchBtn.addEventListener("click", openSearch);
+if(navSearchBtn) navSearchBtn.addEventListener("click", openSearch);
+closeSearchBtn.addEventListener("click", closeSearch);
+
+searchOverlay.addEventListener("click", (e) => {
+    if (e.target === searchOverlay) closeSearch();
+});
+
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && searchOverlay.classList.contains("active")) {
+        closeSearch();
+    }
+});
+
+let searchTimer;
+searchInput.addEventListener("input", (e) => {
+    clearTimeout(searchTimer);
+    const term = e.target.value.trim().toLowerCase();
+    searchTimer = setTimeout(() => {
+        renderSuggestions(term);
+    }, 250);
+});
+
+
+// ============================================================
+// ---------- 6. DETAILS PAGE LOGIC ----------
+// ============================================================
 async function loadAnimeDetails() {
-    // Extract ID from URL (e.g., anime.html?id=1)
     const urlParams = new URLSearchParams(window.location.search);
     const animeId = urlParams.get('id');
 
     if (!animeId) {
-        // If no ID in URL, redirect to home page
-        window.location.href = "index.html";
+        window.location.href = "index.html"; 
         return;
     }
 
     let animeData = null;
 
     try {
-        // Fetch data from Firebase Firestore
         const docRef = doc(db, "anime", animeId);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
             animeData = { id: docSnap.id, ...docSnap.data() };
         } else {
-            // If not found in Firebase, search in Demo data
             animeData = demoData.find(a => a.id === animeId);
         }
     } catch (err) {
         console.error("Error fetching details:", err);
-        // On error, search in Demo data
         animeData = demoData.find(a => a.id === animeId);
     }
 
-    // If data still not found
     if (!animeData) {
         document.getElementById('detailsLoading').innerHTML = `
             <div style="padding: 4rem 2rem; text-align: center;">
@@ -93,17 +199,14 @@ async function loadAnimeDetails() {
         return;
     }
 
-    // Data found, render UI
     renderDetailsUI(animeData);
 }
 
 function renderDetailsUI(anime) {
-    // Hide loader and show content
     document.getElementById('detailsLoading').style.display = 'none';
     const container = document.getElementById('detailsContent');
     container.style.display = 'block';
 
-    // Change the browser tab title dynamically
     document.title = `${anime.title || "Anime"} — Anime Max Zone`;
 
     const title = escapeHTML(anime.title || "Untitled");
@@ -112,17 +215,13 @@ function renderDetailsUI(anime) {
     const status = escapeHTML(anime.status || "Unknown");
     const genres = Array.isArray(anime.genres) ? anime.genres : [];
 
-    // Format Genres HTML
     const genresHTML = genres.map(g => `<span>${escapeHTML(g)}</span>`).join("");
 
-    // Generate Episodes (Dummy 1 to 12 for now)
-    // In the future, you can fetch an 'episodes' array from Firebase and loop here
     let episodesHTML = "";
     for (let i = 1; i <= 12; i++) {
         episodesHTML += `<div class="ep-btn">${i}</div>`;
     }
 
-    // Inject the full HTML structure
     container.innerHTML = `
         <section class="anime-hero" style="background-image: url('${poster}');">
             <div class="anime-hero-content">
@@ -150,28 +249,21 @@ function renderDetailsUI(anime) {
         </section>
     `;
 
-    // Add click events to episode buttons (for UI change)
     const epBtns = document.querySelectorAll('.ep-btn');
     epBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
-            // Remove active from all buttons
             epBtns.forEach(b => b.classList.remove('active'));
-            // Make the clicked one active
             e.target.classList.add('active');
-            
-            // Video player will open here in the future
-            // alert(`Playing Episode ${e.target.innerText}`);
         });
     });
 
-    // Click event for "Watch Episode 1" button
     document.getElementById('playFirstBtn').addEventListener('click', () => {
         if(epBtns.length > 0) {
-            epBtns[0].click(); // Simulate click on the first episode
-            // Future: direct player open logic will go here
+            epBtns[0].click(); 
         }
     });
 }
 
-// ---------- 5. Boot ----------
-loadAnimeDetails();
+// ---------- 7. Boot ----------
+fetchAnimeForSearch(); // Load data for search overlay
+loadAnimeDetails();    // Load specific anime details
