@@ -25,7 +25,6 @@ const nativePlayerContainer = document.getElementById("nativePlayerContainer");
 const iframePlayerContainer = document.getElementById("iframePlayerContainer");
 const videoIframe = document.getElementById("videoIframe");
 const videoPlayer = document.getElementById("videoPlayer");
-const videoSpinnerOverlay = document.getElementById("videoSpinnerOverlay");
 
 const watchInfo = document.getElementById("watchInfo");
 const errorMessage = document.getElementById("errorMessage");
@@ -57,7 +56,7 @@ const liveSuggestions = document.getElementById("liveSuggestions");
 let allAnimeForSearch = []; 
 let player = null; 
 
-// Demo Data (Fallback)
+// Demo Data
 const demoData = [
     { id: '1', title: 'Demon Slayer', genres: ['Action', 'Fantasy'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1286/99889.jpg', type: 'series', totalEpisodes: 12, totalSeasons: 2 },
     { id: '2', title: 'Jujutsu Kaisen', genres: ['Action', 'Supernatural'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1171/109222.jpg', type: 'series', totalEpisodes: 24, totalSeasons: 2 },
@@ -67,11 +66,11 @@ const demoData = [
     { id: '6', title: 'Your Name', genres: ['Romance', 'Drama'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/5/87048.jpg', type: 'movie', totalEpisodes: 1 }
 ];
 
-// Working Video & Subtitle URLs for testing
+// Test Video & Subtitle
 const DUMMY_VIDEO_1080 = "https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-576p.mp4";
 const DEMO_SUBTITLE_EN = "https://rawcdn.githack.com/sadevID/vidJS/f23e769a20d5e06f59afe4ab2f3bbfd154939838/View_From_A_Blue_Moon_Trailer-HD.id.vtt";
 
-// Helper Functions
+// Helpers
 function escapeHTML(str) {
     if (str == null) return "";
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -178,16 +177,18 @@ if(searchInput) {
 }
 
 // ============================================================
-// 3. BOTTOM SHEET LOGIC (Scroll Down to Dismiss)
+// 3. BOTTOM SHEET LOGIC (Swipe Down to Dismiss)
 // ============================================================
 function openBottomSheet() {
     bottomSheetOverlay.classList.add("active");
     document.body.style.overflow = "hidden"; 
+    bottomSheet.style.transform = 'translateY(0)';
 }
 
 function closeBottomSheet() {
     bottomSheetOverlay.classList.remove("active");
     document.body.style.overflow = ""; 
+    bottomSheet.style.transform = 'translateY(100%)';
 }
 
 if(closeSheetBtn) closeSheetBtn.addEventListener("click", closeBottomSheet);
@@ -197,23 +198,50 @@ if(bottomSheetOverlay) {
     });
 }
 
-// Touch & Wheel logic to close Bottom Sheet
-if (sheetContent) {
-    let touchStartY = 0;
-    
-    sheetContent.addEventListener('touchstart', (e) => {
-        touchStartY = e.touches[0].clientY;
-    }, { passive: true });
+// Real Drag/Swipe down logic
+let startY = 0;
+let currentY = 0;
 
-    sheetContent.addEventListener('touchmove', (e) => {
-        let touchEndY = e.touches[0].clientY;
-        if (touchEndY - touchStartY > 50) { 
-            closeBottomSheet();
+if(bottomSheet) {
+    bottomSheet.addEventListener('touchstart', (e) => {
+        // Only allow drag if we are at the very top of the list
+        if (sheetContent.scrollTop <= 0) {
+            startY = e.touches[0].clientY;
+        } else {
+            startY = 0;
         }
     }, { passive: true });
 
+    bottomSheet.addEventListener('touchmove', (e) => {
+        if (startY === 0) return;
+        currentY = e.touches[0].clientY;
+        let diff = currentY - startY;
+        
+        // Only drag down, not up
+        if (diff > 0) {
+            if (e.cancelable) e.preventDefault(); // Prevent background scroll
+            bottomSheet.style.transform = `translateY(${diff}px)`;
+        }
+    }, { passive: false });
+
+    bottomSheet.addEventListener('touchend', () => {
+        if (startY === 0) return;
+        let diff = currentY - startY;
+        
+        if (diff > 100) { // If dragged down more than 100px, close it
+            closeBottomSheet();
+        } else {
+            bottomSheet.style.transform = 'translateY(0)'; // Snap back
+        }
+        startY = 0;
+        currentY = 0;
+    });
+}
+
+// Desktop mouse wheel logic
+if(sheetContent) {
     sheetContent.addEventListener('wheel', (e) => {
-        if (e.deltaY > 30) { 
+        if (e.deltaY > 50 && sheetContent.scrollTop === 0) { 
             closeBottomSheet();
         }
     });
@@ -256,14 +284,12 @@ function renderPlayer(anime, epNum, seasonNum) {
     animeLink.textContent = title;
     animeLink.href = `anime.html?id=${anime.id}`; 
     
-    // Video Sources
     const videoSources = [
         { src: anime.videoUrl || DUMMY_VIDEO_1080, type: "video/mp4", size: 1080, label: "1080p HD" },
         { src: anime.videoUrl || DUMMY_VIDEO_1080, type: "video/mp4", size: 720, label: "720p" },
         { src: anime.videoUrl || DUMMY_VIDEO_1080, type: "video/mp4", size: 480, label: "480p" }
     ];
 
-    // Subtitles
     const subtitles = [
         { src: DEMO_SUBTITLE_EN, label: "English", srclang: "en", default: true }
     ];
@@ -306,27 +332,15 @@ function renderPlayer(anime, epNum, seasonNum) {
         });
 
         videoPlayer.poster = anime.coverImageUrl || "";
-        videoPlayer.load(); // Force reload
+        videoPlayer.load(); // Force browser to fetch new video data
 
-        // Hide Spinner on load or error
-        videoPlayer.onloadeddata = () => {
-            if (videoSpinnerOverlay) videoSpinnerOverlay.classList.add("hidden");
-        };
-        videoPlayer.onerror = () => {
-            if (videoSpinnerOverlay) videoSpinnerOverlay.classList.add("hidden");
-        };
-
-        // Initialize Plyr
+        // Plyr Initialization
         try {
             if (typeof Plyr !== 'undefined') {
                 if (!player) {
                     player = new Plyr(videoPlayer, {
                         controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'],
                         settings: ['captions', 'quality', 'speed', 'loop']
-                    });
-
-                    player.on('ready', () => {
-                        if (videoSpinnerOverlay) videoSpinnerOverlay.classList.add("hidden");
                     });
                 } else {
                     player.source = {
@@ -338,12 +352,10 @@ function renderPlayer(anime, epNum, seasonNum) {
             } else {
                 // Fallback if Plyr CDN fails
                 videoPlayer.setAttribute("controls", "true");
-                if (videoSpinnerOverlay) videoSpinnerOverlay.classList.add("hidden");
             }
         } catch (error) {
             console.error("Plyr error:", error);
             videoPlayer.setAttribute("controls", "true"); 
-            if (videoSpinnerOverlay) videoSpinnerOverlay.classList.add("hidden");
         }
     }
 
