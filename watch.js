@@ -25,7 +25,7 @@ const nativePlayerContainer = document.getElementById("nativePlayerContainer");
 const iframePlayerContainer = document.getElementById("iframePlayerContainer");
 const videoIframe = document.getElementById("videoIframe");
 
-// Custom UI Elements
+// Custom Player UI Elements
 const customPlayBtn = document.getElementById("customPlayBtn");
 const customPlayIcon = document.getElementById("customPlayIcon");
 const centerPlayBtn = document.getElementById("centerPlayBtn");
@@ -35,13 +35,13 @@ const customDuration = document.getElementById("customDuration");
 const customMuteBtn = document.getElementById("customMuteBtn");
 const customSettingsBtn = document.getElementById("customSettingsBtn");
 const customFullScreenBtn = document.getElementById("customFullScreenBtn");
+const fullScreenIcon = document.getElementById("customFullScreenIcon");
 
 // Sheets & Overlays
 const settingsSheetOverlay = document.getElementById("settingsSheetOverlay");
 const settingsContent = document.getElementById("settingsContent");
 const closeSettingsBtn = document.getElementById("closeSettingsBtn");
 const bottomSheetOverlay = document.getElementById("bottomSheetOverlay");
-const bottomSheet = document.getElementById("bottomSheet");
 const sheetTitle = document.getElementById("sheetTitle");
 const sheetContent = document.getElementById("sheetContent");
 const closeSheetBtn = document.getElementById("closeSheetBtn");
@@ -71,9 +71,21 @@ let player = null;
 let allAnimeForSearch = [];
 
 const demoData = [
-    { id: '1', title: 'Demon Slayer', genres: ['Action', 'Fantasy'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1286/99889.jpg', type: 'series', totalEpisodes: 12, totalSeasons: 2 },
-    { id: '2', title: 'Jujutsu Kaisen', genres: ['Action', 'Supernatural'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1171/109222.jpg', type: 'series', totalEpisodes: 24, totalSeasons: 2 },
-    { id: '5', title: 'Naruto', genres: ['Action', 'Adventure'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/13/17405.jpg', type: 'series', totalEpisodes: 220, totalSeasons: 5 }
+    { 
+        id: '1', title: 'Demon Slayer', genres: ['Action', 'Fantasy'], 
+        coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1286/99889.jpg', 
+        type: 'series', totalSeasons: 2, seasons: [{ season: 1, episodes: 26 }, { season: 2, episodes: 18 }] 
+    },
+    { 
+        id: '2', title: 'Jujutsu Kaisen', genres: ['Action', 'Supernatural'], 
+        coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1171/109222.jpg', 
+        type: 'series', totalSeasons: 2, seasons: [{ season: 1, episodes: 24 }, { season: 2, episodes: 23 }] 
+    },
+    { 
+        id: '5', title: 'Naruto', genres: ['Action', 'Adventure'], 
+        coverImageUrl: 'https://cdn.myanimelist.net/images/anime/13/17405.jpg', 
+        type: 'series', totalSeasons: 1, seasons: [{ season: 1, episodes: 220 }] 
+    }
 ];
 
 // Helpers
@@ -91,10 +103,11 @@ const FALLBACK_POSTER = "data:image/svg+xml;utf8," + encodeURIComponent(
 );
 
 // ============================================================
-// 2. CUSTOM PLAYER LOGIC
+// 2. CUSTOM PLAYER LOGIC (Fully Integrated)
 // ============================================================
 function initCustomPlayer(videoElementId, sources, subtitles) {
     const videoElement = document.getElementById(videoElementId);
+    if (!videoElement) return;
     
     videoElement.innerHTML = "";
     
@@ -117,27 +130,33 @@ function initCustomPlayer(videoElementId, sources, subtitles) {
         videoElement.appendChild(track);
     });
 
-    // Initialize Plyr with NO controls
     if (player) player.destroy();
+    
+    // Plyr Init with NO controls
     player = new Plyr(videoElement, {
         controls: [], 
         settings: ['captions', 'quality', 'speed'],
-        hideControls: false, 
+        hideControls: true, 
         clickToPlay: true
     });
 
     bindCustomControls();
     addDoubleTapToSeek();
     addCustomSettingsLogic();
+    
+    // Make player globally available
+    window.player = player; 
 }
 
 function bindCustomControls() {
     if (customPlayBtn) {
         customPlayBtn.addEventListener("click", () => player.togglePlay());
+        
         player.on("play", () => { 
             customPlayIcon.innerHTML = `<path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>`; 
             centerPlayBtn.style.display = "none";
         });
+        
         player.on("pause", () => { 
             customPlayIcon.innerHTML = `<path fill="currentColor" d="M8 5v14l11-7z"/>`; 
             centerPlayBtn.style.display = "flex";
@@ -174,25 +193,37 @@ function bindCustomControls() {
 
     if (customFullScreenBtn) {
         customFullScreenBtn.addEventListener("click", () => player.fullscreen.toggle());
+        player.on("enterfullscreen", () => { if(fullScreenIcon) fullScreenIcon.innerHTML = `<path fill="currentColor" d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>`; });
+        player.on("exitfullscreen", () => { if(fullScreenIcon) fullScreenIcon.innerHTML = `<path fill="currentColor" d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>`; });
     }
 }
 
 function addCustomSettingsLogic() {
     if (customSettingsBtn && settingsSheetOverlay) {
         customSettingsBtn.addEventListener("click", () => {
-            let html = `<div class="settings-group"><h4>Quality</h4><div class="settings-options">`;
-            if (player.quality && player.quality.options) {
-                player.quality.options.forEach(q => {
-                    let active = player.quality === q ? "active" : "";
-                    html += `<button class="settings-btn ${active}" onclick="player.quality = ${q}; document.getElementById('settingsSheetOverlay').classList.remove('active');">${q}p</button>`;
-                });
-            } else {
-                html += `<button class="settings-btn active">Auto</button>`;
-            }
-            html += `</div></div>`;
+            let html = `
+                <div class="settings-group">
+                    <h4>Quality</h4>
+                    <div class="settings-options">
+                        <button class="settings-btn active">Auto</button>
+                        <button class="settings-btn">1080p HD</button>
+                        <button class="settings-btn">720p</button>
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <h4>Audio Track</h4>
+                    <div class="settings-options">
+                        <button class="settings-btn active">Japanese</button>
+                        <button class="settings-btn">English (Dub)</button>
+                        <button class="settings-btn">Hindi (Dub)</button>
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <h4>Subtitles</h4>
+                    <div class="settings-options">
+                        <button class="settings-btn" onclick="toggleSubs(-1); document.getElementById('settingsSheetOverlay').classList.remove('active');">Off</button>
+            `;
 
-            html += `<div class="settings-group"><h4>Subtitles</h4><div class="settings-options">`;
-            html += `<button class="settings-btn" onclick="toggleSubs(-1); document.getElementById('settingsSheetOverlay').classList.remove('active');">Off</button>`;
             for (let i = 0; i < videoPlayer.textTracks.length; i++) {
                 let active = videoPlayer.textTracks[i].mode === 'showing' ? 'active' : '';
                 html += `<button class="settings-btn ${active}" onclick="toggleSubs(${i}); document.getElementById('settingsSheetOverlay').classList.remove('active');">${videoPlayer.textTracks[i].label}</button>`;
@@ -307,11 +338,11 @@ function renderPlayer(anime, epNum, seasonNum) {
     animeLink.textContent = anime.title;
     animeLink.href = `anime.html?id=${anime.id}`; 
     
+    // Use demo video if no URL is provided
     const videoUrl = anime.videoUrl || "https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-576p.mp4";
     const videoSources = [
         { src: videoUrl, type: "video/mp4", size: 1080, label: "1080p HD" },
-        { src: videoUrl, type: "video/mp4", size: 720, label: "720p" },
-        { src: videoUrl, type: "video/mp4", size: 480, label: "480p" }
+        { src: videoUrl, type: "video/mp4", size: 720, label: "720p" }
     ];
     const subtitles = [
         { src: "https://rawcdn.githack.com/sadevID/vidJS/f23e769a20d5e06f59afe4ab2f3bbfd154939838/View_From_A_Blue_Moon_Trailer-HD.id.vtt", label: "English", srclang: "en", default: true }
@@ -331,7 +362,9 @@ function renderPlayer(anime, epNum, seasonNum) {
         initCustomPlayer("videoPlayer", videoSources, subtitles);
     }
 
+    // Season & Episode UI Logic
     const isMovie = anime.type === "movie" || (anime.totalEpisodes === 1 && !anime.totalSeasons);
+    
     if (isMovie) {
         seasonEpisodeWrapper.style.display = "none";
         episodeTitleEl.style.display = "none";
@@ -342,25 +375,38 @@ function renderPlayer(anime, epNum, seasonNum) {
         currentEpisodeText.textContent = `Episode ${epNum}`;
         currentSeasonText.textContent = `Season ${seasonNum}`;
 
+        // --- Smart Logic for Season-wise Episodes ---
+        let totalEpsInCurrentSeason = 12; // Default
+        if (anime.seasons && Array.isArray(anime.seasons)) {
+            const currentSeasonData = anime.seasons.find(s => parseInt(s.season) === parseInt(seasonNum));
+            if (currentSeasonData) totalEpsInCurrentSeason = currentSeasonData.episodes;
+        } else if (anime.totalEpisodes && anime.totalSeasons) {
+            totalEpsInCurrentSeason = Math.ceil(anime.totalEpisodes / anime.totalSeasons);
+        } else if (anime.totalEpisodes) {
+            totalEpsInCurrentSeason = anime.totalEpisodes;
+        }
+
         episodeBtn.onclick = () => {
-            sheetTitle.textContent = "Select Episode";
+            sheetTitle.textContent = `Season ${seasonNum} - Episodes`;
             let epsHTML = `<div class="sheet-grid">`;
-            const totalEps = anime.totalEpisodes || 12;
-            for (let i = 1; i <= totalEps; i++) {
+            for (let i = 1; i <= totalEpsInCurrentSeason; i++) {
                 const activeClass = (i === parseInt(epNum)) ? "active" : "";
                 epsHTML += `<div class="sheet-item ${activeClass}" data-ep="${i}">${i}</div>`;
             }
             epsHTML += `</div>`;
             sheetContent.innerHTML = epsHTML;
+            
             document.querySelectorAll(".sheet-item").forEach(item => {
-                item.onclick = () => { window.location.href = `watch.html?animeId=${anime.id}&season=${seasonNum}&ep=${item.getAttribute("data-ep")}`; }
+                item.onclick = () => { 
+                    window.location.href = `watch.html?animeId=${anime.id}&season=${seasonNum}&ep=${item.getAttribute("data-ep")}`; 
+                }
             });
             bottomSheetOverlay.classList.add("active");
         };
 
         seasonBtn.onclick = () => {
             sheetTitle.textContent = "Select Season";
-            const totalSeasons = anime.totalSeasons || 1; 
+            const totalSeasons = anime.totalSeasons || (anime.seasons ? anime.seasons.length : 1); 
             let seasonsHTML = `<div class="sheet-grid">`;
             for (let i = 1; i <= totalSeasons; i++) {
                 const activeClass = (i === parseInt(seasonNum)) ? "active" : "";
@@ -368,8 +414,12 @@ function renderPlayer(anime, epNum, seasonNum) {
             }
             seasonsHTML += `</div>`;
             sheetContent.innerHTML = seasonsHTML;
+            
             document.querySelectorAll(".sheet-item").forEach(item => {
-                item.onclick = () => { window.location.href = `watch.html?animeId=${anime.id}&season=${item.getAttribute("data-season")}&ep=1`; }
+                item.onclick = () => { 
+                    // Changing season always starts from Episode 1
+                    window.location.href = `watch.html?animeId=${anime.id}&season=${item.getAttribute("data-season")}&ep=1`; 
+                }
             });
             bottomSheetOverlay.classList.add("active");
         };
@@ -404,7 +454,9 @@ function renderRelatedAnime(currentAnimeId) {
     relatedGrid.appendChild(frag);
 }
 
-// SEARCH LOGIC
+// ============================================================
+// 4. SEARCH LOGIC
+// ============================================================
 function renderSuggestions(term) {
     liveSuggestions.innerHTML = "";
     liveSuggestions.style.display = "block"; 
@@ -446,6 +498,7 @@ function renderSuggestions(term) {
 }
 
 function openSearch() {
+    if (!searchOverlay) return;
     searchOverlay.classList.add("active");
     searchInput.focus();
     document.body.style.overflow = "hidden";
@@ -453,6 +506,7 @@ function openSearch() {
 }
 
 function closeSearch() {
+    if (!searchOverlay) return;
     searchOverlay.classList.remove("active");
     searchInput.value = "";
     liveSuggestions.style.display = "none"; 
