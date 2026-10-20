@@ -78,7 +78,7 @@
 .video-spinner-overlay.hidden {
     opacity: 0;
     visibility: hidden;
-    pointer-events: none !important; /* Ensure it doesn't block clicks */
+    pointer-events: none !important;
 }
 
 .video-spinner {
@@ -118,6 +118,52 @@
     background: linear-gradient(90deg, var(--card) 25%, var(--bg-2) 50%, var(--card) 75%);
     background-size: 200% 100%;
     animation: shimmer 1.4s infinite;
+}
+
+/* ============================================================
+   PLYR MOBILE BOTTOM SHEET MAGIC (PORTRAIT ONLY)
+   ============================================================ */
+@media (orientation: portrait) {
+    /* Force settings menu to look like a bottom sheet */
+    .plyr__menu__container {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        max-height: 60vh !important;
+        border-radius: 20px 20px 0 0 !important;
+        background: var(--card) !important;
+        box-shadow: 0 -10px 30px rgba(0,0,0,0.8) !important;
+        z-index: 99999 !important; 
+        transform: translateY(100%) !important;
+        opacity: 0 !important;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    /* When menu is open */
+    .plyr__menu__container.plyr__menu__container--open {
+        transform: translateY(0) !important;
+        opacity: 1 !important;
+    }
+
+    /* Fake handle at the top of the menu */
+    .plyr__menu__container::before {
+        content: '';
+        display: block;
+        width: 40px;
+        height: 4px;
+        background: var(--border);
+        border-radius: 4px;
+        margin: 10px auto;
+    }
+
+    .plyr__control {
+        padding: 1rem 1.5rem !important;
+        font-size: 1rem !important;
+        border-radius: 0 !important;
+    }
 }
 
 /* ============================================================
@@ -272,7 +318,6 @@
     border-radius: 20px 20px 0 0;
     padding: 1.5rem;
     transform: translateY(100%);
-    /* Smooth snap back transition */
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     display: flex;
     flex-direction: column;
@@ -309,9 +354,7 @@
 .sheet-content {
     overflow-y: auto;
     padding-bottom: 1rem;
-    /* Smooth scrolling for mobile */
     -webkit-overflow-scrolling: touch; 
-    /* Prevents background from scrolling when list ends */
     overscroll-behavior: contain; 
 }
 
