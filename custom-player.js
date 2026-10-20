@@ -40,7 +40,7 @@ function initCustomPlayer(videoElementId, sources, subtitles) {
     player = new Plyr(videoElement, {
         controls: [], 
         settings: ['captions', 'quality', 'speed'],
-        hideControls: false, 
+        hideControls: true, 
         clickToPlay: true
     });
 
@@ -120,7 +120,7 @@ function bindCustomControls() {
     }
 }
 
-// 3. Custom Settings / BottomSheet Logic
+// 3. Custom Settings / BottomSheet Logic (With Quality, Audio & Subtitles)
 function addCustomSettingsLogic() {
     const settingsBtn = document.getElementById("customSettingsBtn");
     const settingsSheet = document.getElementById("settingsSheetOverlay");
@@ -140,6 +140,13 @@ function addCustomSettingsLogic() {
             } else {
                 html += `<button class="settings-btn active">Auto</button>`;
             }
+            html += `</div></div>`;
+
+            // Audio Track Options (Custom UI)
+            html += `<div class="settings-group"><h4>Audio Track</h4><div class="settings-options">`;
+            html += `<button class="settings-btn active">Japanese</button>`;
+            html += `<button class="settings-btn">English (Dub)</button>`;
+            html += `<button class="settings-btn">Hindi (Dub)</button>`;
             html += `</div></div>`;
 
             // Subtitles Options
