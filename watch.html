@@ -49,10 +49,9 @@
         <div class="sticky-video-wrap">
             <div id="playerLoading" class="video-container skeleton" style="display: none;"></div>
             
-            <!-- NATIVE PLAYER -->
+            <!-- NATIVE PLAYER (YouTube Style) -->
             <div class="video-container" id="nativePlayerContainer" style="display: none;">
-                <!-- Yahan data-plyr-config add kiya gaya hai jo Volume hata kar Settings (Quality/Audio/CC) dikhayega -->
-                <video id="videoPlayer" playsinline controls data-plyr-config='{"controls":["play-large","play","progress","current-time","captions","settings","pip","fullscreen"],"settings":["captions","quality","speed"]}'></video>
+                <video id="videoPlayer" playsinline controls></video>
             </div>
             
             <!-- IFRAME PLAYER (For Embeds / GDrive) -->
