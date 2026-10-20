@@ -17,7 +17,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// DOM Elements
+// ============================================================
+// 1. DOM Elements
+// ============================================================
 const playerLoading = document.getElementById("playerLoading");
 const nativePlayerContainer = document.getElementById("nativePlayerContainer");
 const iframePlayerContainer = document.getElementById("iframePlayerContainer");
@@ -55,6 +57,7 @@ const liveSuggestions = document.getElementById("liveSuggestions");
 let allAnimeForSearch = []; 
 let player = null; 
 
+// Demo Data (Fallback)
 const demoData = [
     { id: '1', title: 'Demon Slayer', genres: ['Action', 'Fantasy'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1286/99889.jpg', type: 'series', totalEpisodes: 12, totalSeasons: 2 },
     { id: '2', title: 'Jujutsu Kaisen', genres: ['Action', 'Supernatural'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1171/109222.jpg', type: 'series', totalEpisodes: 24, totalSeasons: 2 },
@@ -64,9 +67,11 @@ const demoData = [
     { id: '6', title: 'Your Name', genres: ['Romance', 'Drama'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/5/87048.jpg', type: 'movie', totalEpisodes: 1 }
 ];
 
+// Working Video & Subtitle URLs for testing
 const DUMMY_VIDEO_1080 = "https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-576p.mp4";
 const DEMO_SUBTITLE_EN = "https://rawcdn.githack.com/sadevID/vidJS/f23e769a20d5e06f59afe4ab2f3bbfd154939838/View_From_A_Blue_Moon_Trailer-HD.id.vtt";
 
+// Helper Functions
 function escapeHTML(str) {
     if (str == null) return "";
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -86,7 +91,7 @@ const FALLBACK_POSTER = "data:image/svg+xml;utf8," + encodeURIComponent(
 );
 
 // ============================================================
-// 1. SEARCH LOGIC
+// 2. SEARCH LOGIC
 // ============================================================
 async function fetchAnimeForSearch() {
     try {
@@ -173,7 +178,7 @@ if(searchInput) {
 }
 
 // ============================================================
-// 2. BOTTOM SHEET LOGIC (With Scroll Down to Dismiss)
+// 3. BOTTOM SHEET LOGIC (Scroll Down to Dismiss)
 // ============================================================
 function openBottomSheet() {
     bottomSheetOverlay.classList.add("active");
@@ -192,32 +197,30 @@ if(bottomSheetOverlay) {
     });
 }
 
-// Touch / Scroll Down Logic to close sheet
+// Touch & Wheel logic to close Bottom Sheet
 if (sheetContent) {
     let touchStartY = 0;
     
-    // Mobile Swipe
     sheetContent.addEventListener('touchstart', (e) => {
         touchStartY = e.touches[0].clientY;
     }, { passive: true });
 
     sheetContent.addEventListener('touchmove', (e) => {
         let touchEndY = e.touches[0].clientY;
-        if (touchEndY - touchStartY > 50) { // Swipe down 50px
+        if (touchEndY - touchStartY > 50) { 
             closeBottomSheet();
         }
     }, { passive: true });
 
-    // Desktop Wheel
     sheetContent.addEventListener('wheel', (e) => {
-        if (e.deltaY > 30) { // Scroll down
+        if (e.deltaY > 30) { 
             closeBottomSheet();
         }
     });
 }
 
 // ============================================================
-// 3. WATCH PAGE LOGIC
+// 4. WATCH PAGE LOGIC
 // ============================================================
 async function loadWatchPage() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -253,17 +256,19 @@ function renderPlayer(anime, epNum, seasonNum) {
     animeLink.textContent = title;
     animeLink.href = `anime.html?id=${anime.id}`; 
     
+    // Video Sources
     const videoSources = [
         { src: anime.videoUrl || DUMMY_VIDEO_1080, type: "video/mp4", size: 1080, label: "1080p HD" },
         { src: anime.videoUrl || DUMMY_VIDEO_1080, type: "video/mp4", size: 720, label: "720p" },
         { src: anime.videoUrl || DUMMY_VIDEO_1080, type: "video/mp4", size: 480, label: "480p" }
     ];
 
+    // Subtitles
     const subtitles = [
         { src: DEMO_SUBTITLE_EN, label: "English", srclang: "en", default: true }
     ];
 
-    // Check if it's a Google Drive Link
+    // Check for Google Drive Link
     if (videoSources[0].src.includes("drive.google.com")) {
         nativePlayerContainer.style.display = "none";
         iframePlayerContainer.style.display = "block";
@@ -301,8 +306,17 @@ function renderPlayer(anime, epNum, seasonNum) {
         });
 
         videoPlayer.poster = anime.coverImageUrl || "";
+        videoPlayer.load(); // Force reload
 
-        // Initialize or Update Plyr
+        // Hide Spinner on load or error
+        videoPlayer.onloadeddata = () => {
+            if (videoSpinnerOverlay) videoSpinnerOverlay.classList.add("hidden");
+        };
+        videoPlayer.onerror = () => {
+            if (videoSpinnerOverlay) videoSpinnerOverlay.classList.add("hidden");
+        };
+
+        // Initialize Plyr
         try {
             if (typeof Plyr !== 'undefined') {
                 if (!player) {
@@ -311,25 +325,18 @@ function renderPlayer(anime, epNum, seasonNum) {
                         settings: ['captions', 'quality', 'speed', 'loop']
                     });
 
-                    // Hide Spinner on Load
                     player.on('ready', () => {
                         if (videoSpinnerOverlay) videoSpinnerOverlay.classList.add("hidden");
                     });
-                    
-                    player.on('error', () => {
-                        if (videoSpinnerOverlay) videoSpinnerOverlay.classList.add("hidden");
-                    });
-
                 } else {
                     player.source = {
                         type: 'video',
                         sources: videoSources,
                         tracks: subtitles
                     };
-                    if (videoSpinnerOverlay) videoSpinnerOverlay.classList.add("hidden");
                 }
             } else {
-                // Fallback if Plyr fails to load
+                // Fallback if Plyr CDN fails
                 videoPlayer.setAttribute("controls", "true");
                 if (videoSpinnerOverlay) videoSpinnerOverlay.classList.add("hidden");
             }
@@ -340,7 +347,7 @@ function renderPlayer(anime, epNum, seasonNum) {
         }
     }
 
-    // Check if Movie or Series
+    // Season & Episode UI Logic
     const isMovie = anime.type === "movie" || (anime.totalEpisodes === 1 && !anime.totalSeasons);
     
     if (isMovie) {
