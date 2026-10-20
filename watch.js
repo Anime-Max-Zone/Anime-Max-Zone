@@ -56,7 +56,7 @@ const liveSuggestions = document.getElementById("liveSuggestions");
 let allAnimeForSearch = []; 
 let player = null; 
 
-// Demo Data
+// Demo Data (Fallback)
 const demoData = [
     { id: '1', title: 'Demon Slayer', genres: ['Action', 'Fantasy'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1286/99889.jpg', type: 'series', totalEpisodes: 12, totalSeasons: 2 },
     { id: '2', title: 'Jujutsu Kaisen', genres: ['Action', 'Supernatural'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1171/109222.jpg', type: 'series', totalEpisodes: 24, totalSeasons: 2 },
@@ -66,7 +66,6 @@ const demoData = [
     { id: '6', title: 'Your Name', genres: ['Romance', 'Drama'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/5/87048.jpg', type: 'movie', totalEpisodes: 1 }
 ];
 
-// Test Video & Subtitle
 const DUMMY_VIDEO_1080 = "https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-576p.mp4";
 const DEMO_SUBTITLE_EN = "https://rawcdn.githack.com/sadevID/vidJS/f23e769a20d5e06f59afe4ab2f3bbfd154939838/View_From_A_Blue_Moon_Trailer-HD.id.vtt";
 
@@ -177,7 +176,7 @@ if(searchInput) {
 }
 
 // ============================================================
-// 3. BOTTOM SHEET LOGIC (Swipe Down to Dismiss)
+// 3. BOTTOM SHEET LOGIC (Scroll Down to Dismiss)
 // ============================================================
 function openBottomSheet() {
     bottomSheetOverlay.classList.add("active");
@@ -198,47 +197,44 @@ if(bottomSheetOverlay) {
     });
 }
 
-// Real Drag/Swipe down logic
-let startY = 0;
+// Touch & Wheel logic to close Bottom Sheet
+let touchStartY = 0;
 let currentY = 0;
 
 if(bottomSheet) {
     bottomSheet.addEventListener('touchstart', (e) => {
-        // Only allow drag if we are at the very top of the list
         if (sheetContent.scrollTop <= 0) {
-            startY = e.touches[0].clientY;
+            touchStartY = e.touches[0].clientY;
         } else {
-            startY = 0;
+            touchStartY = 0;
         }
     }, { passive: true });
 
     bottomSheet.addEventListener('touchmove', (e) => {
-        if (startY === 0) return;
+        if (touchStartY === 0) return;
         currentY = e.touches[0].clientY;
-        let diff = currentY - startY;
+        let diff = currentY - touchStartY;
         
-        // Only drag down, not up
         if (diff > 0) {
-            if (e.cancelable) e.preventDefault(); // Prevent background scroll
+            if (e.cancelable) e.preventDefault(); 
             bottomSheet.style.transform = `translateY(${diff}px)`;
         }
     }, { passive: false });
 
     bottomSheet.addEventListener('touchend', () => {
-        if (startY === 0) return;
-        let diff = currentY - startY;
+        if (touchStartY === 0) return;
+        let diff = currentY - touchStartY;
         
-        if (diff > 100) { // If dragged down more than 100px, close it
+        if (diff > 100) { 
             closeBottomSheet();
         } else {
-            bottomSheet.style.transform = 'translateY(0)'; // Snap back
+            bottomSheet.style.transform = 'translateY(0)'; 
         }
-        startY = 0;
+        touchStartY = 0;
         currentY = 0;
     });
 }
 
-// Desktop mouse wheel logic
 if(sheetContent) {
     sheetContent.addEventListener('wheel', (e) => {
         if (e.deltaY > 50 && sheetContent.scrollTop === 0) { 
@@ -332,15 +328,15 @@ function renderPlayer(anime, epNum, seasonNum) {
         });
 
         videoPlayer.poster = anime.coverImageUrl || "";
-        videoPlayer.load(); // Force browser to fetch new video data
+        videoPlayer.load();
 
-        // Plyr Initialization
+        // Plyr Initialization (Volume Removed, Settings & Captions Added)
         try {
             if (typeof Plyr !== 'undefined') {
                 if (!player) {
                     player = new Plyr(videoPlayer, {
-                        controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'],
-                        settings: ['captions', 'quality', 'speed', 'loop']
+                        controls: ['play-large', 'play', 'progress', 'current-time', 'captions', 'settings', 'pip', 'fullscreen'],
+                        settings: ['captions', 'quality', 'speed']
                     });
                 } else {
                     player.source = {
@@ -350,7 +346,6 @@ function renderPlayer(anime, epNum, seasonNum) {
                     };
                 }
             } else {
-                // Fallback if Plyr CDN fails
                 videoPlayer.setAttribute("controls", "true");
             }
         } catch (error) {
