@@ -62,11 +62,11 @@ let player = null;
 
 // ---------- 2. Demo Data & Fallbacks ----------
 const demoData = [
-    { id: '1', title: 'Demon Slayer', genres: ['Action', 'Fantasy'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1286/99889.jpg', type: 'series', totalEpisodes: 12 },
-    { id: '2', title: 'Jujutsu Kaisen', genres: ['Action', 'Supernatural'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1171/109222.jpg', type: 'series', totalEpisodes: 24 },
-    { id: '3', title: 'One Piece', genres: ['Action', 'Adventure'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/6/73245.jpg', type: 'series', totalEpisodes: 1000 },
-    { id: '4', title: 'Attack on Titan', genres: ['Action', 'Drama'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/10/47347.jpg', type: 'series', totalEpisodes: 25 },
-    { id: '5', title: 'Naruto', genres: ['Action', 'Adventure'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/13/17405.jpg', type: 'series', totalEpisodes: 220 },
+    { id: '1', title: 'Demon Slayer', genres: ['Action', 'Fantasy'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1286/99889.jpg', type: 'series', totalEpisodes: 12, totalSeasons: 2 },
+    { id: '2', title: 'Jujutsu Kaisen', genres: ['Action', 'Supernatural'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1171/109222.jpg', type: 'series', totalEpisodes: 24, totalSeasons: 2 },
+    { id: '3', title: 'One Piece', genres: ['Action', 'Adventure'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/6/73245.jpg', type: 'series', totalEpisodes: 1000, totalSeasons: 20 },
+    { id: '4', title: 'Attack on Titan', genres: ['Action', 'Drama'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/10/47347.jpg', type: 'series', totalEpisodes: 25, totalSeasons: 4 },
+    { id: '5', title: 'Naruto', genres: ['Action', 'Adventure'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/13/17405.jpg', type: 'series', totalEpisodes: 220, totalSeasons: 5 },
     { id: '6', title: 'Your Name', genres: ['Romance', 'Drama'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/5/87048.jpg', type: 'movie', totalEpisodes: 1 }
 ];
 
@@ -249,7 +249,7 @@ function renderPlayer(anime, epNum, seasonNum) {
         { src: DEMO_SUBTITLE_EN, label: "English", srclang: "en", default: true }
     ];
 
-    // Check for Google Drive
+    // Check if the video URL is a Google Drive link
     if (videoSources[0].src.includes("drive.google.com")) {
         nativePlayerContainer.style.display = "none";
         iframePlayerContainer.style.display = "block";
@@ -259,15 +259,17 @@ function renderPlayer(anime, epNum, seasonNum) {
         const match = videoSources[0].src.match(driveRegex);
         if (match && match[1]) fileId = match[1];
 
+        // Load GDrive Iframe (Toolbar hidden via CSS)
         videoIframe.src = `https://drive.google.com/file/d/${fileId}/preview`;
         
     } else {
-        // Native Player (Plyr)
+        // Load Native Plyr Player
         iframePlayerContainer.style.display = "none";
         nativePlayerContainer.style.display = "block";
 
         videoPlayer.innerHTML = "";
         
+        // Add Sources for Quality selection
         videoSources.forEach(sourceData => {
             const source = document.createElement("source");
             source.src = sourceData.src;
@@ -277,6 +279,7 @@ function renderPlayer(anime, epNum, seasonNum) {
             videoPlayer.appendChild(source);
         });
 
+        // Add Subtitles
         subtitles.forEach(sub => {
             const track = document.createElement("track");
             track.kind = "captions";
@@ -289,6 +292,7 @@ function renderPlayer(anime, epNum, seasonNum) {
 
         videoPlayer.poster = anime.coverImageUrl || "";
 
+        // Initialize Plyr
         if (!player) {
             player = new Plyr(videoPlayer, {
                 controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'],
