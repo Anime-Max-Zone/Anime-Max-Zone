@@ -1,254 +1,266 @@
-/* ============================================================
-   ANIME MAX ZONE — Custom Video Controller
-   ============================================================ */
+"use strict";
 
-let player = null;
+/*
+ * Anime Max Zone — Custom Player
+ *
+ * Works with a browser-playable video source in:
+ *   <video id="videoPlayer"></video>
+ *
+ * Does not control Google Drive's cross-origin /preview iframe.
+ */
 
-// 1. Initialize Plyr (Default controls ko hide kar dein)
-function initCustomPlayer(videoElementId, sources, subtitles) {
-    const videoElement = document.getElementById(videoElementId);
-    if (!videoElement) return;
+(() => {
+  const video = document.getElementById("videoPlayer");
+  const container = document.getElementById("nativePlayerContainer");
 
-    // Empty the video tag and add sources
-    videoElement.innerHTML = "";
-    
-    sources.forEach(src => {
-        const source = document.createElement("source");
-        source.src = src.src;
-        source.type = src.type;
-        source.size = src.size;
-        source.title = src.label;
-        videoElement.appendChild(source);
-    });
+  if (!video || !container) return;
 
-    subtitles.forEach(sub => {
-        const track = document.createElement("track");
-        track.kind = "captions";
-        track.label = sub.label;
-        track.srclang = sub.srclang;
-        track.src = sub.src;
-        if (sub.default) track.default = true;
-        videoElement.appendChild(track);
-    });
+  // Avoid initializing the same player twice.
+  if (video.dataset.customPlayerInitialized === "true") return;
+  video.dataset.customPlayerInitialized = "true";
 
-    // Destroy previous instance if any
-    if (player) {
-        player.destroy();
+  const player = document.createElement("div");
+  player.className = "amz-custom-player";
+
+  const controls = document.createElement("div");
+  controls.className = "amz-controls";
+
+  const playButton = document.createElement("button");
+  playButton.type = "button";
+  playButton.className = "amz-play-button";
+  playButton.textContent = "▶";
+  playButton.setAttribute("aria-label", "Play video");
+
+  const currentTime = document.createElement("span");
+  currentTime.className = "amz-current-time";
+  currentTime.textContent = "0:00";
+
+  const seekbar = document.createElement("input");
+  seekbar.type = "range";
+  seekbar.className = "amz-seekbar";
+  seekbar.min = "0";
+  seekbar.max = "1000";
+  seekbar.value = "0";
+  seekbar.step = "1";
+  seekbar.setAttribute("aria-label", "Seek video");
+
+  const duration = document.createElement("span");
+  duration.className = "amz-duration";
+  duration.textContent = "0:00";
+
+  const muteButton = document.createElement("button");
+  muteButton.type = "button";
+  muteButton.className = "amz-mute-button";
+  muteButton.textContent = "🔊";
+  muteButton.setAttribute("aria-label", "Mute video");
+
+  const volume = document.createElement("input");
+  volume.type = "range";
+  volume.className = "amz-volume";
+  volume.min = "0";
+  volume.max = "1";
+  volume.step = "0.05";
+  volume.value = String(video.volume);
+  volume.setAttribute("aria-label", "Volume");
+
+  const fullscreenButton = document.createElement("button");
+  fullscreenButton.type = "button";
+  fullscreenButton.className = "amz-fullscreen-button";
+  fullscreenButton.textContent = "⛶";
+  fullscreenButton.setAttribute("aria-label", "Enter fullscreen");
+
+  controls.append(
+    playButton,
+    currentTime,
+    seekbar,
+    duration,
+    muteButton,
+    volume,
+    fullscreenButton
+  );
+
+  // Keep the original video element and place controls around it.
+  const originalParent = video.parentNode;
+  const originalNextSibling = video.nextSibling;
+
+  player.appendChild(video);
+  player.appendChild(controls);
+
+  if (originalParent) {
+    originalParent.insertBefore(player, originalNextSibling);
+  } else {
+    container.appendChild(player);
+  }
+
+  function formatTime(seconds) {
+    if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+
+    const total = Math.floor(seconds);
+    const hours = Math.floor(total / 3600);
+    const minutes = Math.floor((total % 3600) / 60);
+    const secs = total % 60;
+
+    if (hours > 0) {
+      return `${hours}:${String(minutes).padStart(2, "0")}:${String(
+        secs
+      ).padStart(2, "0")}`;
     }
 
-    // Initialize Plyr with NO controls (Humara custom UI chalega)
-    player = new Plyr(videoElement, {
-        controls: [], 
-        settings: ['captions', 'quality', 'speed'],
-        hideControls: true, 
-        clickToPlay: true
-    });
+    return `${minutes}:${String(secs).padStart(2, "0")}`;
+  }
 
-    // Attach Events
-    bindCustomControls();
-    addDoubleTapToSeek();
-    addCustomSettingsLogic();
-    
-    // Player ko globally expose karein taaki watch.js use kar sake
-    window.player = player; 
-}
+  function updatePlayButton() {
+    const isPlaying = !video.paused && !video.ended;
 
-// 2. Bind Custom HTML Buttons to Plyr API
-function bindCustomControls() {
-    const playBtn = document.getElementById("customPlayBtn");
-    const playIcon = document.getElementById("customPlayIcon");
-    const centerPlayBtn = document.getElementById("centerPlayBtn");
-    const progressBar = document.getElementById("customProgressBar");
-    const muteBtn = document.getElementById("customMuteBtn");
-    const fullScreenBtn = document.getElementById("customFullScreenBtn");
-    const fullScreenIcon = document.getElementById("customFullScreenIcon");
+    playButton.textContent = isPlaying ? "❚❚" : "▶";
+    playButton.setAttribute(
+      "aria-label",
+      isPlaying ? "Pause video" : "Play video"
+    );
+  }
 
-    // Play/Pause
-    if (playBtn && centerPlayBtn && playIcon) {
-        playBtn.addEventListener("click", () => player.togglePlay());
-        centerPlayBtn.addEventListener("click", () => player.play());
-        
-        player.on("play", () => { 
-            playIcon.innerHTML = `<path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>`; 
-            centerPlayBtn.style.display = "none";
-        });
-        
-        player.on("pause", () => { 
-            playIcon.innerHTML = `<path fill="currentColor" d="M8 5v14l11-7z"/>`; 
-            centerPlayBtn.style.display = "flex";
-        });
+  function updateProgress() {
+    currentTime.textContent = formatTime(video.currentTime);
+
+    if (Number.isFinite(video.duration) && video.duration > 0) {
+      duration.textContent = formatTime(video.duration);
+      seekbar.value = String(
+        Math.round((video.currentTime / video.duration) * 1000)
+      );
+    } else {
+      duration.textContent = "0:00";
+      seekbar.value = "0";
     }
+  }
 
-    // Progress Bar
-    if (progressBar) {
-        player.on("timeupdate", () => {
-            const percent = (player.currentTime / player.duration) * 100;
-            progressBar.value = percent || 0;
-            updateTimeDisplay(player.currentTime, player.duration);
-        });
+  function updateVolume() {
+    muteButton.textContent =
+      video.muted || video.volume === 0 ? "🔇" : "🔊";
 
-        progressBar.addEventListener("input", () => {
-            const seekTo = player.duration * (progressBar.value / 100);
-            player.currentTime = seekTo;
-        });
+    muteButton.setAttribute(
+      "aria-label",
+      video.muted || video.volume === 0 ? "Unmute video" : "Mute video"
+    );
+
+    volume.value = String(video.muted ? 0 : video.volume);
+  }
+
+  async function togglePlay() {
+    try {
+      if (video.paused || video.ended) {
+        await video.play();
+      } else {
+        video.pause();
+      }
+    } catch (error) {
+      console.error("Video playback failed:", error);
     }
+  }
 
-    // Mute / Unmute
-    if (muteBtn) {
-        muteBtn.addEventListener("click", () => player.muted = !player.muted);
-        
-        player.on("volumechange", () => {
-            if (player.muted || player.volume === 0) {
-                muteBtn.innerHTML = `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>`;
-            } else {
-                muteBtn.innerHTML = `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
-            }
-        });
+  async function toggleFullscreen() {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else if (player.requestFullscreen) {
+        await player.requestFullscreen();
+      } else if (video.webkitEnterFullscreen) {
+        // Safari / iOS fallback.
+        video.webkitEnterFullscreen();
+      }
+    } catch (error) {
+      console.error("Fullscreen failed:", error);
     }
+  }
 
-    // Fullscreen
-    if (fullScreenBtn) {
-        fullScreenBtn.addEventListener("click", () => player.fullscreen.toggle());
-        
-        player.on("enterfullscreen", () => {
-            if(fullScreenIcon) fullScreenIcon.innerHTML = `<path fill="currentColor" d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>`;
-        });
-        
-        player.on("exitfullscreen", () => {
-            if(fullScreenIcon) fullScreenIcon.innerHTML = `<path fill="currentColor" d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>`;
-        });
-    }
-}
+  playButton.addEventListener("click", togglePlay);
 
-// 3. Custom Settings / BottomSheet Logic (With Quality, Audio & Subtitles)
-function addCustomSettingsLogic() {
-    const settingsBtn = document.getElementById("customSettingsBtn");
-    const settingsSheet = document.getElementById("settingsSheetOverlay");
-    const settingsContent = document.getElementById("settingsContent");
-    const closeSettingsBtn = document.getElementById("closeSettingsBtn");
+  video.addEventListener("click", togglePlay);
 
-    if (settingsBtn && settingsSheet && settingsContent) {
-        settingsBtn.addEventListener("click", () => {
-            let html = `<div class="settings-group"><h4>Quality</h4><div class="settings-options">`;
-            
-            // Quality Options
-            if (player.quality && player.quality.options && player.quality.options.length > 0) {
-                player.quality.options.forEach(q => {
-                    let active = player.quality === q ? "active" : "";
-                    html += `<button class="settings-btn ${active}" onclick="player.quality = ${q}; document.getElementById('settingsSheetOverlay').classList.remove('active');">${q}p</button>`;
-                });
-            } else {
-                html += `<button class="settings-btn active">Auto</button>`;
-            }
-            html += `</div></div>`;
+  video.addEventListener("play", updatePlayButton);
+  video.addEventListener("pause", updatePlayButton);
+  video.addEventListener("ended", updatePlayButton);
 
-            // Audio Track Options (Custom UI)
-            html += `<div class="settings-group"><h4>Audio Track</h4><div class="settings-options">`;
-            html += `<button class="settings-btn active">Japanese</button>`;
-            html += `<button class="settings-btn">English (Dub)</button>`;
-            html += `<button class="settings-btn">Hindi (Dub)</button>`;
-            html += `</div></div>`;
+  video.addEventListener("loadedmetadata", updateProgress);
+  video.addEventListener("durationchange", updateProgress);
+  video.addEventListener("timeupdate", updateProgress);
+  video.addEventListener("seeking", updateProgress);
+  video.addEventListener("seeked", updateProgress);
 
-            // Subtitles Options
-            html += `<div class="settings-group"><h4>Subtitles</h4><div class="settings-options">`;
-            html += `<button class="settings-btn" onclick="toggleSubs(-1); document.getElementById('settingsSheetOverlay').classList.remove('active');">Off</button>`;
-            
-            const videoElement = document.getElementById("videoPlayer");
-            if (videoElement && videoElement.textTracks) {
-                for (let i = 0; i < videoElement.textTracks.length; i++) {
-                    let active = videoElement.textTracks[i].mode === 'showing' ? 'active' : '';
-                    html += `<button class="settings-btn ${active}" onclick="toggleSubs(${i}); document.getElementById('settingsSheetOverlay').classList.remove('active');">${videoElement.textTracks[i].label}</button>`;
-                }
-            }
-            html += `</div></div>`;
+  seekbar.addEventListener("input", () => {
+    if (!Number.isFinite(video.duration) || video.duration <= 0) return;
 
-            settingsContent.innerHTML = html;
-            settingsSheet.classList.add("active");
-        });
-    }
+    video.currentTime =
+      (Number(seekbar.value) / 1000) * video.duration;
+  });
 
-    if (closeSettingsBtn && settingsSheet) {
-        closeSettingsBtn.addEventListener("click", () => settingsSheet.classList.remove("active"));
-        settingsSheet.addEventListener("click", (e) => { if (e.target === settingsSheet) settingsSheet.classList.remove("active"); });
-    }
-}
+  muteButton.addEventListener("click", () => {
+    video.muted = !video.muted;
+    updateVolume();
+  });
 
-// Global Function for Subtitle Toggle
-window.toggleSubs = (index) => {
-    const videoElement = document.getElementById("videoPlayer");
-    if (!videoElement) return;
+  volume.addEventListener("input", () => {
+    video.volume = Number(volume.value);
+    video.muted = video.volume === 0;
+    updateVolume();
+  });
 
-    for (let i = 0; i < videoElement.textTracks.length; i++) {
-        videoElement.textTracks[i].mode = (i === index) ? 'showing' : 'hidden';
-    }
-};
+  fullscreenButton.addEventListener("click", toggleFullscreen);
 
-// 4. Double Tap to Seek (YouTube Style)
-function addDoubleTapToSeek() {
-    const videoContainer = document.getElementById("nativePlayerContainer");
-    if (!videoContainer) return;
-    
-    let lastTap = 0;
+  document.addEventListener("fullscreenchange", () => {
+    const isFullscreen = document.fullscreenElement === player;
 
-    videoContainer.addEventListener('touchend', (e) => {
-        const currentTime = new Date().getTime();
-        const tapLength = currentTime - lastTap;
-        
-        if (tapLength < 300 && tapLength > 0) {
-            e.preventDefault(); 
-            const rect = videoContainer.getBoundingClientRect();
-            const tapX = e.changedTouches[0].clientX - rect.left;
-            
-            if (player) {
-                if (tapX < rect.width / 2) {
-                    player.currentTime -= 10; 
-                    showSeekAnimation("backward");
-                } else {
-                    player.currentTime += 10; 
-                    showSeekAnimation("forward");
-                }
-            }
+    fullscreenButton.setAttribute(
+      "aria-label",
+      isFullscreen ? "Exit fullscreen" : "Enter fullscreen"
+    );
+  });
+
+  // Keyboard controls when the player itself is focused.
+  player.tabIndex = 0;
+
+  player.addEventListener("keydown", (event) => {
+    if (event.target.matches("input, button")) return;
+
+    switch (event.key) {
+      case " ":
+      case "k":
+      case "K":
+        event.preventDefault();
+        togglePlay();
+        break;
+
+      case "ArrowLeft":
+        event.preventDefault();
+        video.currentTime = Math.max(0, video.currentTime - 5);
+        break;
+
+      case "ArrowRight":
+        event.preventDefault();
+
+        if (Number.isFinite(video.duration)) {
+          video.currentTime = Math.min(
+            video.duration,
+            video.currentTime + 5
+          );
         }
-        lastTap = currentTime;
-    });
-}
+        break;
 
-// Helpers
-function updateTimeDisplay(current, total) {
-    const currentTimeEl = document.getElementById("customCurrentTime");
-    const durationEl = document.getElementById("customDuration");
-    
-    const format = (time) => {
-        if (isNaN(time)) return "0:00";
-        let m = Math.floor(time / 60);
-        let s = Math.floor(time % 60);
-        return `${m}:${s < 10 ? '0' : ''}${s}`;
-    };
-    
-    if (currentTimeEl) currentTimeEl.textContent = format(current);
-    if (durationEl) durationEl.textContent = format(total);
-}
+      case "f":
+      case "F":
+        event.preventDefault();
+        toggleFullscreen();
+        break;
 
-function showSeekAnimation(direction) {
-    const videoContainer = document.getElementById("nativePlayerContainer");
-    if (!videoContainer) return;
+      case "m":
+      case "M":
+        event.preventDefault();
+        video.muted = !video.muted;
+        updateVolume();
+        break;
+    }
+  });
 
-    const existing = document.querySelector('.seek-overlay');
-    if (existing) existing.remove();
-
-    let overlay = document.createElement("div");
-    overlay.className = `seek-overlay ${direction === "forward" ? "right" : "left"}`;
-    
-    let svgIcon = direction === "forward" 
-        ? `<svg viewBox="0 0 24 24" fill="white"><path d="M11.99 5V1l-5 5 5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6h-2c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>` 
-        : `<svg viewBox="0 0 24 24" fill="white"><path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"/></svg>`;
-    
-    overlay.innerHTML = `${svgIcon} <span>10 seconds</span>`;
-    videoContainer.appendChild(overlay);
-    
-    setTimeout(() => { overlay.classList.add("show"); }, 10);
-    setTimeout(() => { 
-        overlay.classList.remove("show"); 
-        setTimeout(() => overlay.remove(), 300);
-    }, 600);
-}
+  updatePlayButton();
+  updateProgress();
+  updateVolume();
+})();
