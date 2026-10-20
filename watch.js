@@ -23,6 +23,7 @@ const nativePlayerContainer = document.getElementById("nativePlayerContainer");
 const iframePlayerContainer = document.getElementById("iframePlayerContainer");
 const videoIframe = document.getElementById("videoIframe");
 const videoPlayer = document.getElementById("videoPlayer");
+const videoSpinnerOverlay = document.getElementById("videoSpinnerOverlay");
 
 const watchInfo = document.getElementById("watchInfo");
 const errorMessage = document.getElementById("errorMessage");
@@ -84,7 +85,9 @@ const FALLBACK_POSTER = "data:image/svg+xml;utf8," + encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300"><rect width="200" height="300" fill="#1a1a24"/><text x="100" y="150" fill="#555" text-anchor="middle" font-family="sans-serif" font-size="14">No Image</text></svg>`
 );
 
-// --- SEARCH LOGIC ---
+// ============================================================
+// 1. SEARCH LOGIC
+// ============================================================
 async function fetchAnimeForSearch() {
     try {
         const q = query(collection(db, "anime"), orderBy("createdAt", "desc"), limit(60));
@@ -169,7 +172,9 @@ if(searchInput) {
     });
 }
 
-// --- BOTTOM SHEET LOGIC ---
+// ============================================================
+// 2. BOTTOM SHEET LOGIC (With Scroll Down to Dismiss)
+// ============================================================
 function openBottomSheet() {
     bottomSheetOverlay.classList.add("active");
     document.body.style.overflow = "hidden"; 
@@ -187,7 +192,33 @@ if(bottomSheetOverlay) {
     });
 }
 
-// --- WATCH PAGE LOGIC ---
+// Touch / Scroll Down Logic to close sheet
+if (sheetContent) {
+    let touchStartY = 0;
+    
+    // Mobile Swipe
+    sheetContent.addEventListener('touchstart', (e) => {
+        touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    sheetContent.addEventListener('touchmove', (e) => {
+        let touchEndY = e.touches[0].clientY;
+        if (touchEndY - touchStartY > 50) { // Swipe down 50px
+            closeBottomSheet();
+        }
+    }, { passive: true });
+
+    // Desktop Wheel
+    sheetContent.addEventListener('wheel', (e) => {
+        if (e.deltaY > 30) { // Scroll down
+            closeBottomSheet();
+        }
+    });
+}
+
+// ============================================================
+// 3. WATCH PAGE LOGIC
+// ============================================================
 async function loadWatchPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const animeId = urlParams.get('animeId');
@@ -232,6 +263,7 @@ function renderPlayer(anime, epNum, seasonNum) {
         { src: DEMO_SUBTITLE_EN, label: "English", srclang: "en", default: true }
     ];
 
+    // Check if it's a Google Drive Link
     if (videoSources[0].src.includes("drive.google.com")) {
         nativePlayerContainer.style.display = "none";
         iframePlayerContainer.style.display = "block";
@@ -243,6 +275,7 @@ function renderPlayer(anime, epNum, seasonNum) {
 
         videoIframe.src = `https://drive.google.com/file/d/${fileId}/preview`;
     } else {
+        // Native Plyr Player
         iframePlayerContainer.style.display = "none";
         nativePlayerContainer.style.display = "block";
 
@@ -269,20 +302,45 @@ function renderPlayer(anime, epNum, seasonNum) {
 
         videoPlayer.poster = anime.coverImageUrl || "";
 
-        if (!player) {
-            player = new Plyr(videoPlayer, {
-                controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'],
-                settings: ['captions', 'quality', 'speed', 'loop']
-            });
-        } else {
-            player.source = {
-                type: 'video',
-                sources: videoSources,
-                tracks: subtitles
-            };
+        // Initialize or Update Plyr
+        try {
+            if (typeof Plyr !== 'undefined') {
+                if (!player) {
+                    player = new Plyr(videoPlayer, {
+                        controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'],
+                        settings: ['captions', 'quality', 'speed', 'loop']
+                    });
+
+                    // Hide Spinner on Load
+                    player.on('ready', () => {
+                        if (videoSpinnerOverlay) videoSpinnerOverlay.classList.add("hidden");
+                    });
+                    
+                    player.on('error', () => {
+                        if (videoSpinnerOverlay) videoSpinnerOverlay.classList.add("hidden");
+                    });
+
+                } else {
+                    player.source = {
+                        type: 'video',
+                        sources: videoSources,
+                        tracks: subtitles
+                    };
+                    if (videoSpinnerOverlay) videoSpinnerOverlay.classList.add("hidden");
+                }
+            } else {
+                // Fallback if Plyr fails to load
+                videoPlayer.setAttribute("controls", "true");
+                if (videoSpinnerOverlay) videoSpinnerOverlay.classList.add("hidden");
+            }
+        } catch (error) {
+            console.error("Plyr error:", error);
+            videoPlayer.setAttribute("controls", "true"); 
+            if (videoSpinnerOverlay) videoSpinnerOverlay.classList.add("hidden");
         }
     }
 
+    // Check if Movie or Series
     const isMovie = anime.type === "movie" || (anime.totalEpisodes === 1 && !anime.totalSeasons);
     
     if (isMovie) {
@@ -298,6 +356,7 @@ function renderPlayer(anime, epNum, seasonNum) {
         currentEpisodeText.textContent = `Episode ${epNum}`;
         currentSeasonText.textContent = `Season ${seasonNum}`;
 
+        // Episode Button Click
         episodeBtn.onclick = () => {
             sheetTitle.textContent = "Select Episode";
             let epsHTML = `<div class="sheet-grid">`;
@@ -319,6 +378,7 @@ function renderPlayer(anime, epNum, seasonNum) {
             openBottomSheet();
         };
 
+        // Season Button Click
         seasonBtn.onclick = () => {
             sheetTitle.textContent = "Select Season";
             const totalSeasons = anime.totalSeasons || 1; 
