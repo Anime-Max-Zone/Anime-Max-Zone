@@ -42,6 +42,37 @@
         </div>
     </header>
 
+    <!-- ================= SEARCH OVERLAY PANEL ================= -->
+    <div id="searchOverlay" class="search-overlay">
+        <div class="search-panel">
+            <div class="search-logo-container">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 300" class="search-logo-svg">
+                    <defs>
+                        <linearGradient id="maxGradientSearch" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#e2a0ff" />
+                            <stop offset="50%" stop-color="#a855f7" />
+                            <stop offset="100%" stop-color="#7e22ce" />
+                        </linearGradient>
+                    </defs>
+                    <g font-family="'Arial Black', 'Impact', sans-serif" font-weight="900" font-size="180" letter-spacing="2" dominant-baseline="central">
+                        <text x="50" y="150" fill="#ffffff">ANIME</text>
+                        <text x="740" y="150" fill="url(#maxGradientSearch)" class="animated-max-text">MAX</text>
+                    </g>
+                </svg>
+            </div>
+            <div class="search-header">
+                <div class="search-input-group">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" /></svg>
+                    <input id="searchInput" type="search" placeholder="Search anime, genres..." autocomplete="off" />
+                </div>
+                <button id="closeSearchBtn" class="btn-close" aria-label="Close search">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <div id="liveSuggestions" class="live-suggestions"></div>
+        </div>
+    </div>
+
     <!-- ================= MAIN CONTENT ================= -->
     <main class="watch-container">
         
@@ -50,8 +81,8 @@
             
             <!-- NATIVE PLAYER WITH CUSTOM UI -->
             <div class="video-container" id="nativePlayerContainer" style="display: none;">
-                <!-- Video Element (Controls Disabled) -->
-                <video id="videoPlayer" playsinline crossorigin></video>
+                <!-- Video Element (No crossorigin) -->
+                <video id="videoPlayer" playsinline></video>
                 
                 <!-- CUSTOM CONTROLS OVERLAY -->
                 <div class="custom-video-ui" id="customVideoUI">
@@ -191,7 +222,7 @@
     <!-- Plyr JS -->
     <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
     
-    <!-- CUSTOM PLAYER JS (Added here) -->
+    <!-- CUSTOM PLAYER JS -->
     <script src="custom-player.js"></script>
     
     <!-- Watch Page Script -->
