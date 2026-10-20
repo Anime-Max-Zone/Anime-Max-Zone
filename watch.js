@@ -66,6 +66,7 @@ const demoData = [
     { id: '6', title: 'Your Name', genres: ['Romance', 'Drama'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/5/87048.jpg', type: 'movie', totalEpisodes: 1 }
 ];
 
+// Working Demo Video
 const DUMMY_VIDEO_1080 = "https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-576p.mp4";
 const DEMO_SUBTITLE_EN = "https://rawcdn.githack.com/sadevID/vidJS/f23e769a20d5e06f59afe4ab2f3bbfd154939838/View_From_A_Blue_Moon_Trailer-HD.id.vtt";
 
@@ -244,7 +245,63 @@ if(sheetContent) {
 }
 
 // ============================================================
-// 4. WATCH PAGE LOGIC
+// 4. YOUTUBE STYLE DOUBLE TAP TO SEEK (10s)
+// ============================================================
+let lastTap = 0;
+if (nativePlayerContainer) {
+    nativePlayerContainer.addEventListener('touchend', (e) => {
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTap;
+        
+        // Check if it's a double tap (less than 300ms)
+        if (tapLength < 300 && tapLength > 0) {
+            // Prevent default Plyr click behaviour on double tap
+            e.preventDefault(); 
+            
+            const rect = nativePlayerContainer.getBoundingClientRect();
+            const tapX = e.changedTouches[0].clientX - rect.left;
+            
+            if (player) {
+                // Left side (Seek backward 10s)
+                if (tapX < rect.width / 2) {
+                    player.currentTime -= 10;
+                    showSeekAnimation("backward");
+                } 
+                // Right side (Seek forward 10s)
+                else {
+                    player.currentTime += 10;
+                    showSeekAnimation("forward");
+                }
+            }
+        }
+        lastTap = currentTime;
+    });
+}
+
+function showSeekAnimation(direction) {
+    // Remove existing animation if any
+    const existing = document.querySelector('.seek-overlay');
+    if (existing) existing.remove();
+
+    let overlay = document.createElement("div");
+    overlay.className = `seek-overlay ${direction === "forward" ? "right" : "left"}`;
+    
+    let svgIcon = direction === "forward" 
+        ? `<svg viewBox="0 0 24 24" fill="white"><path d="M11.99 5V1l-5 5 5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6h-2c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8zm-1.1 11h-1.5v-4.15c-.4.3-.9.6-1.5.75v-1.25c.8-.3 1.5-.8 1.9-1.35h1.1V16zm4.4-4.15c0 .88-.42 1.35-1.1 1.35s-1.1-.47-1.1-1.35v-1.7c0-.88.42-1.35 1.1-1.35s1.1.47 1.1 1.35v1.7z"/></svg>` 
+        : `<svg viewBox="0 0 24 24" fill="white"><path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8zm-1.1 11h-1.5v-4.15c-.4.3-.9.6-1.5.75v-1.25c.8-.3 1.5-.8 1.9-1.35h1.1V16zm4.4-4.15c0 .88-.42 1.35-1.1 1.35s-1.1-.47-1.1-1.35v-1.7c0-.88.42-1.35 1.1-1.35s1.1.47 1.1 1.35v1.7z"/></svg>`;
+    
+    overlay.innerHTML = `${svgIcon} <span>10 seconds</span>`;
+    nativePlayerContainer.appendChild(overlay);
+    
+    setTimeout(() => { overlay.classList.add("show"); }, 10);
+    setTimeout(() => { 
+        overlay.classList.remove("show"); 
+        setTimeout(() => overlay.remove(), 300);
+    }, 600);
+}
+
+// ============================================================
+// 5. WATCH PAGE LOGIC
 // ============================================================
 async function loadWatchPage() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -336,7 +393,11 @@ function renderPlayer(anime, epNum, seasonNum) {
                 if (!player) {
                     player = new Plyr(videoPlayer, {
                         controls: ['play-large', 'play', 'progress', 'current-time', 'captions', 'settings', 'pip', 'fullscreen'],
-                        settings: ['captions', 'quality', 'speed']
+                        settings: ['captions', 'quality', 'speed'],
+                        hideControls: true,
+                        clickToPlay: true,
+                        resetOnEnd: true,
+                        keyboard: { focused: true, global: true }
                     });
                 } else {
                     player.source = {
