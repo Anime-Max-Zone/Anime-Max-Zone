@@ -13,19 +13,23 @@
 }
 
 /* ============================================================
-   STICKY VIDEO WRAPPER
+   STICKY VIDEO WRAPPER (Fixed overlap & z-index)
    ============================================================ */
 .sticky-video-wrap {
+    position: -webkit-sticky;
     position: sticky;
-    top: 62px;
-    z-index: 50;
+    top: 62px; /* Navbar height */
+    z-index: 90; /* Lower than Navbar (100) */
     background: var(--bg);
+    padding-top: 5px; /* Prevents clipping */
     padding-bottom: 1rem;
     margin-bottom: 1.5rem;
     box-shadow: 0 15px 20px -15px rgba(0,0,0,0.8); 
 }
 
-/* Video Container */
+/* ============================================================
+   VIDEO CONTAINER & PLAYER
+   ============================================================ */
 .video-container {
     width: 100%;
     aspect-ratio: 16 / 9;
@@ -56,12 +60,50 @@
     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
 }
 
-/* Iframe Wrapper (For Google Drive) */
+/* ============================================================
+   VIDEO LOADING SPINNER
+   ============================================================ */
+.video-spinner-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    border-radius: 12px;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.video-spinner-overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.video-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   IFRAME WRAPPER (For Google Drive)
+   ============================================================ */
 .iframe-wrapper {
     position: relative;
     width: 100%;
     height: 100%;
 }
+
 .iframe-wrapper iframe {
     position: absolute;
     top: -60px;
@@ -79,7 +121,7 @@
 }
 
 /* ============================================================
-   WATCH INFO
+   WATCH INFO (Details below video)
    ============================================================ */
 .watch-info {
     background: var(--card);
@@ -177,7 +219,6 @@
     box-shadow: inset 0 2px 5px rgba(0,0,0,0.6), 0 1px 1px rgba(255,255,255,0.1);
 }
 
-/* Arrow Icon Size Fix */
 .btn-icon-wrap svg {
     width: 16px !important;
     height: 16px !important;
@@ -185,7 +226,7 @@
 }
 
 /* ============================================================
-   RELATED ANIME SECTION (Margin Added to fix overlap)
+   RELATED ANIME SECTION
    ============================================================ */
 .related-section {
     margin-top: 3rem;
@@ -205,13 +246,13 @@
 }
 
 /* ============================================================
-   BOTTOM SHEET (Fixed to slide from bottom properly)
+   BOTTOM SHEET (For Season/Episode Selection)
    ============================================================ */
 .bottom-sheet-overlay {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0, 0, 0, 0.8);
-    z-index: 9999; /* On top of everything */
+    z-index: 9999;
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
@@ -267,6 +308,8 @@
 .sheet-content {
     overflow-y: auto;
     padding-bottom: 1rem;
+    /* Smooth scrolling for mobile */
+    -webkit-overflow-scrolling: touch; 
 }
 
 .sheet-grid {
@@ -303,7 +346,7 @@
     }
     
     .sticky-video-wrap {
-        top: 55px; 
+        top: 55px; /* Mobile Navbar height */
         margin-left: -1rem; 
         margin-right: -1rem;
         padding-left: 1rem;
