@@ -4,6 +4,7 @@
 
 @import url('style.css');
 
+/* Main Container */
 .watch-container {
     max-width: 1200px;
     margin: 0 auto;
@@ -11,16 +12,30 @@
     min-height: 80vh;
 }
 
-/* Video Container */
+/* ============================================================
+   STICKY VIDEO WRAPPER (Video stays on top while scrolling)
+   ============================================================ */
+.sticky-video-wrap {
+    position: sticky;
+    top: 62px; /* Navbar height */
+    z-index: 50;
+    background: var(--bg);
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+    /* Niche ek halki shadow taaki video aur text ke beech separation dikhe */
+    box-shadow: 0 15px 20px -15px rgba(0,0,0,0.8); 
+}
+
+/* ============================================================
+   VIDEO CONTAINER
+   ============================================================ */
 .video-container {
     width: 100%;
     aspect-ratio: 16 / 9;
     background: #000;
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     border: 1px solid var(--border);
-    margin-bottom: 2rem;
     position: relative;
 }
 
@@ -30,13 +45,14 @@
     object-fit: contain;
 }
 
-/* Plyr Customization */
+/* Plyr Theme Customization */
 :root {
-    --plyr-color-main: #9d4edd;
+    --plyr-color-main: #9d4edd; /* Aapka Purple Theme */
     --plyr-video-background: #000;
     --plyr-control-spacing: 12px;
 }
-/* Subtitle text style */
+
+/* Subtitle Text Style */
 .plyr__captions {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 1.1rem !important;
@@ -44,7 +60,9 @@
     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
 }
 
-/* GDrive Wrapper */
+/* ============================================================
+   GOOGLE DRIVE IFRAME (Toolbar Hide Trick)
+   ============================================================ */
 .gdrive-wrapper {
     position: relative;
     width: 100%;
@@ -52,25 +70,30 @@
 }
 .gdrive-wrapper iframe {
     position: absolute;
-    top: -60px;
+    top: -60px; /* Pushes the top toolbar (Download/Title) out of view */
     left: 0;
     width: 100%;
-    height: calc(100% + 120px);
+    height: calc(100% + 120px); /* Compensates for the top and bottom shift */
     border: none;
 }
+
+/* Skeleton Loader */
 .video-container.skeleton {
     background: linear-gradient(90deg, var(--card) 25%, var(--bg-2) 50%, var(--card) 75%);
     background-size: 200% 100%;
     animation: shimmer 1.4s infinite;
 }
 
-/* Info Section */
+/* ============================================================
+   WATCH INFO (Details below video)
+   ============================================================ */
 .watch-info {
     background: var(--card);
     padding: 1.5rem;
     border-radius: 12px;
     border: 1px solid var(--border);
 }
+
 .info-header {
     display: flex;
     justify-content: space-between;
@@ -81,12 +104,14 @@
     padding-bottom: 1.5rem;
     border-bottom: 1px solid var(--border);
 }
+
 .title-group {
     display: flex;
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
 }
+
 .anime-name {
     color: var(--primary);
     font-size: 1.4rem;
@@ -97,15 +122,18 @@
     color: var(--primary-hover);
     text-decoration: underline;
 }
+
 .separator {
     color: var(--text-muted);
     font-size: 1.4rem;
 }
+
 .episode-title {
     color: var(--text);
     font-size: 1.4rem;
     font-weight: 600;
 }
+
 .server-select span {
     background: var(--bg-2);
     border: 1px solid var(--primary);
@@ -116,11 +144,14 @@
     font-weight: 600;
     display: inline-block;
 }
+
+/* Next / Prev Buttons */
 .episode-nav {
     display: flex;
     justify-content: space-between;
     gap: 1rem;
 }
+
 .nav-btn {
     display: flex;
     align-items: center;
@@ -135,44 +166,66 @@
     border: 1px solid var(--border);
     cursor: pointer;
 }
+
 .nav-btn:hover:not(:disabled) {
     background: var(--border);
 }
+
 .nav-btn.primary {
     background: var(--primary);
     color: white;
     border-color: var(--primary);
 }
+
 .nav-btn.primary:hover {
     background: var(--primary-hover);
     box-shadow: 0 4px 15px rgba(157, 78, 221, 0.4);
 }
+
 .nav-btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
 }
+
 .nav-btn svg {
     width: 18px;
     height: 18px;
 }
 
+/* ============================================================
+   MOBILE RESPONSIVE
+   ============================================================ */
 @media (max-width: 768px) {
     .watch-container {
         padding: 1rem 1rem 3rem;
     }
+    
+    .sticky-video-wrap {
+        top: 55px; /* Mobile Navbar height */
+        margin-left: -1rem; /* Container padding ko cover karne ke liye negative margin */
+        margin-right: -1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        border-radius: 0; /* Mobile par flat edges achhe lagte hain */
+    }
+
     .watch-info {
         padding: 1.2rem;
     }
+
     .info-header {
         flex-direction: column;
         align-items: flex-start;
     }
+
     .anime-name, .separator, .episode-title {
         font-size: 1.2rem;
     }
+
     .episode-nav {
         flex-direction: column;
     }
+
     .nav-btn {
         width: 100%;
         justify-content: center;
