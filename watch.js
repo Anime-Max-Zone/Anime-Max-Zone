@@ -17,19 +17,37 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// DOM Elements
+// ---------- 1. DOM Elements ----------
+// Player Elements
 const playerLoading = document.getElementById("playerLoading");
 const nativePlayerContainer = document.getElementById("nativePlayerContainer");
-const gdrivePlayerContainer = document.getElementById("gdrivePlayerContainer");
-const gdriveIframe = document.getElementById("gdriveIframe");
+const iframePlayerContainer = document.getElementById("iframePlayerContainer");
+const videoIframe = document.getElementById("videoIframe");
 const videoPlayer = document.getElementById("videoPlayer");
 
+// Info Elements
 const watchInfo = document.getElementById("watchInfo");
 const errorMessage = document.getElementById("errorMessage");
 const episodeTitleEl = document.getElementById("episodeTitle");
 const animeLink = document.getElementById("animeLink");
-const prevEpBtn = document.getElementById("prevEpBtn");
-const nextEpBtn = document.getElementById("nextEpBtn");
+
+// Season & Episode Buttons
+const seasonBtn = document.getElementById("seasonBtn");
+const episodeBtn = document.getElementById("episodeBtn");
+const seasonEpisodeWrapper = document.getElementById("seasonEpisodeWrapper");
+const currentSeasonText = document.getElementById("currentSeasonText");
+const currentEpisodeText = document.getElementById("currentEpisodeText");
+
+// Bottom Sheet Elements
+const bottomSheetOverlay = document.getElementById("bottomSheetOverlay");
+const bottomSheet = document.getElementById("bottomSheet");
+const sheetTitle = document.getElementById("sheetTitle");
+const sheetContent = document.getElementById("sheetContent");
+const closeSheetBtn = document.getElementById("closeSheetBtn");
+
+// Related Anime Elements
+const relatedSection = document.getElementById("relatedSection");
+const relatedGrid = document.getElementById("relatedGrid");
 
 // Search Overlay Elements
 const openSearchBtn = document.getElementById("openSearchBtn");
@@ -42,20 +60,20 @@ const liveSuggestions = document.getElementById("liveSuggestions");
 let allAnimeForSearch = []; 
 let player = null; 
 
-// Demo Data
+// ---------- 2. Demo Data & Fallbacks ----------
 const demoData = [
-    { id: '1', title: 'Demon Slayer', genres: ['Action', 'Fantasy'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1286/99889.jpg' },
-    { id: '2', title: 'Jujutsu Kaisen', genres: ['Action', 'Supernatural'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1171/109222.jpg' },
-    { id: '3', title: 'One Piece', genres: ['Action', 'Adventure'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/6/73245.jpg' },
-    { id: '4', title: 'Attack on Titan', genres: ['Action', 'Drama'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/10/47347.jpg' },
-    { id: '5', title: 'Naruto', genres: ['Action', 'Adventure'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/13/17405.jpg' }
+    { id: '1', title: 'Demon Slayer', genres: ['Action', 'Fantasy'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1286/99889.jpg', type: 'series', totalEpisodes: 12 },
+    { id: '2', title: 'Jujutsu Kaisen', genres: ['Action', 'Supernatural'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1171/109222.jpg', type: 'series', totalEpisodes: 24 },
+    { id: '3', title: 'One Piece', genres: ['Action', 'Adventure'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/6/73245.jpg', type: 'series', totalEpisodes: 1000 },
+    { id: '4', title: 'Attack on Titan', genres: ['Action', 'Drama'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/10/47347.jpg', type: 'series', totalEpisodes: 25 },
+    { id: '5', title: 'Naruto', genres: ['Action', 'Adventure'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/13/17405.jpg', type: 'series', totalEpisodes: 220 },
+    { id: '6', title: 'Your Name', genres: ['Romance', 'Drama'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/5/87048.jpg', type: 'movie', totalEpisodes: 1 }
 ];
 
-// Dummy Video Data
 const DUMMY_VIDEO_1080 = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
 const DEMO_SUBTITLE_EN = "https://raw.githubusercontent.com/mozilla/vtt.js/master/tests/subtitles/subtitles.vtt";
 
-// Helper Functions
+// ---------- 3. Helper Functions ----------
 function escapeHTML(str) {
     if (str == null) return "";
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -75,7 +93,7 @@ const FALLBACK_POSTER = "data:image/svg+xml;utf8," + encodeURIComponent(
 );
 
 // ============================================================
-// 1. SEARCH OVERLAY LOGIC
+// 4. SEARCH OVERLAY LOGIC
 // ============================================================
 async function fetchAnimeForSearch() {
     try {
@@ -162,12 +180,33 @@ if(searchInput) {
 }
 
 // ============================================================
-// 2. WATCH PAGE LOGIC
+// 5. BOTTOM SHEET LOGIC
+// ============================================================
+function openBottomSheet() {
+    bottomSheetOverlay.classList.add("active");
+    document.body.style.overflow = "hidden"; 
+}
+
+function closeBottomSheet() {
+    bottomSheetOverlay.classList.remove("active");
+    document.body.style.overflow = ""; 
+}
+
+if(closeSheetBtn) closeSheetBtn.addEventListener("click", closeBottomSheet);
+if(bottomSheetOverlay) {
+    bottomSheetOverlay.addEventListener("click", (e) => {
+        if (e.target === bottomSheetOverlay) closeBottomSheet();
+    });
+}
+
+// ============================================================
+// 6. WATCH PAGE LOGIC
 // ============================================================
 async function loadWatchPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const animeId = urlParams.get('animeId');
     const episodeNum = urlParams.get('ep') || 1;
+    const seasonNum = urlParams.get('season') || 1;
 
     if (!animeId) { showError(); return; }
 
@@ -185,10 +224,10 @@ async function loadWatchPage() {
     }
 
     if (!animeData) { showError(); return; }
-    renderPlayer(animeData, episodeNum);
+    renderPlayer(animeData, episodeNum, seasonNum);
 }
 
-function renderPlayer(anime, epNum) {
+function renderPlayer(anime, epNum, seasonNum) {
     playerLoading.style.display = "none";
     watchInfo.style.display = "block";
 
@@ -196,60 +235,48 @@ function renderPlayer(anime, epNum) {
     document.title = `${title} - Episode ${epNum} — Anime Max Zone`;
     animeLink.textContent = title;
     animeLink.href = `anime.html?id=${anime.id}`; 
-    episodeTitleEl.textContent = `Episode ${epNum}`;
-
+    
     // ---------------------------------------------
-    // VIDEO SOURCES (Quality & Audio Tracks)
+    // VIDEO SOURCES & SUBTITLES
     // ---------------------------------------------
-    // Yahan aap Firebase se aane wale alag-alag links map kar sakte hain.
-    // Abhi ke liye humne ek hi video ka link 3 qualities me mock kiya hai.
     const videoSources = [
         { src: anime.videoUrl || DUMMY_VIDEO_1080, type: "video/mp4", size: 1080, label: "1080p HD" },
         { src: anime.videoUrl || DUMMY_VIDEO_1080, type: "video/mp4", size: 720, label: "720p" },
         { src: anime.videoUrl || DUMMY_VIDEO_1080, type: "video/mp4", size: 480, label: "480p" }
     ];
 
-    // ---------------------------------------------
-    // SUBTITLES & CAPTIONS
-    // ---------------------------------------------
     const subtitles = [
-        { src: DEMO_SUBTITLE_EN, label: "English", srclang: "en", default: true },
-        // Agar future me Hindi subtitle add karna ho:
-        // { src: "https://link-to-hindi.vtt", label: "Hindi", srclang: "hi", default: false }
+        { src: DEMO_SUBTITLE_EN, label: "English", srclang: "en", default: true }
     ];
 
     // Check for Google Drive
     if (videoSources[0].src.includes("drive.google.com")) {
         nativePlayerContainer.style.display = "none";
-        gdrivePlayerContainer.style.display = "block";
+        iframePlayerContainer.style.display = "block";
 
         let fileId = "";
         const driveRegex = /(?:drive\.google\.com\/(?:file\/d\/|open\?id=))([a-zA-Z0-9_-]+)/;
         const match = videoSources[0].src.match(driveRegex);
         if (match && match[1]) fileId = match[1];
 
-        // GDrive default UI hides via CSS in watch.css
-        gdriveIframe.src = `https://drive.google.com/file/d/${fileId}/preview`;
+        videoIframe.src = `https://drive.google.com/file/d/${fileId}/preview`;
         
     } else {
         // Native Player (Plyr)
-        gdrivePlayerContainer.style.display = "none";
+        iframePlayerContainer.style.display = "none";
         nativePlayerContainer.style.display = "block";
 
-        // Clear previous player content
         videoPlayer.innerHTML = "";
         
-        // Add Video Sources dynamically for Quality Selection
         videoSources.forEach(sourceData => {
             const source = document.createElement("source");
             source.src = sourceData.src;
             source.type = sourceData.type;
-            source.size = sourceData.size; // Yeh Plyr ko batata hai ki kaunsi quality hai
+            source.size = sourceData.size;
             source.title = sourceData.label;
             videoPlayer.appendChild(source);
         });
 
-        // Add Subtitles dynamically
         subtitles.forEach(sub => {
             const track = document.createElement("track");
             track.kind = "captions";
@@ -262,7 +289,6 @@ function renderPlayer(anime, epNum) {
 
         videoPlayer.poster = anime.coverImageUrl || "";
 
-        // Initialize or Update Plyr
         if (!player) {
             player = new Plyr(videoPlayer, {
                 controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'],
@@ -277,33 +303,125 @@ function renderPlayer(anime, epNum) {
         }
     }
 
-    // ============================================
-    // NEXT / PREVIOUS EPISODE BUTTONS LOGIC
-    // ============================================
-    const totalEpisodes = anime.totalEpisodes || 12; 
-    let currentEp = parseInt(epNum);
-
-    if (currentEp > 1) {
-        prevEpBtn.disabled = false;
-        prevEpBtn.onclick = () => { window.location.href = `watch.html?animeId=${anime.id}&ep=${currentEp - 1}`; };
+    // ---------------------------------------------
+    // SEASON & EPISODE UI LOGIC
+    // ---------------------------------------------
+    const isMovie = anime.type === "movie" || (anime.totalEpisodes === 1 && !anime.totalSeasons);
+    
+    if (isMovie) {
+        seasonEpisodeWrapper.style.display = "none";
+        episodeTitleEl.style.display = "none";
+        document.querySelector('.separator').style.display = "none";
     } else {
-        prevEpBtn.disabled = true;
+        seasonEpisodeWrapper.style.display = "flex";
+        episodeTitleEl.style.display = "inline";
+        document.querySelector('.separator').style.display = "inline";
+        
+        episodeTitleEl.textContent = `Episode ${epNum}`;
+        currentEpisodeText.textContent = `Episode ${epNum}`;
+        currentSeasonText.textContent = `Season ${seasonNum}`;
+
+        // Episode Button Click
+        episodeBtn.onclick = () => {
+            sheetTitle.textContent = "Select Episode";
+            let epsHTML = `<div class="sheet-grid">`;
+            const totalEps = anime.totalEpisodes || 12;
+            
+            for (let i = 1; i <= totalEps; i++) {
+                const activeClass = (i === parseInt(epNum)) ? "active" : "";
+                epsHTML += `<div class="sheet-item ${activeClass}" data-ep="${i}">${i}</div>`;
+            }
+            epsHTML += `</div>`;
+            sheetContent.innerHTML = epsHTML;
+            
+            document.querySelectorAll(".sheet-item").forEach(item => {
+                item.onclick = () => {
+                    const selectedEp = item.getAttribute("data-ep");
+                    window.location.href = `watch.html?animeId=${anime.id}&season=${seasonNum}&ep=${selectedEp}`;
+                }
+            });
+            openBottomSheet();
+        };
+
+        // Season Button Click
+        seasonBtn.onclick = () => {
+            sheetTitle.textContent = "Select Season";
+            const totalSeasons = anime.totalSeasons || 1; 
+            let seasonsHTML = `<div class="sheet-grid">`;
+            
+            for (let i = 1; i <= totalSeasons; i++) {
+                const activeClass = (i === parseInt(seasonNum)) ? "active" : "";
+                seasonsHTML += `<div class="sheet-item ${activeClass}" data-season="${i}">S${i}</div>`;
+            }
+            seasonsHTML += `</div>`;
+            sheetContent.innerHTML = seasonsHTML;
+
+            document.querySelectorAll(".sheet-item").forEach(item => {
+                item.onclick = () => {
+                    const selectedSeason = item.getAttribute("data-season");
+                    window.location.href = `watch.html?animeId=${anime.id}&season=${selectedSeason}&ep=1`;
+                }
+            });
+            openBottomSheet();
+        };
     }
 
-    if (currentEp < totalEpisodes) {
-        nextEpBtn.classList.remove("disabled");
-        nextEpBtn.onclick = () => { window.location.href = `watch.html?animeId=${anime.id}&ep=${currentEp + 1}`; };
-    } else {
-        nextEpBtn.classList.add("disabled");
-        nextEpBtn.onclick = null;
+    // ---------------------------------------------
+    // LOAD RELATED ANIME
+    // ---------------------------------------------
+    renderRelatedAnime(anime.id);
+}
+
+function renderRelatedAnime(currentAnimeId) {
+    let allAnimeList = allAnimeForSearch.length > 0 ? allAnimeForSearch : demoData;
+    const relatedAnime = allAnimeList.filter(a => a.id !== currentAnimeId).slice(0, 6);
+
+    if (relatedAnime.length === 0) {
+        relatedSection.style.display = "none";
+        return;
     }
+
+    relatedSection.style.display = "block";
+    relatedGrid.innerHTML = "";
+
+    const frag = document.createDocumentFragment();
+    
+    relatedAnime.forEach(anime => {
+        const title = escapeHTML(anime.title || "Untitled");
+        const poster = safeImageUrl(anime.coverImageUrl) || FALLBACK_POSTER;
+        const safeId = encodeURIComponent(anime.id || "");
+        const genres = Array.isArray(anime.genres) ? anime.genres.map(escapeHTML).join(", ") : escapeHTML(anime.genres || "");
+        
+        const status = (anime.status || "").toLowerCase();
+        const statusClass = status === "ongoing" ? "badge status-ongoing" : status === "completed" ? "badge status-completed" : "badge";
+        const statusLabel = escapeHTML(anime.status || "");
+
+        const card = document.createElement("article");
+        card.className = "anime-card";
+        
+        card.innerHTML = `
+            <div class="poster" onclick="window.location.href='anime.html?id=${safeId}'" style="cursor:pointer;">
+                ${statusLabel ? `<span class="${statusClass}">${statusLabel}</span>` : ""}
+                <img src="${poster}" alt="${title} poster" loading="lazy" onerror="this.src='${FALLBACK_POSTER}'" />
+            </div>
+            <div class="info" onclick="window.location.href='anime.html?id=${safeId}'" style="cursor:pointer;">
+                <h3 title="${title}">${title}</h3>
+                <p class="genres">${genres || "&nbsp;"}</p>
+            </div>
+        `;
+        
+        frag.appendChild(card);
+    });
+
+    relatedGrid.appendChild(frag);
 }
 
 function showError() {
     playerLoading.style.display = "none";
     nativePlayerContainer.style.display = "none";
-    gdrivePlayerContainer.style.display = "none";
+    iframePlayerContainer.style.display = "none";
     watchInfo.style.display = "none";
+    relatedSection.style.display = "none";
     errorMessage.style.display = "block";
     document.title = "Not Found — Anime Max Zone";
 }
