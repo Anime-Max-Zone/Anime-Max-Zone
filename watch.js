@@ -54,7 +54,7 @@ const demoData = [
 ];
 
 // Dummy Video URL for testing
-const DUMMY_VIDEO_URL = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+const DUMMY_VIDEO_URL = "https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-576p.mp4";
 
 // ---------- 4. Helpers ----------
 function escapeHTML(str) {
