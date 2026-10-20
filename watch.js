@@ -17,6 +17,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// DOM Elements
 const playerLoading = document.getElementById("playerLoading");
 const nativePlayerContainer = document.getElementById("nativePlayerContainer");
 const gdrivePlayerContainer = document.getElementById("gdrivePlayerContainer");
@@ -39,8 +40,9 @@ const searchInput = document.getElementById("searchInput");
 const liveSuggestions = document.getElementById("liveSuggestions");
 
 let allAnimeForSearch = []; 
-let player = null; // Plyr instance
+let player = null; 
 
+// Demo Data
 const demoData = [
     { id: '1', title: 'Demon Slayer', genres: ['Action', 'Fantasy'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1286/99889.jpg' },
     { id: '2', title: 'Jujutsu Kaisen', genres: ['Action', 'Supernatural'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1171/109222.jpg' },
@@ -49,24 +51,32 @@ const demoData = [
     { id: '5', title: 'Naruto', genres: ['Action', 'Adventure'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/13/17405.jpg' }
 ];
 
-const DUMMY_VIDEO_URL = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
-// Example VTT subtitle link
-const DEMO_SUBTITLE_URL = "https://raw.githubusercontent.com/mozilla/vtt.js/master/tests/subtitles/subtitles.vtt";
+// Dummy Video Data
+const DUMMY_VIDEO_1080 = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+const DEMO_SUBTITLE_EN = "https://raw.githubusercontent.com/mozilla/vtt.js/master/tests/subtitles/subtitles.vtt";
 
+// Helper Functions
 function escapeHTML(str) {
     if (str == null) return "";
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
+
 function safeImageUrl(url) {
     if (typeof url !== "string") return "";
-    try { const u = new URL(url); if (u.protocol === "http:" || u.protocol === "https:") return u.href; } catch (_) {}
+    try { 
+        const u = new URL(url); 
+        if (u.protocol === "http:" || u.protocol === "https:") return u.href; 
+    } catch (_) {}
     return "";
 }
+
 const FALLBACK_POSTER = "data:image/svg+xml;utf8," + encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300"><rect width="200" height="300" fill="#1a1a24"/><text x="100" y="150" fill="#555" text-anchor="middle" font-family="sans-serif" font-size="14">No Image</text></svg>`
 );
 
-// SEARCH OVERLAY LOGIC
+// ============================================================
+// 1. SEARCH OVERLAY LOGIC
+// ============================================================
 async function fetchAnimeForSearch() {
     try {
         const q = query(collection(db, "anime"), orderBy("createdAt", "desc"), limit(60));
@@ -82,6 +92,7 @@ function renderSuggestions(term) {
     liveSuggestions.innerHTML = "";
     liveSuggestions.style.display = "block"; 
     let filtered = [];
+    
     if (!term) {
         liveSuggestions.innerHTML = `<div class="suggestion-title">Trending Now</div>`;
         filtered = allAnimeForSearch.slice(0, 5);
@@ -92,14 +103,17 @@ function renderSuggestions(term) {
             return t.includes(term) || g.includes(term);
         }).slice(0, 10);
     }
+
     if (filtered.length === 0 && term) {
         liveSuggestions.innerHTML = `<p class="empty-msg">No results found for "${escapeHTML(term)}"</p>`;
         return;
     }
+
     filtered.forEach(anime => {
         const title = escapeHTML(anime.title || "Untitled");
         const poster = safeImageUrl(anime.coverImageUrl) || FALLBACK_POSTER;
         const safeId = encodeURIComponent(anime.id || "");
+        
         const div = document.createElement("div");
         div.className = "suggestion-item";
         div.innerHTML = `
@@ -120,6 +134,7 @@ function openSearch() {
     document.body.style.overflow = "hidden";
     renderSuggestions(""); 
 }
+
 function closeSearch() {
     searchOverlay.classList.remove("active");
     searchInput.value = "";
@@ -132,7 +147,11 @@ if(openSearchBtn) openSearchBtn.addEventListener("click", openSearch);
 if(navSearchBtn) navSearchBtn.addEventListener("click", openSearch);
 if(closeSearchBtn) closeSearchBtn.addEventListener("click", closeSearch);
 if(searchOverlay) searchOverlay.addEventListener("click", (e) => { if (e.target === searchOverlay) closeSearch(); });
-document.addEventListener("keydown", (e) => { if (e.key === "Escape" && searchOverlay.classList.contains("active")) closeSearch(); });
+
+document.addEventListener("keydown", (e) => { 
+    if (e.key === "Escape" && searchOverlay.classList.contains("active")) closeSearch(); 
+});
+
 let searchTimer;
 if(searchInput) {
     searchInput.addEventListener("input", (e) => {
@@ -142,7 +161,9 @@ if(searchInput) {
     });
 }
 
-// WATCH PAGE LOGIC
+// ============================================================
+// 2. WATCH PAGE LOGIC
+// ============================================================
 async function loadWatchPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const animeId = urlParams.get('animeId');
@@ -178,57 +199,68 @@ function renderPlayer(anime, epNum) {
     episodeTitleEl.textContent = `Episode ${epNum}`;
 
     // ---------------------------------------------
-    // VIDEO DATA SETUP (Aap isko Firebase se map kar sakte hain)
+    // VIDEO SOURCES (Quality & Audio Tracks)
     // ---------------------------------------------
-    const videoUrl = anime.videoUrl || DUMMY_VIDEO_URL;
-    
-    // Subtitle Data (Add your .vtt files here)
-    const subtitles = [
-        { src: DEMO_SUBTITLE_URL, label: "English", srclang: "en", default: true },
-        // { src: "link_to_hindi.vtt", label: "Hindi", srclang: "hi", default: false }
+    // Yahan aap Firebase se aane wale alag-alag links map kar sakte hain.
+    // Abhi ke liye humne ek hi video ka link 3 qualities me mock kiya hai.
+    const videoSources = [
+        { src: anime.videoUrl || DUMMY_VIDEO_1080, type: "video/mp4", size: 1080, label: "1080p HD" },
+        { src: anime.videoUrl || DUMMY_VIDEO_1080, type: "video/mp4", size: 720, label: "720p" },
+        { src: anime.videoUrl || DUMMY_VIDEO_1080, type: "video/mp4", size: 480, label: "480p" }
     ];
 
-    // Check if Google Drive
-    if (videoUrl.includes("drive.google.com")) {
+    // ---------------------------------------------
+    // SUBTITLES & CAPTIONS
+    // ---------------------------------------------
+    const subtitles = [
+        { src: DEMO_SUBTITLE_EN, label: "English", srclang: "en", default: true },
+        // Agar future me Hindi subtitle add karna ho:
+        // { src: "https://link-to-hindi.vtt", label: "Hindi", srclang: "hi", default: false }
+    ];
+
+    // Check for Google Drive
+    if (videoSources[0].src.includes("drive.google.com")) {
         nativePlayerContainer.style.display = "none";
         gdrivePlayerContainer.style.display = "block";
 
         let fileId = "";
         const driveRegex = /(?:drive\.google\.com\/(?:file\/d\/|open\?id=))([a-zA-Z0-9_-]+)/;
-        const match = videoUrl.match(driveRegex);
+        const match = videoSources[0].src.match(driveRegex);
         if (match && match[1]) fileId = match[1];
 
+        // GDrive default UI hides via CSS in watch.css
         gdriveIframe.src = `https://drive.google.com/file/d/${fileId}/preview`;
-        
-        // Hide CC if GDrive (because GDrive iframe doesn't support external CC)
         
     } else {
         // Native Player (Plyr)
         gdrivePlayerContainer.style.display = "none";
         nativePlayerContainer.style.display = "block";
 
-        // Clear previous tracks and sources
+        // Clear previous player content
         videoPlayer.innerHTML = "";
         
-        // Add Video Source
-        const source = document.createElement("source");
-        source.src = videoUrl;
-        source.type = "video/mp4";
-        source.size = 720; // Default size for Plyr
-        videoPlayer.appendChild(source);
-        
-        videoPlayer.poster = anime.coverImageUrl || "";
+        // Add Video Sources dynamically for Quality Selection
+        videoSources.forEach(sourceData => {
+            const source = document.createElement("source");
+            source.src = sourceData.src;
+            source.type = sourceData.type;
+            source.size = sourceData.size; // Yeh Plyr ko batata hai ki kaunsi quality hai
+            source.title = sourceData.label;
+            videoPlayer.appendChild(source);
+        });
 
         // Add Subtitles dynamically
         subtitles.forEach(sub => {
             const track = document.createElement("track");
-            track.kind = "captions"; // This enables the CC button
+            track.kind = "captions";
             track.label = sub.label;
             track.srclang = sub.srclang;
             track.src = sub.src;
             if (sub.default) track.default = true;
             videoPlayer.appendChild(track);
         });
+
+        videoPlayer.poster = anime.coverImageUrl || "";
 
         // Initialize or Update Plyr
         if (!player) {
@@ -239,19 +271,15 @@ function renderPlayer(anime, epNum) {
         } else {
             player.source = {
                 type: 'video',
-                sources: [{ src: videoUrl, type: 'video/mp4', size: 720 }],
-                tracks: subtitles.map(sub => ({
-                    kind: 'captions',
-                    label: sub.label,
-                    srclang: sub.srclang,
-                    src: sub.src,
-                    default: sub.default
-                }))
+                sources: videoSources,
+                tracks: subtitles
             };
         }
     }
 
-    // Next/Prev Logic
+    // ============================================
+    // NEXT / PREVIOUS EPISODE BUTTONS LOGIC
+    // ============================================
     const totalEpisodes = anime.totalEpisodes || 12; 
     let currentEp = parseInt(epNum);
 
@@ -280,5 +308,6 @@ function showError() {
     document.title = "Not Found — Anime Max Zone";
 }
 
+// Boot
 fetchAnimeForSearch(); 
 loadWatchPage();
