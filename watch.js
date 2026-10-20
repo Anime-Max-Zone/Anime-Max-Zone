@@ -2,11 +2,9 @@
    ANIME MAX ZONE — Watch Page & Search Logic
    ============================================================ */
 
-// ---------- 1. Firebase Imports ----------
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, getDoc, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// ---------- 2. Firebase Config ----------
 const firebaseConfig = {
     apiKey: "AIzaSyCpfrluxsBhnz48ve9RykIy1IxzbBfk7dA",
     authDomain: "sm-studio-7.firebaseapp.com",
@@ -19,18 +17,16 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ---------- 3. DOM References ----------
 const playerLoading = document.getElementById("playerLoading");
-const playerContainer = document.getElementById("playerContainer");
-const watchInfo = document.getElementById("watchInfo");
-const errorMessage = document.getElementById("errorMessage");
-
-const videoSource = document.getElementById("videoSource");
+const nativePlayerContainer = document.getElementById("nativePlayerContainer");
+const gdrivePlayerContainer = document.getElementById("gdrivePlayerContainer");
+const gdriveIframe = document.getElementById("gdriveIframe");
 const videoPlayer = document.getElementById("videoPlayer");
 
+const watchInfo = document.getElementById("watchInfo");
+const errorMessage = document.getElementById("errorMessage");
 const episodeTitleEl = document.getElementById("episodeTitle");
 const animeLink = document.getElementById("animeLink");
-
 const prevEpBtn = document.getElementById("prevEpBtn");
 const nextEpBtn = document.getElementById("nextEpBtn");
 
@@ -43,8 +39,8 @@ const searchInput = document.getElementById("searchInput");
 const liveSuggestions = document.getElementById("liveSuggestions");
 
 let allAnimeForSearch = []; 
+let player = null; // Plyr instance
 
-// Demo Data
 const demoData = [
     { id: '1', title: 'Demon Slayer', genres: ['Action', 'Fantasy'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1286/99889.jpg' },
     { id: '2', title: 'Jujutsu Kaisen', genres: ['Action', 'Supernatural'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1171/109222.jpg' },
@@ -53,31 +49,24 @@ const demoData = [
     { id: '5', title: 'Naruto', genres: ['Action', 'Adventure'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/13/17405.jpg' }
 ];
 
-// Dummy Video URL for testing
-const DUMMY_VIDEO_URL = "https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-576p.mp4";
+const DUMMY_VIDEO_URL = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+// Example VTT subtitle link
+const DEMO_SUBTITLE_URL = "https://raw.githubusercontent.com/mozilla/vtt.js/master/tests/subtitles/subtitles.vtt";
 
-// ---------- 4. Helpers ----------
 function escapeHTML(str) {
     if (str == null) return "";
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
-
 function safeImageUrl(url) {
     if (typeof url !== "string") return "";
-    try {
-        const u = new URL(url);
-        if (u.protocol === "http:" || u.protocol === "https:") return u.href;
-    } catch (_) {}
+    try { const u = new URL(url); if (u.protocol === "http:" || u.protocol === "https:") return u.href; } catch (_) {}
     return "";
 }
-
 const FALLBACK_POSTER = "data:image/svg+xml;utf8," + encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300"><rect width="200" height="300" fill="#1a1a24"/><text x="100" y="150" fill="#555" text-anchor="middle" font-family="sans-serif" font-size="14">No Image</text></svg>`
 );
 
-// ============================================================
-// ---------- 5. SEARCH OVERLAY LOGIC ----------
-// ============================================================
+// SEARCH OVERLAY LOGIC
 async function fetchAnimeForSearch() {
     try {
         const q = query(collection(db, "anime"), orderBy("createdAt", "desc"), limit(60));
@@ -85,7 +74,6 @@ async function fetchAnimeForSearch() {
         allAnimeForSearch = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         if(allAnimeForSearch.length === 0) allAnimeForSearch = demoData;
     } catch (err) {
-        console.error("Search Fetch error:", err);
         allAnimeForSearch = demoData;
     }
 }
@@ -93,7 +81,6 @@ async function fetchAnimeForSearch() {
 function renderSuggestions(term) {
     liveSuggestions.innerHTML = "";
     liveSuggestions.style.display = "block"; 
-
     let filtered = [];
     if (!term) {
         liveSuggestions.innerHTML = `<div class="suggestion-title">Trending Now</div>`;
@@ -105,17 +92,14 @@ function renderSuggestions(term) {
             return t.includes(term) || g.includes(term);
         }).slice(0, 10);
     }
-
     if (filtered.length === 0 && term) {
         liveSuggestions.innerHTML = `<p class="empty-msg">No results found for "${escapeHTML(term)}"</p>`;
         return;
     }
-
     filtered.forEach(anime => {
         const title = escapeHTML(anime.title || "Untitled");
         const poster = safeImageUrl(anime.coverImageUrl) || FALLBACK_POSTER;
         const safeId = encodeURIComponent(anime.id || "");
-
         const div = document.createElement("div");
         div.className = "suggestion-item";
         div.innerHTML = `
@@ -136,7 +120,6 @@ function openSearch() {
     document.body.style.overflow = "hidden";
     renderSuggestions(""); 
 }
-
 function closeSearch() {
     searchOverlay.classList.remove("active");
     searchInput.value = "";
@@ -148,13 +131,8 @@ function closeSearch() {
 if(openSearchBtn) openSearchBtn.addEventListener("click", openSearch);
 if(navSearchBtn) navSearchBtn.addEventListener("click", openSearch);
 if(closeSearchBtn) closeSearchBtn.addEventListener("click", closeSearch);
-
-if(searchOverlay) {
-    searchOverlay.addEventListener("click", (e) => { if (e.target === searchOverlay) closeSearch(); });
-}
-document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && searchOverlay && searchOverlay.classList.contains("active")) closeSearch();
-});
+if(searchOverlay) searchOverlay.addEventListener("click", (e) => { if (e.target === searchOverlay) closeSearch(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && searchOverlay.classList.contains("active")) closeSearch(); });
 let searchTimer;
 if(searchInput) {
     searchInput.addEventListener("input", (e) => {
@@ -164,81 +142,129 @@ if(searchInput) {
     });
 }
 
-// ============================================================
-// ---------- 6. WATCH PAGE LOGIC ----------
-// ============================================================
+// WATCH PAGE LOGIC
 async function loadWatchPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const animeId = urlParams.get('animeId');
     const episodeNum = urlParams.get('ep') || 1;
 
-    if (!animeId) {
-        showError();
-        return;
-    }
+    if (!animeId) { showError(); return; }
 
     let animeData = null;
-
     try {
         const docRef = doc(db, "anime", animeId);
         const docSnap = await getDoc(docRef);
-
         if (docSnap.exists()) {
             animeData = { id: docSnap.id, ...docSnap.data() };
         } else {
             animeData = demoData.find(a => a.id === animeId);
         }
     } catch (err) {
-        console.error("Firebase error:", err);
         animeData = demoData.find(a => a.id === animeId);
     }
 
-    if (!animeData) {
-        showError();
-        return;
-    }
-
+    if (!animeData) { showError(); return; }
     renderPlayer(animeData, episodeNum);
 }
 
 function renderPlayer(anime, epNum) {
     playerLoading.style.display = "none";
-    playerContainer.style.display = "block";
     watchInfo.style.display = "block";
 
     const title = escapeHTML(anime.title || "Unknown Anime");
-    
-    // Set Page Titles (Dynamic)
     document.title = `${title} - Episode ${epNum} — Anime Max Zone`;
     animeLink.textContent = title;
-    animeLink.href = `anime.html?id=${anime.id}`; // Anime title par click karne se details page khulega
+    animeLink.href = `anime.html?id=${anime.id}`; 
     episodeTitleEl.textContent = `Episode ${epNum}`;
 
-    // Setup Video (Uses Firebase 'videoUrl' if exists, else dummy)
-    videoSource.src = anime.videoUrl || DUMMY_VIDEO_URL;
-    videoPlayer.poster = anime.coverImageUrl || "";
-    videoPlayer.load();
+    // ---------------------------------------------
+    // VIDEO DATA SETUP (Aap isko Firebase se map kar sakte hain)
+    // ---------------------------------------------
+    const videoUrl = anime.videoUrl || DUMMY_VIDEO_URL;
+    
+    // Subtitle Data (Add your .vtt files here)
+    const subtitles = [
+        { src: DEMO_SUBTITLE_URL, label: "English", srclang: "en", default: true },
+        // { src: "link_to_hindi.vtt", label: "Hindi", srclang: "hi", default: false }
+    ];
 
-    // Setup Next/Prev Buttons
+    // Check if Google Drive
+    if (videoUrl.includes("drive.google.com")) {
+        nativePlayerContainer.style.display = "none";
+        gdrivePlayerContainer.style.display = "block";
+
+        let fileId = "";
+        const driveRegex = /(?:drive\.google\.com\/(?:file\/d\/|open\?id=))([a-zA-Z0-9_-]+)/;
+        const match = videoUrl.match(driveRegex);
+        if (match && match[1]) fileId = match[1];
+
+        gdriveIframe.src = `https://drive.google.com/file/d/${fileId}/preview`;
+        
+        // Hide CC if GDrive (because GDrive iframe doesn't support external CC)
+        
+    } else {
+        // Native Player (Plyr)
+        gdrivePlayerContainer.style.display = "none";
+        nativePlayerContainer.style.display = "block";
+
+        // Clear previous tracks and sources
+        videoPlayer.innerHTML = "";
+        
+        // Add Video Source
+        const source = document.createElement("source");
+        source.src = videoUrl;
+        source.type = "video/mp4";
+        source.size = 720; // Default size for Plyr
+        videoPlayer.appendChild(source);
+        
+        videoPlayer.poster = anime.coverImageUrl || "";
+
+        // Add Subtitles dynamically
+        subtitles.forEach(sub => {
+            const track = document.createElement("track");
+            track.kind = "captions"; // This enables the CC button
+            track.label = sub.label;
+            track.srclang = sub.srclang;
+            track.src = sub.src;
+            if (sub.default) track.default = true;
+            videoPlayer.appendChild(track);
+        });
+
+        // Initialize or Update Plyr
+        if (!player) {
+            player = new Plyr(videoPlayer, {
+                controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'],
+                settings: ['captions', 'quality', 'speed', 'loop']
+            });
+        } else {
+            player.source = {
+                type: 'video',
+                sources: [{ src: videoUrl, type: 'video/mp4', size: 720 }],
+                tracks: subtitles.map(sub => ({
+                    kind: 'captions',
+                    label: sub.label,
+                    srclang: sub.srclang,
+                    src: sub.src,
+                    default: sub.default
+                }))
+            };
+        }
+    }
+
+    // Next/Prev Logic
     const totalEpisodes = anime.totalEpisodes || 12; 
     let currentEp = parseInt(epNum);
 
-    // Prev Button
     if (currentEp > 1) {
         prevEpBtn.disabled = false;
-        prevEpBtn.onclick = () => {
-            window.location.href = `watch.html?animeId=${anime.id}&ep=${currentEp - 1}`;
-        };
+        prevEpBtn.onclick = () => { window.location.href = `watch.html?animeId=${anime.id}&ep=${currentEp - 1}`; };
     } else {
         prevEpBtn.disabled = true;
     }
 
-    // Next Button
     if (currentEp < totalEpisodes) {
         nextEpBtn.classList.remove("disabled");
-        nextEpBtn.onclick = () => {
-            window.location.href = `watch.html?animeId=${anime.id}&ep=${currentEp + 1}`;
-        };
+        nextEpBtn.onclick = () => { window.location.href = `watch.html?animeId=${anime.id}&ep=${currentEp + 1}`; };
     } else {
         nextEpBtn.classList.add("disabled");
         nextEpBtn.onclick = null;
@@ -247,12 +273,12 @@ function renderPlayer(anime, epNum) {
 
 function showError() {
     playerLoading.style.display = "none";
-    playerContainer.style.display = "none";
+    nativePlayerContainer.style.display = "none";
+    gdrivePlayerContainer.style.display = "none";
     watchInfo.style.display = "none";
     errorMessage.style.display = "block";
     document.title = "Not Found — Anime Max Zone";
 }
 
-// ---------- 7. Boot ----------
 fetchAnimeForSearch(); 
 loadWatchPage();
