@@ -64,8 +64,8 @@ const demoData = [
     { id: '6', title: 'Your Name', genres: ['Romance', 'Drama'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/5/87048.jpg', type: 'movie', totalEpisodes: 1 }
 ];
 
-const DUMMY_VIDEO_1080 = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
-const DEMO_SUBTITLE_EN = "https://raw.githubusercontent.com/mozilla/vtt.js/master/tests/subtitles/subtitles.vtt";
+const DUMMY_VIDEO_1080 = "https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-576p.mp4";
+const DEMO_SUBTITLE_EN = "https://rawcdn.githack.com/sadevID/vidJS/f23e769a20d5e06f59afe4ab2f3bbfd154939838/View_From_A_Blue_Moon_Trailer-HD.id.vtt";
 
 function escapeHTML(str) {
     if (str == null) return "";
