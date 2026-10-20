@@ -51,6 +51,7 @@ const FALLBACK_POSTER = "data:image/svg+xml;utf8," + encodeURIComponent(
      </svg>`
 );
 
+// Demo Data (Fallback)
 const demoData = [
     { id: '1', title: 'Demon Slayer', genres: ['Action', 'Fantasy'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1286/99889.jpg', status: 'Ongoing', description: 'Tanjiro Kamado sets out to become a demon slayer after his family is slaughtered and his sister is turned into a demon.' },
     { id: '2', title: 'Jujutsu Kaisen', genres: ['Action', 'Supernatural'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1171/109222.jpg', status: 'Completed', description: 'A boy swallows a cursed talisman - the finger of a demon - and becomes cursed himself.' },
@@ -220,6 +221,7 @@ function renderDetailsUI(anime) {
 
     const genresHTML = genres.map(g => `<span>${escapeHTML(g)}</span>`).join("");
 
+    // Generate episodes (1 to 12)
     let episodesHTML = "";
     for (let i = 1; i <= 12; i++) {
         episodesHTML += `<div class="ep-btn">${i}</div>`;
@@ -252,18 +254,21 @@ function renderDetailsUI(anime) {
         </section>
     `;
 
+    // FIX: Redirect to watch.html when episode is clicked
     const epBtns = document.querySelectorAll('.ep-btn');
     epBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
             epBtns.forEach(b => b.classList.remove('active'));
             e.target.classList.add('active');
+            
+            const selectedEp = e.target.innerText;
+            window.location.href = `watch.html?animeId=${anime.id}&ep=${selectedEp}`;
         });
     });
 
+    // FIX: Redirect to watch.html for Episode 1
     document.getElementById('playFirstBtn').addEventListener('click', () => {
-        if(epBtns.length > 0) {
-            epBtns[0].click(); 
-        }
+        window.location.href = `watch.html?animeId=${anime.id}&ep=1`;
     });
 }
 
