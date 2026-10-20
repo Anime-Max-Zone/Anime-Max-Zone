@@ -8,16 +8,20 @@
   <meta name="description" content="Watch anime online on Anime Max Zone.">
   <meta name="theme-color" content="#080811">
 
+  <!-- Custom CSS -->
   <link rel="stylesheet" href="watch.css">
+  <!-- Plyr CSS -->
   <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
 
+  <!-- Firebase Setup -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 </head>
 
 <body>
+  <!-- Header -->
   <header class="site-header">
-    <a class="brand" href="index.html">Anime Max Zone</a>
+    <a class="brand" href="index.html">ANIME <span class="purple-text">MAX</span></a>
 
     <nav class="header-actions" aria-label="Main navigation">
       <a href="index.html">Home</a>
@@ -30,16 +34,12 @@
     <section class="watch-player-section" aria-label="Anime video player">
       <div class="video-container">
 
-        <!-- Native video player for direct video sources only -->
+        <!-- Native video player for direct video sources only (MP4/M3U8) -->
         <div id="nativePlayerContainer" hidden>
-          <video
-            id="videoPlayer"
-            playsinline
-            preload="metadata"
-          ></video>
+          <video id="videoPlayer" playsinline preload="metadata"></video>
         </div>
 
-        <!-- Google Drive preview player -->
+        <!-- Google Drive preview player (For 500MB+ files) -->
         <div id="iframePlayerContainer" hidden>
           <iframe
             id="videoIframe"
@@ -67,7 +67,7 @@
         </div>
 
         <button id="watchBookmarkBtn" type="button" hidden>
-          Add to List
+          ＋ Add to List
         </button>
       </div>
 
@@ -98,13 +98,8 @@
       </div>
 
       <div class="episode-navigation">
-        <button id="previousEpisodeBtn" type="button" disabled>
-          Previous Episode
-        </button>
-
-        <button id="nextEpisodeBtn" type="button" disabled>
-          Next Episode
-        </button>
+        <button id="previousEpisodeBtn" type="button" disabled>← Prev</button>
+        <button id="nextEpisodeBtn" type="button" disabled>Next →</button>
       </div>
     </section>
 
@@ -124,17 +119,33 @@
     <p>&copy; <span id="currentYear"></span> Anime Max Zone</p>
   </footer>
 
+  <!-- MOBILE BOTTOM NAVIGATION (From Screenshot) -->
+  <nav class="bottom-nav">
+    <a href="index.html">
+      <span class="nav-icon">🏠</span>
+      <span>Home</span>
+    </a>
+    <a href="search.html">
+      <span class="nav-icon">🔍</span>
+      <span>Search</span>
+    </a>
+    <a href="watchlist.html" class="active">
+      <span class="nav-icon">🔖</span>
+      <span>Watchlist</span>
+    </a>
+    <a href="settings.html">
+      <span class="nav-icon">⚙️</span>
+      <span>Settings</span>
+    </a>
+  </nav>
+
+  <!-- SCRIPTS -->
   <script>
-    document.getElementById("currentYear").textContent =
-      new Date().getFullYear();
+    document.getElementById("currentYear").textContent = new Date().getFullYear();
   </script>
 
   <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
-
-  <!-- Your existing Firebase configuration -->
   <script src="firebase-config.js"></script>
-
-  <!-- Existing player and watch-page logic -->
   <script src="custom-player.js"></script>
   <script src="watch.js"></script>
 </body>
