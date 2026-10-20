@@ -5,18 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Loading... — Anime Max Zone</title>
     
-    <!-- ================= FAVICON FOR ALL DEVICES ================= -->
-    <!-- Standard Desktop & Browser Tab -->
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="favicon.png" />
-    
-    <!-- Apple / iOS (iPhone/iPad Home Screen) -->
     <link rel="apple-touch-icon" href="favicon.png" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    
-    <!-- Android / Chrome Theme Color -->
     <meta name="theme-color" content="#0a0a0f" />
-    <!-- ============================================================ -->
     
     <!-- Plyr Video Player CSS -->
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
@@ -50,51 +42,15 @@
         </div>
     </header>
 
-    <!-- ================= SEARCH OVERLAY PANEL ================= -->
-    <div id="searchOverlay" class="search-overlay">
-        <div class="search-panel">
-            <div class="search-logo-container">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 300" class="search-logo-svg">
-                    <defs>
-                        <linearGradient id="maxGradientSearch" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stop-color="#e2a0ff" />
-                            <stop offset="50%" stop-color="#a855f7" />
-                            <stop offset="100%" stop-color="#7e22ce" />
-                        </linearGradient>
-                    </defs>
-                    <g font-family="'Arial Black', 'Impact', sans-serif" font-weight="900" font-size="180" letter-spacing="2" dominant-baseline="central">
-                        <text x="50" y="150" fill="#ffffff">ANIME</text>
-                        <text x="740" y="150" fill="url(#maxGradientSearch)" class="animated-max-text">MAX</text>
-                    </g>
-                </svg>
-            </div>
-            <div class="search-header">
-                <div class="search-input-group">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" /></svg>
-                    <input id="searchInput" type="search" placeholder="Search anime, genres..." autocomplete="off" />
-                </div>
-                <button id="closeSearchBtn" class="btn-close" aria-label="Close search">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-            </div>
-            <div id="liveSuggestions" class="live-suggestions"></div>
-        </div>
-    </div>
-
     <!-- ================= MAIN CONTENT ================= -->
     <main class="watch-container">
         
         <!-- STICKY VIDEO WRAPPER -->
         <div class="sticky-video-wrap">
-            <!-- Loader Skeleton -->
             <div id="playerLoading" class="video-container skeleton"></div>
-            
-            <!-- Native Player (Plyr) -->
             <div class="video-container" id="nativePlayerContainer" style="display: none;">
                 <video id="videoPlayer" playsinline controls crossorigin></video>
             </div>
-            
-            <!-- Iframe Player (Video) -->
             <div class="video-container iframe-wrapper" id="iframePlayerContainer" style="display: none;">
                 <iframe id="videoIframe" src="" allow="autoplay; fullscreen" allowfullscreen></iframe>
             </div>
@@ -132,9 +88,7 @@
             <div class="section-header">
                 <h2>Related Anime</h2>
             </div>
-            <div class="anime-grid" id="relatedGrid">
-                <!-- JS will populate this -->
-            </div>
+            <div class="anime-grid" id="relatedGrid"></div>
         </section>
 
         <!-- Error Message -->
@@ -156,9 +110,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
             </div>
-            <div class="sheet-content" id="sheetContent">
-                <!-- JS will populate episodes/seasons here -->
-            </div>
+            <div class="sheet-content" id="sheetContent"></div>
         </div>
     </div>
 
@@ -182,10 +134,8 @@
         </a>
     </nav>
 
-    <!-- Plyr JS (Best Video Player) -->
+    <!-- Plyr JS -->
     <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
-    
-    <!-- Watch Page Script -->
     <script type="module" src="watch.js"></script>
 </body>
 </html>
