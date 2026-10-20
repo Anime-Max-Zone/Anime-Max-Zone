@@ -47,10 +47,18 @@
         
         <!-- STICKY VIDEO WRAPPER -->
         <div class="sticky-video-wrap">
-            <div id="playerLoading" class="video-container skeleton"></div>
+            <div id="playerLoading" class="video-container skeleton" style="display: none;"></div>
+            
+            <!-- NATIVE PLAYER -->
             <div class="video-container" id="nativePlayerContainer" style="display: none;">
-                <video id="videoPlayer" playsinline controls crossorigin></video>
+                <video id="videoPlayer" playsinline controls></video>
+                <!-- Video Loading Spinner -->
+                <div class="video-spinner-overlay" id="videoSpinnerOverlay">
+                    <div class="video-spinner"></div>
+                </div>
             </div>
+            
+            <!-- IFRAME PLAYER (For Google Drive) -->
             <div class="video-container iframe-wrapper" id="iframePlayerContainer" style="display: none;">
                 <iframe id="videoIframe" src="" allow="autoplay; fullscreen" allowfullscreen></iframe>
             </div>
@@ -103,7 +111,7 @@
     <!-- ================= BOTTOM SHEET OVERLAY ================= -->
     <div id="bottomSheetOverlay" class="bottom-sheet-overlay">
         <div class="bottom-sheet" id="bottomSheet">
-            <div class="sheet-handle"></div>
+            <div class="sheet-handle" id="sheetHandle"></div>
             <div class="sheet-header">
                 <h3 id="sheetTitle">Select Episode</h3>
                 <button id="closeSheetBtn" class="btn-close" aria-label="Close">
@@ -136,6 +144,8 @@
 
     <!-- Plyr JS -->
     <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    
+    <!-- Watch Page Script -->
     <script type="module" src="watch.js"></script>
 </body>
 </html>
