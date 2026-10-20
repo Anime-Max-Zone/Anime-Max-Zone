@@ -1,5 +1,5 @@
 /* ============================================================
-   ANIME MAX ZONE — Custom Video Controller Logic
+   ANIME MAX ZONE — Custom Video Controller
    ============================================================ */
 
 let player = null;
@@ -7,7 +7,8 @@ let player = null;
 // 1. Initialize Plyr (Default controls ko hide kar dein)
 function initCustomPlayer(videoElementId, sources, subtitles) {
     const videoElement = document.getElementById(videoElementId);
-    
+    if (!videoElement) return;
+
     // Empty the video tag and add sources
     videoElement.innerHTML = "";
     
@@ -30,57 +31,71 @@ function initCustomPlayer(videoElementId, sources, subtitles) {
         videoElement.appendChild(track);
     });
 
-    // Initialize Plyr with NO controls (Custom UI banayenge)
+    // Destroy previous instance if any
+    if (player) {
+        player.destroy();
+    }
+
+    // Initialize Plyr with NO controls (Humara custom UI chalega)
     player = new Plyr(videoElement, {
-        controls: [], // Plyr ke controls hide
+        controls: [], 
         settings: ['captions', 'quality', 'speed'],
-        hideControls: false, // Plyr controls hide mat karo
+        hideControls: false, 
         clickToPlay: true
     });
 
-    // Attach Custom Events
+    // Attach Events
     bindCustomControls();
     addDoubleTapToSeek();
     addCustomSettingsLogic();
+    
+    // Player ko globally expose karein taaki watch.js use kar sake
+    window.player = player; 
 }
 
 // 2. Bind Custom HTML Buttons to Plyr API
 function bindCustomControls() {
-    // Play/Pause Button
     const playBtn = document.getElementById("customPlayBtn");
-    if (playBtn) {
-        playBtn.addEventListener("click", () => {
-            player.togglePlay();
+    const playIcon = document.getElementById("customPlayIcon");
+    const centerPlayBtn = document.getElementById("centerPlayBtn");
+    const progressBar = document.getElementById("customProgressBar");
+    const muteBtn = document.getElementById("customMuteBtn");
+    const fullScreenBtn = document.getElementById("customFullScreenBtn");
+    const fullScreenIcon = document.getElementById("customFullScreenIcon");
+
+    // Play/Pause
+    if (playBtn && centerPlayBtn && playIcon) {
+        playBtn.addEventListener("click", () => player.togglePlay());
+        centerPlayBtn.addEventListener("click", () => player.play());
+        
+        player.on("play", () => { 
+            playIcon.innerHTML = `<path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>`; 
+            centerPlayBtn.style.display = "none";
         });
         
-        // Update Icon based on state
-        player.on("play", () => { playBtn.innerHTML = `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`; });
-        player.on("pause", () => { playBtn.innerHTML = `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>`; });
+        player.on("pause", () => { 
+            playIcon.innerHTML = `<path fill="currentColor" d="M8 5v14l11-7z"/>`; 
+            centerPlayBtn.style.display = "flex";
+        });
     }
 
     // Progress Bar
-    const progressBar = document.getElementById("customProgressBar");
     if (progressBar) {
-        // Update progress bar on timeupdate
         player.on("timeupdate", () => {
             const percent = (player.currentTime / player.duration) * 100;
             progressBar.value = percent || 0;
             updateTimeDisplay(player.currentTime, player.duration);
         });
 
-        // Seek video on progress bar change
         progressBar.addEventListener("input", () => {
             const seekTo = player.duration * (progressBar.value / 100);
             player.currentTime = seekTo;
         });
     }
 
-    // Volume/Mute Button
-    const muteBtn = document.getElementById("customMuteBtn");
+    // Mute / Unmute
     if (muteBtn) {
-        muteBtn.addEventListener("click", () => {
-            player.muted = !player.muted;
-        });
+        muteBtn.addEventListener("click", () => player.muted = !player.muted);
         
         player.on("volumechange", () => {
             if (player.muted || player.volume === 0) {
@@ -91,11 +106,16 @@ function bindCustomControls() {
         });
     }
 
-    // Fullscreen Button
-    const fullScreenBtn = document.getElementById("customFullScreenBtn");
+    // Fullscreen
     if (fullScreenBtn) {
-        fullScreenBtn.addEventListener("click", () => {
-            player.fullscreen.toggle();
+        fullScreenBtn.addEventListener("click", () => player.fullscreen.toggle());
+        
+        player.on("enterfullscreen", () => {
+            if(fullScreenIcon) fullScreenIcon.innerHTML = `<path fill="currentColor" d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>`;
+        });
+        
+        player.on("exitfullscreen", () => {
+            if(fullScreenIcon) fullScreenIcon.innerHTML = `<path fill="currentColor" d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>`;
         });
     }
 }
@@ -103,32 +123,64 @@ function bindCustomControls() {
 // 3. Custom Settings / BottomSheet Logic
 function addCustomSettingsLogic() {
     const settingsBtn = document.getElementById("customSettingsBtn");
-    const customSheet = document.getElementById("customSettingsSheet"); // Apni HTML sheet ka ID
+    const settingsSheet = document.getElementById("settingsSheetOverlay");
+    const settingsContent = document.getElementById("settingsContent");
+    const closeSettingsBtn = document.getElementById("closeSettingsBtn");
 
-    if (settingsBtn && customSheet) {
+    if (settingsBtn && settingsSheet && settingsContent) {
         settingsBtn.addEventListener("click", () => {
-            // Yahan aap apna BottomSheet open kar sakte hain
-            customSheet.classList.add("active");
+            let html = `<div class="settings-group"><h4>Quality</h4><div class="settings-options">`;
             
-            // Example: Quality Options Fetch karna (Plyr API se)
-            let qualityHTML = "";
-            player.quality.options.forEach((quality, index) => {
-                qualityHTML += `<button onclick="player.quality = ${quality}; customSheet.classList.remove('active');">
-                    ${quality}p
-                </button>`;
-            });
+            // Quality Options
+            if (player.quality && player.quality.options && player.quality.options.length > 0) {
+                player.quality.options.forEach(q => {
+                    let active = player.quality === q ? "active" : "";
+                    html += `<button class="settings-btn ${active}" onclick="player.quality = ${q}; document.getElementById('settingsSheetOverlay').classList.remove('active');">${q}p</button>`;
+                });
+            } else {
+                html += `<button class="settings-btn active">Auto</button>`;
+            }
+            html += `</div></div>`;
+
+            // Subtitles Options
+            html += `<div class="settings-group"><h4>Subtitles</h4><div class="settings-options">`;
+            html += `<button class="settings-btn" onclick="toggleSubs(-1); document.getElementById('settingsSheetOverlay').classList.remove('active');">Off</button>`;
             
-            // Apni sheet ke andar quality buttons daal dein
-            document.getElementById("qualityList").innerHTML = qualityHTML;
-            
-            // Same logic Audio aur Subtitles ke liye bhi likh sakte hain
+            const videoElement = document.getElementById("videoPlayer");
+            if (videoElement && videoElement.textTracks) {
+                for (let i = 0; i < videoElement.textTracks.length; i++) {
+                    let active = videoElement.textTracks[i].mode === 'showing' ? 'active' : '';
+                    html += `<button class="settings-btn ${active}" onclick="toggleSubs(${i}); document.getElementById('settingsSheetOverlay').classList.remove('active');">${videoElement.textTracks[i].label}</button>`;
+                }
+            }
+            html += `</div></div>`;
+
+            settingsContent.innerHTML = html;
+            settingsSheet.classList.add("active");
         });
     }
+
+    if (closeSettingsBtn && settingsSheet) {
+        closeSettingsBtn.addEventListener("click", () => settingsSheet.classList.remove("active"));
+        settingsSheet.addEventListener("click", (e) => { if (e.target === settingsSheet) settingsSheet.classList.remove("active"); });
+    }
 }
+
+// Global Function for Subtitle Toggle
+window.toggleSubs = (index) => {
+    const videoElement = document.getElementById("videoPlayer");
+    if (!videoElement) return;
+
+    for (let i = 0; i < videoElement.textTracks.length; i++) {
+        videoElement.textTracks[i].mode = (i === index) ? 'showing' : 'hidden';
+    }
+};
 
 // 4. Double Tap to Seek (YouTube Style)
 function addDoubleTapToSeek() {
     const videoContainer = document.getElementById("nativePlayerContainer");
+    if (!videoContainer) return;
+    
     let lastTap = 0;
 
     videoContainer.addEventListener('touchend', (e) => {
@@ -137,16 +189,15 @@ function addDoubleTapToSeek() {
         
         if (tapLength < 300 && tapLength > 0) {
             e.preventDefault(); 
-            
             const rect = videoContainer.getBoundingClientRect();
             const tapX = e.changedTouches[0].clientX - rect.left;
             
             if (player) {
                 if (tapX < rect.width / 2) {
-                    player.currentTime -= 10; // Left side -10s
+                    player.currentTime -= 10; 
                     showSeekAnimation("backward");
                 } else {
-                    player.currentTime += 10; // Right side +10s
+                    player.currentTime += 10; 
                     showSeekAnimation("forward");
                 }
             }
@@ -155,30 +206,32 @@ function addDoubleTapToSeek() {
     });
 }
 
-// Helper: Format Time (00:00)
+// Helpers
 function updateTimeDisplay(current, total) {
     const currentTimeEl = document.getElementById("customCurrentTime");
     const durationEl = document.getElementById("customDuration");
     
     const format = (time) => {
-        if (isNaN(time)) return "00:00";
+        if (isNaN(time)) return "0:00";
         let m = Math.floor(time / 60);
         let s = Math.floor(time % 60);
-        return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+        return `${m}:${s < 10 ? '0' : ''}${s}`;
     };
     
     if (currentTimeEl) currentTimeEl.textContent = format(current);
     if (durationEl) durationEl.textContent = format(total);
 }
 
-// Seek Animation Helper
 function showSeekAnimation(direction) {
     const videoContainer = document.getElementById("nativePlayerContainer");
+    if (!videoContainer) return;
+
     const existing = document.querySelector('.seek-overlay');
     if (existing) existing.remove();
 
     let overlay = document.createElement("div");
     overlay.className = `seek-overlay ${direction === "forward" ? "right" : "left"}`;
+    
     let svgIcon = direction === "forward" 
         ? `<svg viewBox="0 0 24 24" fill="white"><path d="M11.99 5V1l-5 5 5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6h-2c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>` 
         : `<svg viewBox="0 0 24 24" fill="white"><path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"/></svg>`;
