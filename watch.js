@@ -1,5 +1,5 @@
 /* ============================================================
-   ANIME MAX ZONE — Watch Page & Search Logic
+   ANIME MAX ZONE — Watch Page Logic
    ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -17,39 +17,33 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ---------- 1. DOM Elements ----------
-// Player Elements
+// DOM Elements
 const playerLoading = document.getElementById("playerLoading");
 const nativePlayerContainer = document.getElementById("nativePlayerContainer");
 const iframePlayerContainer = document.getElementById("iframePlayerContainer");
 const videoIframe = document.getElementById("videoIframe");
 const videoPlayer = document.getElementById("videoPlayer");
 
-// Info Elements
 const watchInfo = document.getElementById("watchInfo");
 const errorMessage = document.getElementById("errorMessage");
 const episodeTitleEl = document.getElementById("episodeTitle");
 const animeLink = document.getElementById("animeLink");
 
-// Season & Episode Buttons
 const seasonBtn = document.getElementById("seasonBtn");
 const episodeBtn = document.getElementById("episodeBtn");
 const seasonEpisodeWrapper = document.getElementById("seasonEpisodeWrapper");
 const currentSeasonText = document.getElementById("currentSeasonText");
 const currentEpisodeText = document.getElementById("currentEpisodeText");
 
-// Bottom Sheet Elements
 const bottomSheetOverlay = document.getElementById("bottomSheetOverlay");
 const bottomSheet = document.getElementById("bottomSheet");
 const sheetTitle = document.getElementById("sheetTitle");
 const sheetContent = document.getElementById("sheetContent");
 const closeSheetBtn = document.getElementById("closeSheetBtn");
 
-// Related Anime Elements
 const relatedSection = document.getElementById("relatedSection");
 const relatedGrid = document.getElementById("relatedGrid");
 
-// Search Overlay Elements
 const openSearchBtn = document.getElementById("openSearchBtn");
 const navSearchBtn = document.getElementById("navSearchBtn");
 const closeSearchBtn = document.getElementById("closeSearchBtn");
@@ -60,7 +54,6 @@ const liveSuggestions = document.getElementById("liveSuggestions");
 let allAnimeForSearch = []; 
 let player = null; 
 
-// ---------- 2. Demo Data & Fallbacks ----------
 const demoData = [
     { id: '1', title: 'Demon Slayer', genres: ['Action', 'Fantasy'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1286/99889.jpg', type: 'series', totalEpisodes: 12, totalSeasons: 2 },
     { id: '2', title: 'Jujutsu Kaisen', genres: ['Action', 'Supernatural'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1171/109222.jpg', type: 'series', totalEpisodes: 24, totalSeasons: 2 },
@@ -73,7 +66,6 @@ const demoData = [
 const DUMMY_VIDEO_1080 = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
 const DEMO_SUBTITLE_EN = "https://raw.githubusercontent.com/mozilla/vtt.js/master/tests/subtitles/subtitles.vtt";
 
-// ---------- 3. Helper Functions ----------
 function escapeHTML(str) {
     if (str == null) return "";
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -92,9 +84,7 @@ const FALLBACK_POSTER = "data:image/svg+xml;utf8," + encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300"><rect width="200" height="300" fill="#1a1a24"/><text x="100" y="150" fill="#555" text-anchor="middle" font-family="sans-serif" font-size="14">No Image</text></svg>`
 );
 
-// ============================================================
-// 4. SEARCH OVERLAY LOGIC
-// ============================================================
+// --- SEARCH LOGIC ---
 async function fetchAnimeForSearch() {
     try {
         const q = query(collection(db, "anime"), orderBy("createdAt", "desc"), limit(60));
@@ -179,9 +169,7 @@ if(searchInput) {
     });
 }
 
-// ============================================================
-// 5. BOTTOM SHEET LOGIC
-// ============================================================
+// --- BOTTOM SHEET LOGIC ---
 function openBottomSheet() {
     bottomSheetOverlay.classList.add("active");
     document.body.style.overflow = "hidden"; 
@@ -199,9 +187,7 @@ if(bottomSheetOverlay) {
     });
 }
 
-// ============================================================
-// 6. WATCH PAGE LOGIC
-// ============================================================
+// --- WATCH PAGE LOGIC ---
 async function loadWatchPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const animeId = urlParams.get('animeId');
@@ -236,9 +222,6 @@ function renderPlayer(anime, epNum, seasonNum) {
     animeLink.textContent = title;
     animeLink.href = `anime.html?id=${anime.id}`; 
     
-    // ---------------------------------------------
-    // VIDEO SOURCES & SUBTITLES
-    // ---------------------------------------------
     const videoSources = [
         { src: anime.videoUrl || DUMMY_VIDEO_1080, type: "video/mp4", size: 1080, label: "1080p HD" },
         { src: anime.videoUrl || DUMMY_VIDEO_1080, type: "video/mp4", size: 720, label: "720p" },
@@ -249,7 +232,6 @@ function renderPlayer(anime, epNum, seasonNum) {
         { src: DEMO_SUBTITLE_EN, label: "English", srclang: "en", default: true }
     ];
 
-    // Check if the video URL is a Google Drive link
     if (videoSources[0].src.includes("drive.google.com")) {
         nativePlayerContainer.style.display = "none";
         iframePlayerContainer.style.display = "block";
@@ -259,17 +241,13 @@ function renderPlayer(anime, epNum, seasonNum) {
         const match = videoSources[0].src.match(driveRegex);
         if (match && match[1]) fileId = match[1];
 
-        // Load GDrive Iframe (Toolbar hidden via CSS)
         videoIframe.src = `https://drive.google.com/file/d/${fileId}/preview`;
-        
     } else {
-        // Load Native Plyr Player
         iframePlayerContainer.style.display = "none";
         nativePlayerContainer.style.display = "block";
 
         videoPlayer.innerHTML = "";
         
-        // Add Sources for Quality selection
         videoSources.forEach(sourceData => {
             const source = document.createElement("source");
             source.src = sourceData.src;
@@ -279,7 +257,6 @@ function renderPlayer(anime, epNum, seasonNum) {
             videoPlayer.appendChild(source);
         });
 
-        // Add Subtitles
         subtitles.forEach(sub => {
             const track = document.createElement("track");
             track.kind = "captions";
@@ -292,7 +269,6 @@ function renderPlayer(anime, epNum, seasonNum) {
 
         videoPlayer.poster = anime.coverImageUrl || "";
 
-        // Initialize Plyr
         if (!player) {
             player = new Plyr(videoPlayer, {
                 controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'],
@@ -307,9 +283,6 @@ function renderPlayer(anime, epNum, seasonNum) {
         }
     }
 
-    // ---------------------------------------------
-    // SEASON & EPISODE UI LOGIC
-    // ---------------------------------------------
     const isMovie = anime.type === "movie" || (anime.totalEpisodes === 1 && !anime.totalSeasons);
     
     if (isMovie) {
@@ -325,7 +298,6 @@ function renderPlayer(anime, epNum, seasonNum) {
         currentEpisodeText.textContent = `Episode ${epNum}`;
         currentSeasonText.textContent = `Season ${seasonNum}`;
 
-        // Episode Button Click
         episodeBtn.onclick = () => {
             sheetTitle.textContent = "Select Episode";
             let epsHTML = `<div class="sheet-grid">`;
@@ -347,7 +319,6 @@ function renderPlayer(anime, epNum, seasonNum) {
             openBottomSheet();
         };
 
-        // Season Button Click
         seasonBtn.onclick = () => {
             sheetTitle.textContent = "Select Season";
             const totalSeasons = anime.totalSeasons || 1; 
@@ -370,9 +341,6 @@ function renderPlayer(anime, epNum, seasonNum) {
         };
     }
 
-    // ---------------------------------------------
-    // LOAD RELATED ANIME
-    // ---------------------------------------------
     renderRelatedAnime(anime.id);
 }
 
