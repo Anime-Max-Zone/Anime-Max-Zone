@@ -4,132 +4,108 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
-  <title>Anime Max Zone</title>
+  <title>Loading Anime — Anime Max Zone</title>
   <meta name="theme-color" content="#08080b">
-  <meta name="description" content="Watch anime on Anime Max Zone.">
+  <meta name="description" content="Watch anime episodes on Anime Max Zone.">
 
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="stylesheet" href="video-player.css">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 
 <body>
 
-  <!-- Header -->
+  <!-- Sticky Header: No Back Button -->
   <header class="site-header" id="siteHeader">
     <a href="index.html" class="brand" aria-label="Anime Max Zone Home">
-      <span class="brand-icon">A</span>
-      <span class="brand-name">ANIME <b>MAX</b> ZONE</span>
-    </a>
-
-    <a href="index.html" class="header-home" aria-label="Home">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M15 18l-6-6 6-6"/>
-      </svg>
-      <span>Back</span>
+      <img src="logo.png" alt="Anime Max Zone" class="brand-logo">
     </a>
   </header>
 
   <main class="player-page">
 
-    <!-- Anime information -->
+    <!-- Anime Heading -->
     <section class="episode-heading">
       <div class="episode-details">
         <span class="episode-label">NOW PLAYING</span>
         <h1 id="animeTitle">Loading Anime...</h1>
-        <p id="episodeTitle">Please wait while the episode loads.</p>
+        <p id="episodeTitle">Loading episode...</p>
       </div>
 
-      <button
-        type="button"
-        class="icon-button"
-        id="shareButton"
-        aria-label="Share episode"
-        title="Share">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
+      <button type="button" class="icon-button" id="shareButton"
+        aria-label="Share episode" title="Share">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M12 16V3m-5 5 5-5 5 5"/>
           <path d="M5 12v8h14v-8"/>
         </svg>
       </button>
     </section>
 
-    <!-- Video player -->
+    <!-- Video Player -->
     <section class="video-section" aria-label="Anime video player">
-
       <div class="video-player" id="playerContainer">
 
+        <!-- Native browser controls intentionally disabled -->
         <video
           id="videoPlayer"
           playsinline
           webkit-playsinline
           preload="metadata"
-          disablepictureinpicture="false"
           controlslist="nodownload noremoteplayback"
           aria-label="Anime episode video">
         </video>
 
-        <!-- Cinematic intro -->
+        <!-- Cinematic Intro -->
         <div class="cinematic-intro" id="cinematicIntro">
           <div class="intro-content">
-            <div class="intro-logo">ANIME <span>MAX</span> ZONE</div>
+            <img src="logo.png" alt="Anime Max Zone" class="intro-logo-image">
             <div class="intro-line"></div>
             <p>YOUR ANIME WORLD</p>
           </div>
         </div>
 
-        <!-- Loading indicator -->
+        <!-- Loading -->
         <div class="player-loading" id="videoLoading">
           <div class="loading-spinner"></div>
           <p id="loadingText">Loading episode...</p>
         </div>
 
-        <!-- Error display -->
+        <!-- Error -->
         <div class="player-error" id="playerError" hidden>
           <div class="error-icon">!</div>
           <h2>Unable to Play Video</h2>
-          <p id="errorMessage">
-            The video could not be loaded. Please try again.
-          </p>
+          <p id="errorMessage">The video could not be loaded. Please try again.</p>
           <button type="button" id="retryButton">Try Again</button>
         </div>
 
-        <!-- Center controls -->
+        <!-- Center Controls -->
         <div class="center-controls" id="centerControls">
 
-          <button
-            type="button"
-            id="back10"
-            class="seek-action"
-            aria-label="Back 10 seconds">
-            <svg viewBox="0 0 48 48" aria-hidden="true">
+          <button type="button" id="back10" class="seek-action"
+            aria-label="Back 10 seconds" title="Back 10 seconds">
+            <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
               <path d="M15 9 6 18l9 9"/>
               <path d="M7 18h15a14 14 0 1 1-12 21"/>
             </svg>
             <span>10s</span>
           </button>
 
-          <button
-            type="button"
-            id="playPause"
-            class="main-play-button"
-            aria-label="Play video">
-            <svg id="playIcon" viewBox="0 0 48 48" aria-hidden="true">
+          <button type="button" id="playPause" class="main-play-button"
+            aria-label="Play video" title="Play/Pause">
+            <svg id="playIcon" viewBox="0 0 48 48" fill="none" aria-hidden="true">
               <path d="M15 8v32l26-16z"/>
             </svg>
-            <svg id="pauseIcon" viewBox="0 0 48 48" aria-hidden="true" hidden>
+            <svg id="pauseIcon" viewBox="0 0 48 48" fill="none" aria-hidden="true" hidden>
               <path d="M13 9h8v30h-8zM27 9h8v30h-8z"/>
             </svg>
           </button>
 
-          <button
-            type="button"
-            id="forward10"
-            class="seek-action"
-            aria-label="Forward 10 seconds">
-            <svg viewBox="0 0 48 48" aria-hidden="true">
+          <button type="button" id="forward10" class="seek-action"
+            aria-label="Forward 10 seconds" title="Forward 10 seconds">
+            <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
               <path d="m33 9 9 9-9 9"/>
               <path d="M41 18H26a14 14 0 1 0 12 21"/>
             </svg>
@@ -138,131 +114,122 @@
 
         </div>
 
-        <!-- Left brightness control -->
-        <div class="side-control brightness-control" id="brightnessControl">
-          <button
-            type="button"
-            id="brightnessIcon"
-            class="side-icon"
-            aria-label="Brightness">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="12" cy="12" r="4"/>
-              <path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/>
-            </svg>
-          </button>
-
-          <input
-            type="range"
-            id="brightnessSlider"
-            class="vertical-slider"
-            min="30"
-            max="100"
-            value="100"
+        <!-- Brightness hidden -->
+        <div class="side-control brightness-control" id="brightnessControl"
+          hidden aria-hidden="true">
+          <button type="button" id="brightnessIcon" class="side-icon"
+            tabindex="-1" aria-label="Brightness"></button>
+          <input type="range" id="brightnessSlider" class="vertical-slider"
+            min="30" max="100" value="100" tabindex="-1"
             aria-label="Screen brightness">
         </div>
 
-        <!-- Right volume control -->
-        <div class="side-control volume-control" id="volumeControl">
-          <button
-            type="button"
-            id="muteButton"
-            class="side-icon"
-            aria-label="Mute audio">
-            <svg id="volumeIcon" viewBox="0 0 24 24" aria-hidden="true">
+        <!-- Volume hidden -->
+        <div class="side-control volume-control" id="volumeControl"
+          hidden aria-hidden="true">
+          <button type="button" id="muteButton" class="side-icon"
+            tabindex="-1" aria-label="Mute audio">
+            <svg id="volumeIcon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M11 5 6 9H3v6h3l5 4z"/>
               <path d="M15 9a5 5 0 0 1 0 6m3-9a9 9 0 0 1 0 12"/>
             </svg>
-            <svg id="mutedIcon" viewBox="0 0 24 24" aria-hidden="true" hidden>
+            <svg id="mutedIcon" viewBox="0 0 24 24" fill="none" aria-hidden="true" hidden>
               <path d="M11 5 6 9H3v6h3l5 4z"/>
               <path d="m16 9 5 6m0-6-5 6"/>
             </svg>
           </button>
-
-          <input
-            type="range"
-            id="volumeSlider"
-            class="vertical-slider"
-            min="0"
-            max="100"
-            value="100"
-            aria-label="Volume">
+          <input type="range" id="volumeSlider" class="vertical-slider"
+            min="0" max="100" value="100" tabindex="-1" aria-label="Volume">
         </div>
 
-        <!-- Custom bottom controls -->
+        <!-- Player Controls -->
         <div class="player-controls" id="customControls">
 
           <div class="timeline-row">
             <span id="currentTime">00:00</span>
-
-            <input
-              type="range"
-              id="seekBar"
-              min="0"
-              max="1000"
-              value="0"
-              step="1"
-              aria-label="Video timeline">
-
+            <input type="range" id="seekBar" min="0" max="1000"
+              value="0" step="1" aria-label="Video timeline">
             <span id="duration">00:00</span>
           </div>
 
           <div class="toolbar">
 
-            <button type="button" class="toolbar-button" id="speedButton">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
+            <button type="button" class="toolbar-button icon-only"
+              id="speedButton" aria-label="Playback speed" title="Speed">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M4.9 19a9 9 0 1 1 14.2 0"/>
                 <path d="m12 13 4-5m-4 5-2 4"/>
+                <circle cx="12" cy="13" r="1"/>
               </svg>
-              <span>Speed <b id="speedValue">1x</b></span>
+              <span id="speedValue" class="sr-only">1x</span>
             </button>
 
-            <button type="button" class="toolbar-button" id="qualityButton">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
+            <button type="button" class="toolbar-button icon-only"
+              id="qualityButton" aria-label="Video quality" title="Quality">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <rect x="3" y="5" width="18" height="14" rx="2"/>
                 <path d="m4 16 5-5 4 4 3-3 4 4"/>
               </svg>
-              <span id="qualityLabel">HD Quality</span>
+              <span id="qualityLabel" class="sr-only">Auto Quality</span>
             </button>
 
-            <button type="button" class="toolbar-button" id="lockButton">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
+            <button type="button" class="toolbar-button icon-only"
+              id="episodeButton" aria-label="Select episode" title="Episodes">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="7" y="3" width="14" height="14" rx="2"/>
+                <path d="M4 7v14h14m-7-13h6m-6 4h6"/>
+              </svg>
+            </button>
+
+            <button type="button" class="toolbar-button icon-only"
+              id="audioButton" aria-label="Audio tracks" title="Audio">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 10v4m4-7v10m4-13v16m4-13v10m4-7v4"/>
+              </svg>
+            </button>
+
+            <button type="button" class="toolbar-button icon-only"
+              id="subtitleButton" aria-label="Subtitles" title="Subtitles">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="2.5" y="5" width="19" height="14" rx="2"/>
+                <path d="M6 10h5m-5 4h3m5-4h5m-5 4h5"/>
+              </svg>
+            </button>
+
+            <button type="button" class="toolbar-button icon-only"
+              id="lockButton" aria-label="Lock controls" title="Lock">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <rect x="4" y="10" width="16" height="11" rx="2"/>
                 <path d="M8 10V7a4 4 0 0 1 8 0v3"/>
                 <circle cx="12" cy="15" r="1"/>
               </svg>
-              <span id="lockLabel">Lock</span>
+              <span id="lockLabel" class="sr-only">Lock</span>
             </button>
 
-            <button type="button" class="toolbar-button" id="audioSubtitleButton">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M4 4h16v13H13l-4 4v-4H4z"/>
-                <path d="M7 8h4m2 0h4M7 12h3m3 0h4"/>
+            <button type="button" class="toolbar-button icon-only"
+              id="fullscreenButton" aria-label="Enter fullscreen" title="Fullscreen">
+              <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/>
               </svg>
-              <span>Audio &amp; Subtitles</span>
-            </button>
-
-            <button type="button" class="toolbar-button" id="episodeButton">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <rect x="7" y="3" width="14" height="14" rx="2"/>
-                <path d="M4 7v14h14"/>
+              <svg id="exitFullscreenIcon" viewBox="0 0 24 24" fill="none" aria-hidden="true" hidden>
+                <path d="M8 3v5H3m13-5v5h5M3 16h5v5m8 0v-5h5"/>
               </svg>
-              <span>Select Episode</span>
             </button>
 
-            <button type="button" class="toolbar-button" id="nextButton">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
+            <button type="button" id="nextButton"
+              class="toolbar-button icon-only" aria-label="Next episode" title="Next">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="m5 4 12 8-12 8zM20 4v16"/>
               </svg>
-              <span>Next</span>
             </button>
 
           </div>
         </div>
 
-        <!-- Lock screen overlay -->
+        <!-- Lock Overlay -->
         <div class="lock-overlay" id="lockOverlay" hidden>
-          <button type="button" id="unlockButton">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
+          <button type="button" id="unlockButton" aria-label="Unlock controls">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <rect x="4" y="10" width="16" height="11" rx="2"/>
               <path d="M8 10V7a4 4 0 0 1 8 0"/>
             </svg>
@@ -270,13 +237,13 @@
           </button>
         </div>
 
-        <!-- Settings popup -->
+        <!-- Speed Popup -->
         <div class="player-popup" id="settingsPopup" hidden>
           <div class="popup-header">
             <h3>Playback Speed</h3>
-            <button type="button" class="popup-close" data-close-popup="settingsPopup">✕</button>
+            <button type="button" class="popup-close"
+              data-close-popup="settingsPopup" aria-label="Close">✕</button>
           </div>
-
           <div class="option-list" id="speedOptions">
             <button type="button" data-speed="0.5">0.5x</button>
             <button type="button" data-speed="0.75">0.75x</button>
@@ -287,13 +254,13 @@
           </div>
         </div>
 
-        <!-- Audio & subtitles popup -->
+        <!-- Audio and Subtitle Popup -->
         <div class="player-popup track-popup" id="tracksPopup" hidden>
           <div class="popup-header">
             <h3>Audio &amp; Subtitles</h3>
-            <button type="button" class="popup-close" data-close-popup="tracksPopup">✕</button>
+            <button type="button" class="popup-close"
+              data-close-popup="tracksPopup" aria-label="Close">✕</button>
           </div>
-
           <div class="track-columns">
             <section>
               <h4>Audio</h4>
@@ -301,9 +268,8 @@
                 <p class="empty-option">Audio tracks depend on the video source.</p>
               </div>
             </section>
-
             <section>
-              <h4>Subtitle</h4>
+              <h4>Subtitles</h4>
               <div id="subtitleOptions" class="option-list">
                 <button type="button" data-subtitle="off" class="selected">Off</button>
               </div>
@@ -311,27 +277,25 @@
           </div>
         </div>
 
-        <!-- Video quality popup -->
+        <!-- Quality Popup -->
         <div class="player-popup quality-popup" id="qualityPopup" hidden>
           <div class="popup-header">
             <h3>Video Quality</h3>
-            <button type="button" class="popup-close" data-close-popup="qualityPopup">✕</button>
+            <button type="button" class="popup-close"
+              data-close-popup="qualityPopup" aria-label="Close">✕</button>
           </div>
-
           <div class="option-list" id="qualityOptions">
-            <p class="empty-option">
-              Available quality depends on the video source.
-            </p>
+            <p class="empty-option">Available quality depends on the video source.</p>
           </div>
         </div>
 
-        <!-- Episode list popup -->
+        <!-- Episode Popup -->
         <div class="player-popup episode-popup" id="episodePopup" hidden>
           <div class="popup-header">
             <h3>Select Episode</h3>
-            <button type="button" class="popup-close" data-close-popup="episodePopup">✕</button>
+            <button type="button" class="popup-close"
+              data-close-popup="episodePopup" aria-label="Close">✕</button>
           </div>
-
           <div id="episodeList" class="option-list">
             <p class="empty-option">Loading episodes...</p>
           </div>
@@ -340,11 +304,11 @@
       </div>
     </section>
 
-    <!-- Episode information -->
+    <!-- Episode Information -->
     <section class="episode-info">
       <div>
         <span class="info-label">ANIME</span>
-        <h2 id="infoAnimeTitle">Anime Max Zone</h2>
+        <h2 id="infoAnimeTitle">Loading Anime...</h2>
       </div>
 
       <div>
@@ -357,7 +321,7 @@
       </p>
     </section>
 
-    <!-- Next episode -->
+    <!-- Next Episode -->
     <section class="next-episode-section" id="nextEpisodeSection" hidden>
       <h2>Continue Watching</h2>
       <button type="button" id="nextEpisodeCard" class="next-episode-card">
@@ -374,7 +338,10 @@
 
   <!-- Footer -->
   <footer class="site-footer" id="siteFooter">
-    <a href="index.html" class="footer-brand">ANIME MAX ZONE</a>
+    <a href="index.html" class="footer-brand">
+      <img src="logo.png" alt="Anime Max Zone" class="footer-logo">
+    </a>
+
     <p>Your Anime World.</p>
 
     <nav class="footer-links" aria-label="Footer navigation">
@@ -388,36 +355,37 @@
     </p>
   </footer>
 
-  <!-- Mobile bottom navigation -->
+  <!-- Bottom Navigation -->
   <nav class="bottom-navigation" id="bottomNavigation" aria-label="Bottom navigation">
 
-    <a href="index.html" class="bottom-nav-item">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
+    <a href="index.html" class="bottom-nav-item" aria-label="Home">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>
       </svg>
       <span>Home</span>
     </a>
 
-    <a href="index.html#search" class="bottom-nav-item">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
+    <a href="index.html#search" class="bottom-nav-item" aria-label="Search">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <circle cx="10.5" cy="10.5" r="6.5"/>
         <path d="m16 16 5 5"/>
       </svg>
       <span>Search</span>
     </a>
 
-    <a href="index.html#trending" class="bottom-nav-item">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 22c5 0 8-3 8-8 0-3-2-6-5-9 0 3-1 4-2 5 0-4-2-7-5-9 1 5-4 8-4 13 0 5 3 8 8 8z"/>
-      </svg>
-      <span>Trending</span>
-    </a>
-
-    <a href="index.html#bookmarks" class="bottom-nav-item">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
+    <a href="index.html#bookmarks" class="bottom-nav-item" aria-label="Watchlist">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/>
       </svg>
       <span>Watchlist</span>
+    </a>
+
+    <a href="profile.html" class="bottom-nav-item" aria-label="Profile">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 21a8 8 0 0 1 16 0"/>
+      </svg>
+      <span>Profile</span>
     </a>
 
   </nav>
@@ -428,6 +396,5 @@
   </script>
 
   <script type="module" src="video-player.js"></script>
-
 </body>
 </html>
