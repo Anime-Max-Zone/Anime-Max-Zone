@@ -1,37 +1,42 @@
 /* =========================================================
-   ANIME MAX ZONE — VIDEO PLAYER
+   ANIME MAX ZONE — PREMIUM GOLD VIDEO PLAYER
    File: video-player.css
-   Theme: Premium Dark / Purple / Neon
+   Theme: Black + Gold + Golden Glow
+   Compatible with the provided video-player.html
    ========================================================= */
 
 :root {
   color-scheme: dark;
 
-  --bg: #08080b;
-  --bg-secondary: #0d0d13;
-  --surface: #12121a;
-  --surface-hover: #1a1a25;
+  --bg: #080807;
+  --bg-secondary: #0d0c09;
+  --surface: #14120d;
+  --surface-hover: #211b0e;
 
-  --accent: #a855f7;
-  --accent-light: #c084fc;
-  --accent-pink: #ec4899;
-  --accent-blue: #6366f1;
+  --gold: #d4af37;
+  --gold-light: #ffe7a0;
+  --gold-bright: #ffcf40;
+  --gold-dark: #8f6b12;
 
-  --text: #f7f7fb;
-  --text-secondary: #a1a1b2;
-  --text-muted: #717184;
+  --text: #fffdf5;
+  --text-secondary: #b8b2a0;
+  --text-muted: #777160;
 
-  --border: rgba(255, 255, 255, 0.09);
-  --glass: rgba(12, 12, 19, 0.88);
+  --border: rgba(212, 175, 55, 0.17);
+  --border-strong: rgba(212, 175, 55, 0.38);
 
-  --header-height: 68px;
-  --bottom-nav-height: 68px;
+  --glass: rgba(12, 11, 8, 0.94);
+
+  --header-height: 66px;
+  --bottom-nav-height: 66px;
 
   --radius-sm: 10px;
   --radius-md: 16px;
-  --radius-lg: 22px;
+  --radius-lg: 20px;
 
-  --shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  --shadow:
+    0 14px 45px rgba(0, 0, 0, 0.5),
+    0 0 22px rgba(212, 175, 55, 0.05);
 }
 
 /* =========================================================
@@ -50,19 +55,19 @@ html {
 }
 
 body {
-  margin: 0;
   min-height: 100vh;
+  margin: 0;
   overflow-x: hidden;
 
+  color: var(--text);
   background:
     radial-gradient(
       ellipse at 50% -20%,
-      rgba(124, 58, 237, 0.12),
+      rgba(212, 175, 55, 0.11),
       transparent 55%
     ),
     var(--bg);
 
-  color: var(--text);
   font-family: "Inter", sans-serif;
   font-size: 14px;
   line-height: 1.5;
@@ -80,6 +85,7 @@ input {
 
 button {
   color: inherit;
+  border: 0;
 }
 
 button,
@@ -91,7 +97,7 @@ input {
 button:focus-visible,
 a:focus-visible,
 input:focus-visible {
-  outline: 2px solid var(--accent-light);
+  outline: 2px solid var(--gold-light);
   outline-offset: 3px;
 }
 
@@ -100,13 +106,11 @@ a {
   text-decoration: none;
 }
 
-button {
-  border: 0;
-}
-
 svg {
+  display: block;
   width: 24px;
   height: 24px;
+
   fill: none;
   stroke: currentColor;
   stroke-width: 1.8;
@@ -118,6 +122,12 @@ svg {
   display: none !important;
 }
 
+button:disabled,
+input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 /* =========================================================
    STICKY HEADER
    ========================================================= */
@@ -127,17 +137,16 @@ svg {
   top: 0;
   z-index: 1000;
 
-  width: 100%;
-  height: var(--header-height);
-
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+
+  width: 100%;
+  height: var(--header-height);
 
   padding: 0 5%;
 
-  background: rgba(8, 8, 11, 0.91);
+  background: rgba(8, 8, 7, 0.94);
   border-bottom: 1px solid var(--border);
 
   -webkit-backdrop-filter: blur(20px);
@@ -148,65 +157,46 @@ svg {
   display: inline-flex;
   align-items: center;
   gap: 11px;
+
   min-width: 0;
 }
 
 .brand-logo {
   display: block;
-  width: 40px;
-  height: 40px;
+
+  width: 43px;
+  height: 43px;
+
+  flex-shrink: 0;
   object-fit: contain;
-  flex-shrink: 0;
 }
 
-.brand-icon {
-  width: 38px;
-  height: 38px;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  flex-shrink: 0;
-
-  border-radius: 12px;
-
-  color: #fff;
-  font-size: 21px;
-  font-weight: 800;
-
-  background: linear-gradient(
-    135deg,
-    var(--accent),
-    var(--accent-pink)
-  );
-
-  box-shadow: 0 0 22px rgba(168, 85, 247, 0.28);
-}
+/* Preserve the original logo artwork. */
 
 .brand-name {
+  color: var(--text);
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 1.2px;
   white-space: nowrap;
 }
 
 .brand-name b {
-  color: var(--accent-light);
+  color: var(--gold-light);
 }
 
+.brand-icon,
 .header-home {
   display: none !important;
 }
 
 /* =========================================================
-   PAGE LAYOUT
+   MAIN PAGE
    ========================================================= */
 
 .player-page {
   width: min(1120px, 100%);
   margin: 0 auto;
-
   padding: 28px 24px 36px;
 }
 
@@ -231,7 +221,7 @@ svg {
   display: inline-block;
   margin-bottom: 8px;
 
-  color: var(--accent-light);
+  color: var(--gold-light);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 2px;
@@ -240,10 +230,11 @@ svg {
 .episode-heading h1 {
   margin: 0;
 
+  color: var(--text);
   font-size: clamp(22px, 3vw, 32px);
+  font-weight: 800;
   line-height: 1.25;
-  font-weight: 750;
-  letter-spacing: -0.8px;
+  letter-spacing: -0.6px;
 
   overflow-wrap: anywhere;
 }
@@ -254,6 +245,8 @@ svg {
   color: var(--text-secondary);
   font-size: 13px;
   line-height: 1.6;
+
+  overflow-wrap: anywhere;
 }
 
 .icon-button {
@@ -265,17 +258,21 @@ svg {
   height: 44px;
   flex-shrink: 0;
 
-  border: 1px solid var(--border);
-  border-radius: 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 13px;
 
-  background: var(--surface);
-  color: var(--text-secondary);
+  color: var(--gold-light);
+  background: linear-gradient(
+    145deg,
+    rgba(212, 175, 55, 0.12),
+    rgba(20, 18, 13, 0.96)
+  );
 
   cursor: pointer;
 
   transition:
     background 0.2s ease,
-    color 0.2s ease,
+    border-color 0.2s ease,
     transform 0.2s ease;
 }
 
@@ -285,8 +282,8 @@ svg {
 }
 
 .icon-button:hover {
-  background: var(--surface-hover);
-  color: var(--accent-light);
+  border-color: var(--gold);
+  background: rgba(212, 175, 55, 0.18);
 }
 
 .icon-button:active {
@@ -294,7 +291,7 @@ svg {
 }
 
 /* =========================================================
-   VIDEO PLAYER CONTAINER
+   VIDEO PLAYER
    ========================================================= */
 
 .video-section {
@@ -312,38 +309,31 @@ svg {
   overflow: hidden;
 
   background: #000;
-  border: 1px solid rgba(168, 85, 247, 0.16);
+  border: 1px solid rgba(212, 175, 55, 0.25);
   border-radius: var(--radius-lg);
 
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.015),
-    0 18px 55px rgba(0, 0, 0, 0.45);
+    0 0 0 1px rgba(212, 175, 55, 0.04),
+    0 18px 55px rgba(0, 0, 0, 0.55);
 
   touch-action: manipulation;
 }
 
 #videoPlayer {
+  position: absolute;
+  inset: 0;
+
   display: block;
 
   width: 100%;
   height: 100%;
 
-  position: absolute;
-  inset: 0;
-
   object-fit: contain;
   background: #000;
-
   outline: none;
 }
 
-/* Browser controls must remain disabled.
-   Do not add the controls attribute to the HTML video element. */
-
-#videoPlayer::-webkit-media-controls {
-  display: none !important;
-}
-
+#videoPlayer::-webkit-media-controls,
 #videoPlayer::-webkit-media-controls-enclosure {
   display: none !important;
 }
@@ -365,16 +355,16 @@ svg {
 
   background:
     radial-gradient(
-      ellipse at 50% 45%,
-      rgba(147, 51, 234, 0.32),
+      ellipse at 50% 48%,
+      rgba(212, 175, 55, 0.17),
       transparent 48%
     ),
     radial-gradient(
-      ellipse at 20% 80%,
-      rgba(236, 72, 153, 0.13),
-      transparent 45%
+      ellipse at 50% 100%,
+      rgba(143, 107, 18, 0.12),
+      transparent 55%
     ),
-    #08060e;
+    #080704;
 
   animation: introBackground 3s ease both;
 }
@@ -382,15 +372,16 @@ svg {
 .cinematic-intro::before,
 .cinematic-intro::after {
   content: "";
+
   position: absolute;
 
   width: 240px;
   height: 240px;
 
-  border: 1px solid rgba(192, 132, 252, 0.17);
+  border: 1px solid rgba(212, 175, 55, 0.2);
   border-radius: 50%;
 
-  animation: introOrbit 7s linear infinite;
+  animation: introOrbit 9s linear infinite;
 }
 
 .cinematic-intro::before {
@@ -401,34 +392,51 @@ svg {
 .cinematic-intro::after {
   width: 350px;
   height: 350px;
+
+  border-color: rgba(255, 231, 160, 0.09);
+
   animation-direction: reverse;
-  opacity: 0.55;
 }
 
 .intro-content {
   position: relative;
   z-index: 1;
 
+  width: 100%;
   padding: 20px;
+
   text-align: center;
 
   animation: introContent 3s ease both;
 }
 
+.intro-logo-image {
+  display: block;
+
+  width: min(115px, 25vw);
+  height: min(115px, 25vw);
+
+  margin: 0 auto 15px;
+
+  object-fit: contain;
+
+  filter: drop-shadow(
+    0 0 18px rgba(212, 175, 55, 0.2)
+  );
+}
+
 .intro-logo {
-  color: #fff;
+  color: var(--gold-light);
 
   font-size: clamp(22px, 5vw, 42px);
   font-weight: 800;
   letter-spacing: 3px;
 
-  text-shadow:
-    0 0 18px rgba(168, 85, 247, 0.6),
-    0 0 40px rgba(168, 85, 247, 0.22);
+  text-shadow: 0 0 22px rgba(212, 175, 55, 0.25);
 }
 
 .intro-logo span {
-  color: var(--accent-light);
+  color: var(--gold);
 }
 
 .intro-line {
@@ -440,8 +448,9 @@ svg {
   background: linear-gradient(
     90deg,
     transparent,
-    var(--accent-pink),
-    var(--accent-light),
+    var(--gold-dark),
+    var(--gold-light),
+    var(--gold),
     transparent
   );
 
@@ -451,16 +460,20 @@ svg {
 .intro-content p {
   margin: 0;
 
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(255, 231, 160, 0.72);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 5px;
 }
 
 @keyframes introBackground {
-  0% { opacity: 1; }
-  75% { opacity: 1; }
-  100% { opacity: 0; }
+  0%, 75% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
 }
 
 @keyframes introContent {
@@ -469,13 +482,9 @@ svg {
     transform: scale(0.92);
   }
 
-  18% {
+  18%, 78% {
     opacity: 1;
     transform: scale(1);
-  }
-
-  78% {
-    opacity: 1;
   }
 
   100% {
@@ -485,16 +494,23 @@ svg {
 }
 
 @keyframes introLine {
-  to { width: min(280px, 75vw); }
+  to {
+    width: min(280px, 75vw);
+  }
 }
 
 @keyframes introOrbit {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* =========================================================
-   LOADING SPINNER
+   LOADING
    ========================================================= */
 
 .player-loading {
@@ -506,42 +522,45 @@ svg {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 17px;
+  gap: 16px;
 
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.72);
 
   pointer-events: none;
 }
 
 .loading-spinner {
-  width: 48px;
-  height: 48px;
+  width: 47px;
+  height: 47px;
 
-  border: 3px solid rgba(255, 255, 255, 0.12);
-  border-top-color: var(--accent-light);
-  border-right-color: var(--accent-pink);
+  border: 3px solid rgba(212, 175, 55, 0.15);
+  border-top-color: var(--gold-light);
+  border-right-color: var(--gold);
+
   border-radius: 50%;
 
-  animation: spin 0.75s linear infinite;
+  animation: goldSpin 0.8s linear infinite;
 
-  box-shadow: 0 0 22px rgba(168, 85, 247, 0.13);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.12);
 }
 
 .player-loading p {
   margin: 0;
 
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--gold-light);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0.5px;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+@keyframes goldSpin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* =========================================================
-   PLAYER ERROR
+   VIDEO ERROR
    ========================================================= */
 
 .player-error {
@@ -555,33 +574,33 @@ svg {
   justify-content: center;
 
   padding: 24px;
+
   text-align: center;
 
   background:
     radial-gradient(
       circle at 50% 40%,
-      rgba(168, 85, 247, 0.12),
+      rgba(212, 175, 55, 0.08),
       transparent 65%
     ),
-    rgba(4, 4, 8, 0.97);
+    rgba(5, 5, 4, 0.98);
 }
 
 .error-icon {
-  width: 46px;
-  height: 46px;
-
   display: flex;
   align-items: center;
   justify-content: center;
 
+  width: 46px;
+  height: 46px;
   margin-bottom: 12px;
 
-  border: 1px solid rgba(236, 72, 153, 0.4);
+  border: 1px solid var(--border-strong);
   border-radius: 50%;
 
-  color: #f9a8d4;
+  color: var(--gold-light);
   font-size: 25px;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .player-error h2 {
@@ -595,28 +614,31 @@ svg {
 
   color: var(--text-secondary);
   font-size: 12px;
+  line-height: 1.7;
 }
 
 .player-error button {
   min-height: 42px;
   padding: 0 22px;
 
-  border-radius: 12px;
+  border: 1px solid rgba(255, 231, 160, 0.35);
+  border-radius: 11px;
 
-  color: #fff;
-  font-weight: 700;
-
+  color: #171105;
   background: linear-gradient(
-    110deg,
-    var(--accent),
-    var(--accent-pink)
+    135deg,
+    var(--gold-light),
+    var(--gold),
+    #b58a19
   );
+
+  font-weight: 800;
 
   cursor: pointer;
 }
 
 /* =========================================================
-   CENTER PLAYBACK CONTROLS
+   CENTER CONTROLS
    ========================================================= */
 
 .center-controls {
@@ -627,8 +649,8 @@ svg {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(20px, 5vw, 60px);
 
+  gap: clamp(20px, 5vw, 60px);
   padding: 20px;
 
   background: linear-gradient(
@@ -636,7 +658,7 @@ svg {
     rgba(0, 0, 0, 0.1),
     transparent 35%,
     transparent 65%,
-    rgba(0, 0, 0, 0.3)
+    rgba(0, 0, 0, 0.32)
   );
 
   pointer-events: none;
@@ -647,35 +669,40 @@ svg {
 }
 
 .main-play-button {
-  width: clamp(56px, 8vw, 78px);
-  height: clamp(56px, 8vw, 78px);
-
   display: flex;
   align-items: center;
   justify-content: center;
 
+  width: clamp(56px, 8vw, 78px);
+  height: clamp(56px, 8vw, 78px);
+
   flex-shrink: 0;
 
-  border: 1px solid rgba(255, 255, 255, 0.38);
+  border: 1px solid rgba(255, 231, 160, 0.7);
   border-radius: 50%;
 
-  background: rgba(168, 85, 247, 0.88);
-  color: #fff;
+  color: #100c02;
+  background: linear-gradient(
+    135deg,
+    #ffe9a6,
+    #d4af37 60%,
+    #a47a12
+  );
 
   box-shadow:
-    0 0 0 8px rgba(168, 85, 247, 0.12),
-    0 0 35px rgba(168, 85, 247, 0.32);
+    0 0 0 7px rgba(212, 175, 55, 0.1),
+    0 0 35px rgba(212, 175, 55, 0.24);
 
   cursor: pointer;
 
   transition:
     transform 0.2s ease,
-    background 0.2s ease;
+    filter 0.2s ease;
 }
 
 .main-play-button:hover {
-  background: #9333ea;
-  transform: scale(1.07);
+  filter: brightness(1.12);
+  transform: scale(1.06);
 }
 
 .main-play-button:active {
@@ -683,8 +710,9 @@ svg {
 }
 
 .main-play-button svg {
-  width: 35px;
-  height: 35px;
+  width: 34px;
+  height: 34px;
+
   fill: currentColor;
   stroke: none;
 }
@@ -694,19 +722,19 @@ svg {
 }
 
 .seek-action {
-  width: 48px;
-  height: 58px;
-
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0;
 
+  width: 48px;
+  height: 58px;
+
+  gap: 0;
   padding: 0;
 
+  color: rgba(255, 255, 255, 0.9);
   background: transparent;
-  color: rgba(255, 255, 255, 0.88);
 
   cursor: pointer;
 
@@ -723,16 +751,16 @@ svg {
 
 .seek-action span {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .seek-action:hover {
-  color: var(--accent-light);
+  color: var(--gold-light);
   transform: scale(1.08);
 }
 
 /* =========================================================
-   BRIGHTNESS AND VOLUME — HIDDEN
+   BRIGHTNESS AND VOLUME HIDDEN
    ========================================================= */
 
 #brightnessControl,
@@ -741,22 +769,22 @@ svg {
 }
 
 /* =========================================================
-   CUSTOM PLAYER BOTTOM CONTROLS
+   PLAYER BOTTOM CONTROLS
    ========================================================= */
 
 .player-controls {
   position: absolute;
-  left: 0;
   right: 0;
   bottom: 0;
+  left: 0;
   z-index: 15;
 
   padding: 45px 18px 13px;
 
   background: linear-gradient(
     0deg,
-    rgba(0, 0, 0, 0.96) 0%,
-    rgba(0, 0, 0, 0.76) 48%,
+    rgba(0, 0, 0, 0.97) 0%,
+    rgba(0, 0, 0, 0.78) 48%,
     transparent 100%
   );
 }
@@ -775,7 +803,7 @@ svg {
 .timeline-row span {
   min-width: 43px;
 
-  color: rgba(255, 255, 255, 0.88);
+  color: rgba(255, 248, 225, 0.9);
   font-size: 10px;
   font-variant-numeric: tabular-nums;
 }
@@ -792,7 +820,6 @@ svg {
 
   width: 100%;
   height: 4px;
-
   min-width: 0;
 
   border: 0;
@@ -800,8 +827,8 @@ svg {
 
   background: linear-gradient(
     to right,
-    var(--accent-pink) 0%,
-    var(--accent) var(--seek-progress),
+    var(--gold-light) 0%,
+    var(--gold) var(--seek-progress),
     rgba(255, 255, 255, 0.26) var(--seek-progress),
     rgba(255, 255, 255, 0.26) 100%
   );
@@ -817,11 +844,11 @@ svg {
   width: 12px;
   height: 12px;
 
-  border: 2px solid #fff;
+  border: 2px solid #fff8df;
   border-radius: 50%;
 
-  background: var(--accent-pink);
-  box-shadow: 0 0 10px rgba(236, 72, 153, 0.65);
+  background: var(--gold);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.65);
 
   transition: transform 0.15s ease;
 }
@@ -830,24 +857,26 @@ svg {
   width: 10px;
   height: 10px;
 
-  border: 2px solid #fff;
+  border: 2px solid #fff8df;
   border-radius: 50%;
 
-  background: var(--accent-pink);
-  box-shadow: 0 0 10px rgba(236, 72, 153, 0.65);
+  background: var(--gold);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.65);
 }
 
 #seekBar:hover::-webkit-slider-thumb {
   transform: scale(1.2);
 }
 
-/* Toolbar */
+/* =========================================================
+   TOOLBAR — ICONS ONLY
+   ========================================================= */
 
 .toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
 
   width: 100%;
 }
@@ -864,9 +893,9 @@ svg {
   padding: 0;
 
   border: 1px solid transparent;
-  border-radius: 11px;
+  border-radius: 10px;
 
-  color: rgba(255, 255, 255, 0.83);
+  color: rgba(255, 248, 225, 0.87);
   background: transparent;
 
   cursor: pointer;
@@ -877,7 +906,7 @@ svg {
     border-color 0.2s ease;
 }
 
-/* Hide control text: icons only */
+/* Keep all toolbar controls icon-only. */
 
 .toolbar-button span,
 .toolbar-button b {
@@ -892,16 +921,14 @@ svg {
 
 .toolbar-button:hover,
 .toolbar-button:focus-visible {
-  color: #fff;
-  background: rgba(168, 85, 247, 0.19);
-  border-color: rgba(168, 85, 247, 0.28);
+  color: var(--gold-light);
+  background: rgba(212, 175, 55, 0.13);
+  border-color: var(--border-strong);
 }
 
 .toolbar-button:active {
   transform: scale(0.95);
 }
-
-/* Tooltip text is available on hover where supported */
 
 @media (hover: hover) and (pointer: fine) {
   .toolbar-button {
@@ -925,8 +952,8 @@ svg {
     border: 1px solid var(--border);
     border-radius: 7px;
 
-    background: #171720;
-    color: #fff;
+    color: var(--text);
+    background: #17140c;
 
     font-size: 10px;
     font-weight: 500;
@@ -948,7 +975,7 @@ svg {
   align-items: center;
   justify-content: center;
 
-  background: rgba(0, 0, 0, 0.24);
+  background: rgba(0, 0, 0, 0.3);
 }
 
 #unlockButton {
@@ -956,18 +983,18 @@ svg {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
 
   min-width: 100px;
   min-height: 90px;
 
+  gap: 10px;
   padding: 14px;
 
-  border: 1px solid rgba(255, 255, 255, 0.17);
-  border-radius: 18px;
+  border: 1px solid var(--border-strong);
+  border-radius: 17px;
 
-  background: rgba(14, 14, 22, 0.82);
-  color: #fff;
+  color: var(--text);
+  background: rgba(17, 15, 9, 0.91);
 
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
@@ -978,7 +1005,7 @@ svg {
 #unlockButton svg {
   width: 27px;
   height: 27px;
-  color: var(--accent-light);
+  color: var(--gold-light);
 }
 
 #unlockButton span {
@@ -987,7 +1014,7 @@ svg {
 }
 
 /* =========================================================
-   PLAYER POPUPS
+   POPUPS
    ========================================================= */
 
 .player-popup {
@@ -1004,17 +1031,19 @@ svg {
 
   padding: 15px;
 
-  border: 1px solid rgba(168, 85, 247, 0.24);
-  border-radius: 17px;
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
 
-  background: rgba(15, 15, 23, 0.97);
+  color: var(--text);
+  background: rgba(15, 14, 10, 0.98);
+
   box-shadow: var(--shadow);
 
   -webkit-backdrop-filter: blur(22px);
   backdrop-filter: blur(22px);
 
   scrollbar-width: thin;
-  scrollbar-color: #5b3b82 transparent;
+  scrollbar-color: var(--gold-dark) transparent;
 }
 
 .popup-header {
@@ -1030,7 +1059,7 @@ svg {
   margin: 0;
 
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .popup-close {
@@ -1042,17 +1071,18 @@ svg {
   height: 30px;
   flex-shrink: 0;
 
+  border: 1px solid var(--border);
   border-radius: 9px;
 
-  background: var(--surface-hover);
   color: var(--text-secondary);
+  background: var(--surface-hover);
 
   cursor: pointer;
 }
 
 .popup-close:hover {
-  background: rgba(168, 85, 247, 0.2);
-  color: #fff;
+  color: var(--gold-light);
+  background: rgba(212, 175, 55, 0.14);
 }
 
 .option-list {
@@ -1075,8 +1105,8 @@ svg {
   border: 1px solid transparent;
   border-radius: 9px;
 
-  background: transparent;
   color: var(--text-secondary);
+  background: transparent;
 
   font-size: 12px;
   text-align: left;
@@ -1086,18 +1116,19 @@ svg {
 
   transition:
     background 0.2s ease,
-    color 0.2s ease;
+    color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .option-list button:hover {
-  background: rgba(255, 255, 255, 0.045);
-  color: #fff;
+  color: var(--text);
+  background: rgba(212, 175, 55, 0.08);
 }
 
 .option-list button.selected {
-  border-color: rgba(168, 85, 247, 0.18);
-  background: rgba(168, 85, 247, 0.13);
-  color: var(--accent-light);
+  color: var(--gold-light);
+  background: rgba(212, 175, 55, 0.12);
+  border-color: rgba(212, 175, 55, 0.22);
 }
 
 .empty-option {
@@ -1105,10 +1136,10 @@ svg {
 
   color: var(--text-muted);
   font-size: 11px;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
-/* Audio/subtitle columns */
+/* Audio and subtitle columns */
 
 .track-popup {
   width: min(470px, calc(100% - 28px));
@@ -1127,18 +1158,14 @@ svg {
 .track-columns h4 {
   margin: 0 0 9px;
 
-  color: var(--text-secondary);
+  color: var(--gold-light);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
 }
-
-/* Quality popup */
 
 .quality-popup {
   width: min(230px, calc(100% - 28px));
 }
-
-/* Episode popup */
 
 .episode-popup {
   width: min(310px, calc(100% - 28px));
@@ -1166,8 +1193,8 @@ svg {
 
   background: linear-gradient(
     145deg,
-    rgba(22, 22, 32, 0.88),
-    rgba(13, 13, 19, 0.92)
+    rgba(25, 22, 14, 0.9),
+    rgba(13, 12, 9, 0.96)
   );
 }
 
@@ -1175,7 +1202,7 @@ svg {
   display: inline-block;
   margin-bottom: 8px;
 
-  color: var(--accent-light);
+  color: var(--gold-light);
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 1.8px;
@@ -1184,9 +1211,10 @@ svg {
 .episode-info h2 {
   margin: 0;
 
+  color: var(--text);
   font-size: 17px;
+  font-weight: 800;
   line-height: 1.45;
-  font-weight: 700;
 
   overflow-wrap: anywhere;
 }
@@ -1197,6 +1225,7 @@ svg {
   color: var(--text-secondary);
   font-size: 12px;
   line-height: 1.7;
+
   overflow-wrap: anywhere;
 }
 
@@ -1224,8 +1253,9 @@ svg {
 .next-episode-section h2 {
   margin: 0 0 14px;
 
+  color: var(--text);
   font-size: 18px;
-  font-weight: 750;
+  font-weight: 800;
 }
 
 .next-episode-card {
@@ -1241,6 +1271,7 @@ svg {
   border: 1px solid var(--border);
   border-radius: 15px;
 
+  color: var(--text);
   background: var(--surface);
 
   text-align: left;
@@ -1253,7 +1284,7 @@ svg {
 }
 
 .next-episode-card:hover {
-  border-color: rgba(168, 85, 247, 0.4);
+  border-color: var(--gold);
   background: var(--surface-hover);
 }
 
@@ -1270,15 +1301,17 @@ svg {
   height: 54px;
   flex-shrink: 0;
 
+  border: 1px solid rgba(255, 231, 160, 0.24);
   border-radius: 12px;
 
+  color: #151004;
   background: linear-gradient(
     135deg,
-    #7e22ce,
-    #db2777
+    var(--gold-light),
+    var(--gold),
+    var(--gold-dark)
   );
 
-  color: #fff;
   font-size: 18px;
 }
 
@@ -1292,6 +1325,7 @@ svg {
 }
 
 .next-episode-text strong {
+  color: var(--text);
   font-size: 13px;
   font-weight: 700;
   overflow-wrap: anywhere;
@@ -1303,7 +1337,7 @@ svg {
 }
 
 .next-episode-arrow {
-  color: var(--accent-light);
+  color: var(--gold-light);
   font-size: 28px;
   line-height: 1;
 }
@@ -1318,18 +1352,24 @@ svg {
 
   border-top: 1px solid var(--border);
 
-  background: rgba(8, 8, 11, 0.75);
+  background: rgba(8, 8, 7, 0.8);
 
   text-align: center;
 }
 
 .footer-brand {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 
-  color: #fff;
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 1.5px;
+.footer-logo {
+  display: block;
+
+  width: 44px;
+  height: 44px;
+
+  object-fit: contain;
 }
 
 .site-footer > p {
@@ -1357,7 +1397,7 @@ svg {
 }
 
 .footer-links a:hover {
-  color: var(--accent-light);
+  color: var(--gold-light);
 }
 
 .site-footer .copyright {
@@ -1367,7 +1407,6 @@ svg {
 
 /* =========================================================
    BOTTOM NAVIGATION
-   Home / Search / Watchlist / Profile
    ========================================================= */
 
 .bottom-navigation {
@@ -1375,7 +1414,7 @@ svg {
 }
 
 /* =========================================================
-   RESPONSIVE — TABLETS
+   TABLETS
    ========================================================= */
 
 @media (max-width: 850px) {
@@ -1388,7 +1427,7 @@ svg {
   }
 
   .toolbar {
-    gap: 7px;
+    gap: 5px;
   }
 
   .toolbar-button {
@@ -1404,7 +1443,7 @@ svg {
 }
 
 /* =========================================================
-   RESPONSIVE — MOBILE
+   MOBILE
    ========================================================= */
 
 @media (max-width: 600px) {
@@ -1422,32 +1461,18 @@ svg {
 
   .site-header {
     height: var(--header-height);
-
     padding: 0 16px;
 
-    background: rgba(8, 8, 11, 0.94);
+    background: rgba(8, 8, 7, 0.96);
+  }
+
+  .brand-logo {
+    width: 36px;
+    height: 36px;
   }
 
   .brand {
     gap: 9px;
-  }
-
-  .brand-logo {
-    width: 34px;
-    height: 34px;
-  }
-
-  .brand-icon {
-    width: 33px;
-    height: 33px;
-
-    border-radius: 10px;
-    font-size: 18px;
-  }
-
-  .brand-name {
-    font-size: 12px;
-    letter-spacing: 0.8px;
   }
 
   .player-page {
@@ -1455,9 +1480,9 @@ svg {
   }
 
   .episode-heading {
-    padding: 0 16px;
-    margin-bottom: 17px;
     gap: 10px;
+    margin-bottom: 17px;
+    padding: 0 16px;
   }
 
   .episode-label {
@@ -1468,7 +1493,7 @@ svg {
 
   .episode-heading h1 {
     font-size: clamp(19px, 5vw, 25px);
-    letter-spacing: -0.45px;
+    letter-spacing: -0.4px;
   }
 
   .episode-heading p {
@@ -1479,7 +1504,7 @@ svg {
   .icon-button {
     width: 39px;
     height: 39px;
-    border-radius: 12px;
+    border-radius: 11px;
   }
 
   .video-player {
@@ -1527,8 +1552,8 @@ svg {
 
     background: linear-gradient(
       0deg,
-      rgba(0, 0, 0, 0.97),
-      rgba(0, 0, 0, 0.7) 55%,
+      rgba(0, 0, 0, 0.98),
+      rgba(0, 0, 0, 0.72) 55%,
       transparent
     );
   }
@@ -1560,15 +1585,14 @@ svg {
     width: 34px;
     height: 34px;
     min-width: 0;
-
     flex: 1;
 
-    border-radius: 9px;
+    border-radius: 8px;
   }
 
   .toolbar-button svg {
-    width: 20px;
-    height: 20px;
+    width: 19px;
+    height: 19px;
   }
 
   .player-popup {
@@ -1583,6 +1607,10 @@ svg {
 
   .track-popup {
     width: min(400px, calc(100% - 20px));
+  }
+
+  .track-columns {
+    gap: 10px;
   }
 
   .episode-info {
@@ -1633,14 +1661,13 @@ svg {
     gap: 18px;
   }
 
-  /* Fixed mobile bottom navigation */
+  /* Fixed bottom navigation */
 
   .bottom-navigation {
     position: fixed;
-    left: 0;
     right: 0;
     bottom: 0;
-
+    left: 0;
     z-index: 1200;
 
     display: grid;
@@ -1653,9 +1680,9 @@ svg {
       6px + env(safe-area-inset-bottom)
     );
 
-    border-top: 1px solid rgba(255, 255, 255, 0.09);
+    border-top: 1px solid var(--border-strong);
 
-    background: rgba(10, 10, 15, 0.96);
+    background: rgba(10, 9, 6, 0.97);
 
     -webkit-backdrop-filter: blur(22px);
     backdrop-filter: blur(22px);
@@ -1671,9 +1698,9 @@ svg {
     min-width: 0;
     min-height: 49px;
 
-    border-radius: 12px;
+    border-radius: 11px;
 
-    color: #858596;
+    color: #8e8877;
 
     transition:
       color 0.2s ease,
@@ -1688,18 +1715,15 @@ svg {
 
   .bottom-nav-item span {
     font-size: 9px;
-    font-weight: 500;
+    font-weight: 600;
     line-height: 1.2;
   }
 
   .bottom-nav-item:hover,
-  .bottom-nav-item:focus-visible {
-    color: var(--accent-light);
-    background: rgba(168, 85, 247, 0.08);
-  }
-
+  .bottom-nav-item:focus-visible,
   .bottom-nav-item.active {
-    color: var(--accent-light);
+    color: var(--gold-light);
+    background: rgba(212, 175, 55, 0.08);
   }
 }
 
@@ -1708,9 +1732,9 @@ svg {
    ========================================================= */
 
 @media (max-width: 360px) {
-  .brand-name {
-    font-size: 11px;
-    letter-spacing: 0.4px;
+  .brand-logo {
+    width: 32px;
+    height: 32px;
   }
 
   .player-controls {
@@ -1729,8 +1753,8 @@ svg {
   }
 
   .toolbar-button svg {
-    width: 18px;
-    height: 18px;
+    width: 17px;
+    height: 17px;
   }
 
   .center-controls {
@@ -1757,7 +1781,7 @@ svg {
 }
 
 /* =========================================================
-   LANDSCAPE / FULLSCREEN
+   FULLSCREEN
    ========================================================= */
 
 .video-player:fullscreen,
@@ -1791,6 +1815,10 @@ svg {
   height: 43px;
 }
 
+/* =========================================================
+   LANDSCAPE MOBILE
+   ========================================================= */
+
 @media (orientation: landscape) and (max-height: 500px) {
   .video-player {
     min-height: 0;
@@ -1820,7 +1848,7 @@ svg {
 }
 
 /* =========================================================
-   REDUCED MOTION ACCESSIBILITY
+   REDUCED MOTION
    ========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
