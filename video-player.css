@@ -1,0 +1,1528 @@
+/* =========================================
+   ANIME MAX ZONE — VIDEO PLAYER
+   File: video-player.css
+========================================= */
+
+:root {
+  --page-bg: #08080b;
+  --player-bg: #000000;
+  --surface: #222328;
+  --surface-hover: #303036;
+  --text-primary: #ffffff;
+  --text-secondary: #a5a5ad;
+  --accent: #ffd77a;
+  --accent-dark: #e8a944;
+  --border: rgba(255, 255, 255, 0.1);
+  --header-height: 72px;
+  --bottom-nav-height: 68px;
+  --player-radius: 12px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: var(--page-bg);
+  color: var(--text-primary);
+  font-family: Inter, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  color: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+button[hidden],
+div[hidden],
+section[hidden],
+svg[hidden] {
+  display: none !important;
+}
+
+/* =========================================
+   HEADER
+========================================= */
+
+.site-header {
+  position: relative;
+  z-index: 30;
+  width: 100%;
+  min-height: var(--header-height);
+  padding: 14px clamp(16px, 4vw, 48px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: #09090c;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.brand-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: #09090c;
+  background: linear-gradient(135deg, #ffe5a1, #e8a944);
+  border-radius: 11px;
+  font-size: 23px;
+  font-weight: 900;
+}
+
+.brand-name {
+  font-size: clamp(13px, 2vw, 18px);
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+}
+
+.brand-name b {
+  color: var(--accent);
+}
+
+.header-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #d0d0d5;
+  font-size: 14px;
+}
+
+.header-home:hover {
+  color: var(--accent);
+}
+
+/* =========================================
+   PAGE CONTENT
+========================================= */
+
+.player-page {
+  width: min(100% - 32px, 1450px);
+  margin: 0 auto;
+  padding: 24px 0 48px;
+}
+
+.episode-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.episode-details {
+  min-width: 0;
+}
+
+.episode-label,
+.info-label {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.episode-heading h1 {
+  margin: 0;
+  font-size: clamp(19px, 3vw, 29px);
+  font-weight: 750;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.episode-heading p {
+  margin: 7px 0 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.icon-button {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.icon-button:hover {
+  background: var(--surface-hover);
+  color: var(--accent);
+}
+
+/* =========================================
+   VIDEO PLAYER
+========================================= */
+
+.video-section {
+  width: 100%;
+}
+
+.video-player {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  min-height: 220px;
+  max-height: calc(100svh - 100px);
+  overflow: hidden;
+  isolation: isolate;
+  background: #000;
+  border-radius: var(--player-radius);
+  box-shadow: 0 16px 60px rgba(0, 0, 0, 0.35);
+}
+
+#videoPlayer {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  object-fit: contain;
+  outline: none;
+}
+
+/* Keep browser controls disabled */
+
+#videoPlayer::-webkit-media-controls,
+#videoPlayer::-webkit-media-controls-enclosure,
+#videoPlayer::-webkit-media-controls-panel,
+#videoPlayer::-webkit-media-controls-play-button,
+#videoPlayer::-webkit-media-controls-start-playback-button {
+  display: none !important;
+  -webkit-appearance: none !important;
+}
+
+#videoPlayer::-webkit-media-controls-timeline,
+#videoPlayer::-webkit-media-controls-current-time-display,
+#videoPlayer::-webkit-media-controls-time-remaining-display,
+#videoPlayer::-webkit-media-controls-mute-button,
+#videoPlayer::-webkit-media-controls-volume-slider,
+#videoPlayer::-webkit-media-controls-fullscreen-button {
+  display: none !important;
+}
+
+/* =========================================
+   CINEMATIC INTRO
+========================================= */
+
+.cinematic-intro {
+  position: absolute;
+  z-index: 50;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse at center, rgba(83, 43, 17, 0.24), transparent 55%),
+    #000;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 0.7s ease,
+    visibility 0.7s ease;
+}
+
+.cinematic-intro.hide {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.intro-content {
+  text-align: center;
+  animation: introReveal 0.8s ease both;
+}
+
+.intro-logo {
+  font-size: clamp(22px, 5vw, 48px);
+  font-weight: 900;
+  letter-spacing: clamp(2px, 0.7vw, 8px);
+  text-shadow: 0 0 25px rgba(255, 215, 122, 0.13);
+}
+
+.intro-logo span {
+  color: var(--accent);
+}
+
+.intro-line {
+  width: min(230px, 55vw);
+  height: 2px;
+  margin: 17px auto;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--accent),
+    transparent
+  );
+  animation: introLine 1.3s ease both;
+}
+
+.intro-content p {
+  margin: 0;
+  color: #bdbdc5;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 5px;
+}
+
+@keyframes introReveal {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes introLine {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* =========================================
+   LOADING SPINNER
+========================================= */
+
+.player-loading {
+  position: absolute;
+  z-index: 20;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  background: rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+}
+
+.loading-spinner {
+  width: 43px;
+  height: 43px;
+  border: 3px solid rgba(255, 255, 255, 0.17);
+  border-top-color: var(--accent);
+  border-right-color: var(--accent);
+  border-radius: 50%;
+  animation: spinnerRotate 0.75s linear infinite;
+}
+
+.player-loading p {
+  margin: 0;
+  color: #e5e5e9;
+  font-size: 12px;
+}
+
+@keyframes spinnerRotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =========================================
+   VIDEO ERROR
+========================================= */
+
+.player-error {
+  position: absolute;
+  z-index: 60;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.94);
+}
+
+.error-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #ff6b6b;
+  border-radius: 50%;
+  color: #ff6b6b;
+  font-size: 24px;
+}
+
+.player-error h2 {
+  margin: 15px 0 8px;
+  font-size: 18px;
+}
+
+.player-error p {
+  max-width: 420px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.player-error button {
+  padding: 11px 22px;
+  color: #17120a;
+  background: var(--accent);
+  border: 0;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* =========================================
+   CENTER PLAY AND SEEK CONTROLS
+========================================= */
+
+.center-controls {
+  position: absolute;
+  z-index: 8;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(40px, 14vw, 190px);
+  padding: 20px 14%;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.center-controls button {
+  pointer-events: auto;
+}
+
+.main-play-button,
+.seek-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+}
+
+.main-play-button {
+  width: 68px;
+  height: 68px;
+}
+
+.main-play-button svg {
+  width: 58px;
+  height: 58px;
+  fill: currentColor;
+  stroke: none;
+  transition: transform 0.2s ease;
+}
+
+.main-play-button:hover svg {
+  transform: scale(1.12);
+}
+
+.seek-action {
+  width: 65px;
+  height: 82px;
+  gap: 2px;
+}
+
+.seek-action svg {
+  width: 47px;
+  height: 47px;
+  stroke-width: 2.3;
+}
+
+.seek-action span {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* =========================================
+   SIDE BRIGHTNESS / VOLUME
+========================================= */
+
+.side-control {
+  position: absolute;
+  z-index: 12;
+  top: 18%;
+  bottom: 25%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.video-player:hover .side-control,
+.video-player.controls-visible .side-control,
+.side-control:focus-within {
+  opacity: 1;
+}
+
+.brightness-control {
+  left: 14px;
+}
+
+.volume-control {
+  right: 14px;
+}
+
+.side-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  color: white;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.side-icon svg {
+  width: 30px;
+  height: 30px;
+}
+
+.vertical-slider {
+  width: 5px;
+  height: 100%;
+  min-height: 70px;
+  margin: 0;
+  padding: 0;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  appearance: none;
+  -webkit-appearance: none;
+  background: #77777c;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.vertical-slider::-webkit-slider-thumb {
+  width: 10px;
+  height: 10px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: #fff;
+  border: 0;
+  border-radius: 50%;
+}
+
+.vertical-slider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  background: #fff;
+  border: 0;
+  border-radius: 50%;
+}
+
+/* =========================================
+   CUSTOM PLAYER CONTROLS
+========================================= */
+
+.player-controls {
+  position: absolute;
+  z-index: 15;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 42px 20px 15px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(0, 0, 0, 0.82) 35%,
+    rgba(0, 0, 0, 0.97)
+  );
+  transition: opacity 0.25s ease;
+}
+
+.video-player.controls-hidden .player-controls {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.timeline-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.timeline-row span {
+  flex-shrink: 0;
+  color: #f5f5f5;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+#seekBar {
+  flex: 1;
+  min-width: 20px;
+  height: 4px;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: #77777c;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+#seekBar::-webkit-slider-thumb {
+  width: 12px;
+  height: 12px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+#seekBar::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border: 0;
+  border-radius: 50%;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.toolbar::-webkit-scrollbar {
+  display: none;
+}
+
+.toolbar-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 38px;
+  flex-shrink: 0;
+  padding: 6px 8px;
+  color: #eeeef1;
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  font-size: 14px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.toolbar-button svg {
+  width: 25px;
+  height: 25px;
+  flex-shrink: 0;
+  stroke-width: 1.9;
+}
+
+.toolbar-button:hover,
+.toolbar-button.active {
+  color: var(--accent);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.toolbar-button b {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* =========================================
+   LOCK OVERLAY
+========================================= */
+
+.lock-overlay {
+  position: absolute;
+  z-index: 25;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.lock-overlay button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: 14px 20px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.lock-overlay svg {
+  width: 32px;
+  height: 32px;
+}
+
+.lock-overlay span {
+  font-size: 12px;
+}
+
+/* =========================================
+   POPUPS AND MENUS
+========================================= */
+
+.player-popup {
+  position: absolute;
+  z-index: 35;
+  top: 50%;
+  left: 50%;
+  width: min(92%, 460px);
+  max-height: 82%;
+  padding: 22px;
+  overflow-y: auto;
+  transform: translate(-50%, -50%);
+  background: rgba(18, 18, 23, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 15px;
+  box-shadow: 0 18px 65px rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.popup-header h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 650;
+}
+
+.popup-close {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  color: #c7c7ce;
+  background: var(--surface);
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.popup-close:hover {
+  color: white;
+  background: #393940;
+}
+
+.option-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.option-list > button {
+  position: relative;
+  width: 100%;
+  min-height: 52px;
+  padding: 14px 16px;
+  text-align: left;
+  color: #d0d0d5;
+  background: var(--surface);
+  border: 1px solid transparent;
+  border-radius: 9px;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+.option-list > button:hover {
+  background: #2c2c33;
+}
+
+.option-list > button.selected {
+  color: var(--accent);
+  background: #25242a;
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px rgba(255, 215, 122, 0.08);
+}
+
+.option-list > button.selected::after {
+  content: "✓";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 25px;
+  height: 23px;
+  display: grid;
+  place-items: center;
+  color: #36240b;
+  background: linear-gradient(135deg, #ffe5a1, #e9ac48);
+  border-radius: 8px 0 8px 0;
+  font-weight: 900;
+}
+
+.empty-option {
+  margin: 0;
+  padding: 14px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* =========================================
+   AUDIO & SUBTITLES
+========================================= */
+
+.track-popup {
+  width: min(94%, 820px);
+}
+
+.track-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.track-columns h4 {
+  margin: 0 0 13px;
+  color: #a7a7b0;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* =========================================
+   QUALITY MENU
+========================================= */
+
+.quality-popup {
+  width: min(92%, 400px);
+}
+
+.quality-popup .option-list > button {
+  min-height: 58px;
+  padding-right: 38px;
+  font-size: 15px;
+}
+
+/* =========================================
+   EPISODE MENU
+========================================= */
+
+.episode-popup {
+  width: min(92%, 470px);
+}
+
+.episode-popup .option-list > button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* =========================================
+   EPISODE INFORMATION
+========================================= */
+
+.episode-info {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 22px;
+  margin-top: 28px;
+  padding: 23px;
+  background: #111115;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+}
+
+.episode-info h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 650;
+}
+
+.episode-info p {
+  margin: 0;
+  color: #dedee4;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.episode-description {
+  grid-column: 1 / -1;
+  color: var(--text-secondary) !important;
+}
+
+.info-label {
+  margin-bottom: 9px;
+  color: #9999a4;
+  font-size: 9px;
+}
+
+/* =========================================
+   NEXT EPISODE
+========================================= */
+
+.next-episode-section {
+  margin-top: 30px;
+}
+
+.next-episode-section h2 {
+  margin: 0 0 14px;
+  font-size: 19px;
+}
+
+.next-episode-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 13px;
+  text-align: left;
+  background: #141419;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.next-episode-card:hover {
+  border-color: rgba(255, 215, 122, 0.45);
+}
+
+.next-episode-art {
+  width: 70px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: #17120a;
+  background: linear-gradient(135deg, #ffe5a1, #e8a944);
+  border-radius: 7px;
+}
+
+.next-episode-text {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.next-episode-text strong {
+  font-size: 14px;
+}
+
+.next-episode-text small {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.next-episode-arrow {
+  margin-left: auto;
+  color: var(--accent);
+  font-size: 26px;
+}
+
+/* =========================================
+   FOOTER
+========================================= */
+
+.site-footer {
+  margin-top: 30px;
+  padding: 35px 20px 100px;
+  text-align: center;
+  background: #050507;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.footer-brand {
+  font-size: 16px;
+  font-weight: 850;
+  letter-spacing: 1px;
+}
+
+.site-footer > p {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 22px;
+  margin: 22px 0;
+}
+
+.footer-links a {
+  color: #c5c5cc;
+  font-size: 12px;
+}
+
+.footer-links a:hover {
+  color: var(--accent);
+}
+
+.site-footer .copyright {
+  margin-top: 24px;
+  color: #777780;
+  font-size: 11px;
+}
+
+/* =========================================
+   MOBILE BOTTOM NAVIGATION
+========================================= */
+
+.bottom-navigation {
+  position: fixed;
+  z-index: 100;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  min-height: var(--bottom-nav-height);
+  display: none;
+  align-items: center;
+  justify-content: space-around;
+  padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
+  background: rgba(9, 9, 13, 0.97);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.bottom-nav-item {
+  min-width: 55px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 4px 8px;
+  color: #92929d;
+  font-size: 10px;
+  transition: color 0.18s ease;
+}
+
+.bottom-nav-item svg {
+  width: 22px;
+  height: 22px;
+}
+
+.bottom-nav-item:hover,
+.bottom-nav-item.active {
+  color: var(--accent);
+}
+
+/* =========================================
+   TABLET
+========================================= */
+
+@media (max-width: 900px) {
+  .player-page {
+    width: min(100% - 24px, 100%);
+    padding-top: 18px;
+  }
+
+  .video-player {
+    border-radius: 9px;
+  }
+
+  .player-controls {
+    padding: 35px 13px 12px;
+  }
+
+  .toolbar {
+    justify-content: flex-start;
+    gap: 7px;
+  }
+
+  .toolbar-button {
+    gap: 6px;
+    font-size: 12px;
+  }
+
+  .toolbar-button svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .center-controls {
+    gap: clamp(28px, 10vw, 100px);
+  }
+}
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 600px) {
+  :root {
+    --header-height: 58px;
+  }
+
+  .site-header {
+    min-height: var(--header-height);
+    padding: 10px 13px;
+    gap: 10px;
+  }
+
+  .brand {
+    gap: 7px;
+  }
+
+  .brand-icon {
+    width: 31px;
+    height: 31px;
+    font-size: 19px;
+    border-radius: 8px;
+  }
+
+  .brand-name {
+    font-size: 11px;
+    letter-spacing: 0.1px;
+  }
+
+  .header-home {
+    gap: 3px;
+    font-size: 12px;
+  }
+
+  .header-home svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .player-page {
+    width: 100%;
+    padding: 15px 0 30px;
+  }
+
+  .episode-heading {
+    margin: 0 14px 13px;
+    gap: 10px;
+  }
+
+  .episode-label {
+    margin-bottom: 5px;
+    font-size: 8px;
+    letter-spacing: 1.5px;
+  }
+
+  .episode-heading h1 {
+    font-size: 16px;
+  }
+
+  .episode-heading p {
+    margin-top: 4px;
+    font-size: 11px;
+  }
+
+  .icon-button {
+    width: 35px;
+    height: 35px;
+  }
+
+  .icon-button svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .video-player {
+    width: 100%;
+    min-height: 0;
+    aspect-ratio: 16 / 9;
+    border-radius: 0;
+  }
+
+  .center-controls {
+    gap: clamp(20px, 9vw, 48px);
+    padding: 8px 10%;
+  }
+
+  .main-play-button {
+    width: 49px;
+    height: 49px;
+  }
+
+  .main-play-button svg {
+    width: 42px;
+    height: 42px;
+  }
+
+  .seek-action {
+    width: 45px;
+    height: 61px;
+  }
+
+  .seek-action svg {
+    width: 34px;
+    height: 34px;
+  }
+
+  .seek-action span {
+    font-size: 11px;
+  }
+
+  .side-control {
+    top: 16%;
+    bottom: 29%;
+    gap: 6px;
+  }
+
+  .brightness-control {
+    left: 4px;
+  }
+
+  .volume-control {
+    right: 4px;
+  }
+
+  .side-icon {
+    width: 27px;
+    height: 27px;
+  }
+
+  .side-icon svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .vertical-slider {
+    width: 4px;
+    min-height: 35px;
+  }
+
+  .player-controls {
+    padding: 25px 10px 9px;
+  }
+
+  .timeline-row {
+    gap: 7px;
+    margin-bottom: 8px;
+  }
+
+  .timeline-row span {
+    font-size: 10px;
+  }
+
+  #seekBar {
+    height: 3px;
+  }
+
+  #seekBar::-webkit-slider-thumb {
+    width: 9px;
+    height: 9px;
+  }
+
+  #seekBar::-moz-range-thumb {
+    width: 9px;
+    height: 9px;
+  }
+
+  .toolbar {
+    gap: 4px;
+  }
+
+  .toolbar-button {
+    min-height: 34px;
+    gap: 5px;
+    padding: 5px 7px;
+    font-size: 11px;
+  }
+
+  .toolbar-button svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .episode-info {
+    grid-template-columns: 1fr;
+    gap: 17px;
+    margin: 20px 13px 0;
+    padding: 17px;
+  }
+
+  .episode-info h2 {
+    font-size: 15px;
+  }
+
+  .episode-info p {
+    font-size: 12px;
+  }
+
+  .episode-description {
+    grid-column: auto;
+  }
+
+  .next-episode-section {
+    margin: 24px 13px 0;
+  }
+
+  .next-episode-section h2 {
+    font-size: 17px;
+  }
+
+  .next-episode-card {
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .next-episode-art {
+    width: 55px;
+    height: 42px;
+  }
+
+  .next-episode-text strong {
+    font-size: 12px;
+  }
+
+  .next-episode-text small {
+    font-size: 10px;
+  }
+
+  .site-footer {
+    margin-top: 25px;
+    padding: 28px 16px calc(30px + var(--bottom-nav-height) + env(safe-area-inset-bottom));
+  }
+
+  .bottom-navigation {
+    display: flex;
+    min-height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
+  }
+
+  .player-popup {
+    width: calc(100% - 24px);
+    max-height: 80%;
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .popup-header {
+    margin-bottom: 14px;
+  }
+
+  .popup-header h3 {
+    font-size: 15px;
+  }
+
+  .option-list {
+    gap: 7px;
+  }
+
+  .option-list > button {
+    min-height: 46px;
+    padding: 12px;
+    font-size: 13px;
+  }
+
+  .track-columns {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .track-columns h4 {
+    font-size: 12px;
+  }
+
+  .track-columns .option-list > button {
+    min-height: 42px;
+    padding: 10px 8px;
+    font-size: 11px;
+    overflow-wrap: anywhere;
+  }
+
+  .option-list > button.selected::after {
+    width: 20px;
+    height: 19px;
+    font-size: 12px;
+  }
+}
+
+/* =========================================
+   SMALL MOBILE
+========================================= */
+
+@media (max-width: 360px) {
+  .brand-name {
+    font-size: 10px;
+  }
+
+  .header-home span {
+    display: none;
+  }
+
+  .center-controls {
+    gap: 16px;
+    padding: 5px 8%;
+  }
+
+  .main-play-button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .main-play-button svg {
+    width: 35px;
+    height: 35px;
+  }
+
+  .seek-action {
+    width: 37px;
+  }
+
+  .seek-action svg {
+    width: 29px;
+    height: 29px;
+  }
+
+  .toolbar-button {
+    padding: 5px;
+    font-size: 10px;
+  }
+
+  .toolbar-button svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .track-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================
+   LANDSCAPE MOBILE
+========================================= */
+
+@media (max-width: 900px) and (orientation: landscape) {
+  .site-header {
+    display: none;
+  }
+
+  .player-page {
+    width: 100%;
+    padding: 0;
+  }
+
+  .episode-heading,
+  .episode-info,
+  .next-episode-section,
+  .site-footer,
+  .bottom-navigation {
+    display: none !important;
+  }
+
+  .video-player {
+    width: 100%;
+    height: 100svh;
+    max-height: none;
+    aspect-ratio: auto;
+    border-radius: 0;
+  }
+
+  #videoPlayer {
+    object-fit: contain;
+  }
+
+  .player-controls {
+    padding: 30px 16px 12px;
+  }
+
+  .side-control {
+    top: 18%;
+    bottom: 28%;
+  }
+
+  .player-popup {
+    max-height: 90%;
+  }
+}
+
+/* =========================================
+   REDUCED MOTION
+========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
