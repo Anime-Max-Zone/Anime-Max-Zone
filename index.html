@@ -1,170 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Anime Max Zone — Watch Anime Online</title>
-    <meta name="description" content="Anime Max Zone - Watch your favorite anime in HD quality." />
-    <meta name="referrer" content="strict-origin-when-cross-origin" />
-
-    <!-- ================= FAVICON FOR ALL DEVICES ================= -->
-    <!-- Standard Desktop & Browser Tab -->
-    <link rel="icon" type="image/png" href="favicon.png" />
-    
-    <!-- Apple / iOS (iPhone/iPad Home Screen) -->
-    <link rel="apple-touch-icon" href="favicon.png" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    
-    <!-- Android / Chrome Theme Color -->
-    <meta name="theme-color" content="#0a0a0f" />
-    
-    <!-- External CSS Link -->
-    <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Anime Max Zone — Watch Anime Online</title><meta name="description" content="Anime Max Zone - discover your favorite anime."><meta name="theme-color" content="#111027">
+<link rel="icon" type="image/png" href="favicon.png"><link rel="apple-touch-icon" href="favicon.png">
+<style>
+:root{--bg:#0b0b19;--panel:#17172b;--text:#fff;--muted:#aaaabd;--orange:#f47742;--purple:#8b5cf6;--line:#ffffff16}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Arial,sans-serif;background-image:linear-gradient(180deg,#11102bdb,#090914f5),url('anime-bg.jpg');background-size:cover;background-position:center;background-attachment:fixed}button,a{font:inherit}a{color:inherit;text-decoration:none}.navbar{height:112px;padding:20px clamp(18px,4vw,46px);display:flex;align-items:center;justify-content:space-between;gap:18px;background:linear-gradient(90deg,#17122de8,#11152de8);position:relative;z-index:3}.brand{display:flex;align-items:center;gap:13px;min-width:0}.brand img{width:74px;height:74px;object-fit:contain;filter:drop-shadow(0 0 12px #f4774255)}.brand-name{font-size:clamp(22px,4vw,39px);font-weight:950;letter-spacing:.3px;white-space:nowrap}.brand-name span{color:var(--orange)}.icon-btn{width:48px;height:48px;border:0;background:transparent;color:white;display:grid;place-items:center;border-radius:50%}.icon-btn svg{width:34px;height:34px}.icon-btn:active{background:#ffffff18}.page{max-width:1440px;margin:auto;padding:0 clamp(18px,4vw,46px) 110px}.hero{height:clamp(245px,35vw,420px);margin:10px 0 28px;position:relative;overflow:hidden;border-radius:22px;background:linear-gradient(90deg,#08070af5 0%,#08070ac9 36%,#08070a12 72%),#242038;box-shadow:0 18px 40px #0006}.hero-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 35%;opacity:.9}.hero-content{position:absolute;inset:0;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:clamp(22px,5vw,54px);max-width:560px}.hero-kicker{font-size:clamp(25px,4vw,44px);font-weight:900;line-height:1.08;margin:0 0 15px;text-shadow:0 2px 8px #000}.hero-title{font-size:clamp(19px,2.6vw,29px);font-weight:850;line-height:1.25;margin:0 0 19px;text-transform:uppercase}.play-btn{border:0;border-radius:9px;background:var(--orange);color:white;padding:12px 22px;font-weight:850;box-shadow:0 6px 18px #f4774233}.section{margin:26px 0 32px}.section h2{font-size:clamp(20px,2.5vw,28px);margin:0 0 16px;font-weight:900;text-transform:uppercase;letter-spacing:.1px}.row{display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - 36px)/3.25);gap:18px;overflow-x:auto;padding:0 0 8px;scrollbar-width:none}.row::-webkit-scrollbar{display:none}.continue-card{min-width:0;cursor:pointer}.continue-thumb{width:100%;aspect-ratio:1.7/1;object-fit:cover;border-radius:13px;display:block;background:#242438}.card-title{font-size:clamp(14px,1.7vw,20px);line-height:1.25;margin:8px 0 9px;font-weight:500}.progress{height:6px;border-radius:10px;background:#555365;overflow:hidden}.progress span{display:block;height:100%;width:35%;background:var(--orange);border-radius:10px}.poster-row{display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - 40px)/3.25);gap:20px;overflow-x:auto;scrollbar-width:none;padding-bottom:8px}.poster-row::-webkit-scrollbar{display:none}.anime-card{min-width:0;cursor:pointer}.poster{width:100%;aspect-ratio:0.72;object-fit:cover;border-radius:14px;display:block;background:#242438;box-shadow:0 7px 22px #0004;transition:transform .2s}.anime-card:active .poster{transform:scale(.98)}.poster-title{font-size:clamp(15px,1.9vw,22px);font-weight:750;line-height:1.25;margin:10px 0 0}.empty{color:var(--muted);padding:18px 0}.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:10;display:grid;grid-template-columns:repeat(4,1fr);padding:10px 8px calc(9px + env(safe-area-inset-bottom));background:#171629f5;border-top:1px solid #ffffff14;backdrop-filter:blur(18px)}.nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:#8e8da5;background:none;border:0;padding:5px 2px;font-size:14px}.nav-item svg{width:29px;height:29px}.nav-item.active{color:white}.nav-item.active svg{fill:currentColor}.search-overlay{position:fixed;inset:0;z-index:30;background:#05050beF;display:none;padding:22px;overflow:auto}.search-overlay.active{display:block}.search-panel{max-width:760px;margin:20px auto}.search-head{display:flex;gap:12px;align-items:center}.search-input{flex:1;background:#1b1a2c;border:1px solid #ffffff20;border-radius:12px;padding:15px;color:white;font-size:16px;outline:none}.search-close{background:#252438;color:white;border:0;border-radius:10px;width:48px;height:48px;font-size:26px}.suggestions{margin-top:15px}.suggestion{display:flex;align-items:center;gap:13px;padding:10px;border-bottom:1px solid var(--line);cursor:pointer}.suggestion img{width:54px;height:72px;object-fit:cover;border-radius:7px}.suggestion p{margin:5px 0 0;color:var(--muted);font-size:13px}footer{text-align:center;color:#8e8da5;font-size:12px;padding:10px 20px 115px}@media(max-width:600px){.navbar{height:112px;padding:15px 18px}.brand img{width:72px;height:72px}.page{padding-left:18px;padding-right:18px}.hero{height:300px;border-radius:17px;margin-top:0}.hero-image{object-position:58% center}.hero-content{padding:22px;max-width:82%}.hero-kicker{font-size:29px}.hero-title{font-size:21px}.row{grid-auto-columns:75%;gap:16px}.poster-row{grid-auto-columns:calc((100% - 26px)/2.35);gap:13px}.section{margin:24px 0 28px}.section h2{margin-bottom:13px}.nav-item{font-size:12px}.nav-item svg{width:27px;height:27px}}@media(min-width:900px){.row{grid-auto-columns:calc((100% - 54px)/4)}.poster-row{grid-auto-columns:calc((100% - 80px)/5)}}
+</style>
 </head>
 <body>
-
-    <!-- ================= LOADING SCREEN ================= -->
-    <div id="preloader">
-        <div class="loader-container">
-            <div class="spinner-ring"></div>
-            <img src="loading.png" alt="Loading..." class="loader-logo" />
-        </div>
-        <div class="loading-text">Loading...</div>
-    </div>
-
-    <!-- ================= NAVBAR ================= -->
-    <header class="navbar">
-        <!-- Navbar Logo SVG -->
-        <a href="index.html" class="logo-link" aria-label="Anime Max Zone Home">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 300" class="nav-logo-svg">
-                <defs>
-                    <linearGradient id="maxGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stop-color="#e2a0ff" />
-                        <stop offset="50%" stop-color="#a855f7" />
-                        <stop offset="100%" stop-color="#7e22ce" />
-                    </linearGradient>
-                </defs>
-                <g font-family="'Arial Black', 'Impact', sans-serif" font-weight="900" font-size="180" letter-spacing="2" dominant-baseline="central">
-                    <text x="50" y="150" fill="#ffffff">ANIME</text>
-                    <text x="740" y="150" fill="url(#maxGradient)" class="animated-max-text">MAX</text>
-                </g>
-            </svg>
-        </a>
-
-        <div class="nav-actions">
-            <!-- Search Icon Button -->
-            <button class="btn-icon" id="openSearchBtn" aria-label="Search">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
-                </svg>
-            </button>
-        </div>
-    </header>
-
-    <!-- ================= SEARCH OVERLAY PANEL ================= -->
-    <div id="searchOverlay" class="search-overlay">
-        <div class="search-panel">
-            
-            <!-- Search ke upar Logo (Left Aligned) -->
-            <div class="search-logo-container">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 300" class="search-logo-svg">
-                    <defs>
-                        <linearGradient id="maxGradientSearch" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stop-color="#e2a0ff" />
-                            <stop offset="50%" stop-color="#a855f7" />
-                            <stop offset="100%" stop-color="#7e22ce" />
-                        </linearGradient>
-                    </defs>
-                    <g font-family="'Arial Black', 'Impact', sans-serif" font-weight="900" font-size="180" letter-spacing="2" dominant-baseline="central">
-                        <text x="50" y="150" fill="#ffffff">ANIME</text>
-                        <text x="740" y="150" fill="url(#maxGradientSearch)" class="animated-max-text">MAX</text>
-                    </g>
-                </svg>
-            </div>
-
-            <div class="search-header">
-                <div class="search-input-group">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
-                    </svg>
-                    <input id="searchInput" type="search" placeholder="Search anime, genres..." autocomplete="off" />
-                </div>
-                <!-- Close Icon -->
-                <button id="closeSearchBtn" class="btn-close" aria-label="Close search">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-            
-            <!-- Live Suggestions -->
-            <div id="liveSuggestions" class="live-suggestions">
-                <!-- JS will populate this -->
-            </div>
-        </div>
-    </div>
-
-    <!-- ================= HERO SLIDER ================= -->
-    <section class="hero-slider" id="heroSlider">
-        <!-- Slider initial skeleton loader -->
-        <div class="slider-placeholder skeleton"></div>
-    </section>
-
-    <!-- ================= MAIN ================= -->
-    <main>
-        <div class="section-header" id="animeSection">
-            <h2 id="sectionTitle">Trending Now</h2>
-        </div>
-
-        <div class="anime-grid" id="animeGrid">
-            <!-- Skeleton loaders -->
-            <div class="skeleton"></div>
-            <div class="skeleton"></div>
-            <div class="skeleton"></div>
-            <div class="skeleton"></div>
-            <div class="skeleton"></div>
-            <div class="skeleton"></div>
-        </div>
-    </main>
-
-    <!-- ================= FOOTER ================= -->
-    <footer>
-        &copy; 2026 <strong>Anime Max Zone</strong>. Built with &hearts; SM Studio.
-    </footer>
-
-    <!-- ================= BOTTOM NAVIGATION BAR ================= -->
-    <nav class="bottom-nav">
-        <a href="index.html" class="nav-item active">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
-            <span>Home</span>
-        </a>
-        
-        <button class="nav-item" id="navSearchBtn">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
-            </svg>
-            <span>Search</span>
-        </button>
-
-        <a href="watchlist.html" class="nav-item">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-            </svg>
-            <span>Watchlist</span>
-        </a>
-
-        <a href="settings.html" class="nav-item">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <span>Settings</span>
-        </a>
-    </nav>
-
-    <script type="module" src="script.js"></script>
-</body>
-</html>
+<header class="navbar"><a class="brand" href="index.html" aria-label="Anime Max Zone home"><img src="favicon.png" alt="Anime Max logo" onerror="this.style.display='none'"><div class="brand-name">ANIME <span>MAX</span></div></a><button class="icon-btn" id="openSearchBtn" aria-label="Search anime"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10.8" cy="10.8" r="7.2"></circle><path d="m16.2 16.2 5 5"></path></svg></button></header>
+<main class="page">
+<section class="hero" id="heroSlider"><img class="hero-image" id="heroImage" alt="Featured anime" src=""><div class="hero-content"><p class="hero-kicker" id="heroKicker">ANIME MAX ZONE</p><h1 class="hero-title" id="heroTitle">Discover your next anime</h1><button class="play-btn" id="heroPlay">▶ &nbsp; PLAY NOW</button></div></section>
+<section class="section"><h2>Continue Watching</h2><div class="row" id="continueRow"><p class="empty">Loading anime...</p></div></section>
+<section class="section"><h2>Popular Series</h2><div class="poster-row" id="popularRow"><p class="empty">Loading anime...</p></div></section>
+<section class="section"><h2>New Releases</h2><div class="poster-row" id="newRow"><p class="empty">Loading anime...</p></div></section>
+</main>
+<footer>© 2026 <strong>Anime Max Zone</strong>. Built with ♥ SM Studio.</footer>
+<nav class="bottom-nav" aria-label="Bottom navigation"><a href="index.html" class="nav-item active"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 10.8 12 3l9 7.8v9a1.2 1.2 0 0 1-1.2 1.2h-5.2v-6.2H9.4V21H4.2A1.2 1.2 0 0 1 3 19.8z"/></svg><span>Home</span></a><a href="discover.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9.5"/><path d="m15.8 8.2-2.3 5.3-5.3 2.3 2.3-5.3z"/></svg><span>Discover</span></a><a href="watchlist.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3.5h12v17L12 17l-6 3.5z"/></svg><span>My List</span></a><a href="settings.html" class="nav-item"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg><span>More</span></a></nav>
+<div class="search-overlay" id="searchOverlay"><div class="search-panel"><div class="search-head"><input class="search-input" id="searchInput" type="search" placeholder="Search anime, genres..." autocomplete="off"><button class="search-close" id="closeSearchBtn" aria-label="Close">×</button></div><div class="suggestions" id="liveSuggestions"></div></div></div>
+<script type="module">
+import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import {getDatabase,ref,get} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+const firebaseConfig={apiKey:'AIzaSyCpfrluxsBhnz48ve9RykIy1IxzbBfk7dA',authDomain:'sm-studio-7.firebaseapp.com',databaseURL:'https://sm-studio-7-default-rtdb.asia-southeast1.firebasedatabase.app/',projectId:'sm-studio-7',storageBucket:'sm-studio-7.firebasestorage.app',messagingSenderId:'126291501472',appId:'1:126291501472:web:47386660af8ec3a57204c5'};
+const db=getDatabase(initializeApp(firebaseConfig));const $=id=>document.getElementById(id);let animeList=[];const fallback='data:image/svg+xml;charset=UTF-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="420"><rect width="100%" height="100%" fill="#202035"/><text x="50%" y="50%" fill="#aaa" text-anchor="middle" font-size="18">No Poster</text></svg>');
+function safeUrl(value){try{const u=new URL(value);return ['https:','http:'].includes(u.protocol)?u.href:''}catch{return ''}}
+function goAnime(a){location.href='anime.html?id='+encodeURIComponent(a.id)}
+function card(a){const el=document.createElement('article');el.className='anime-card';const img=document.createElement('img');img.className='poster';img.loading='lazy';img.src=safeUrl(a.coverImageUrl||a.posterUrl||a.poster)||fallback;img.alt=a.title||'Anime';img.onerror=()=>img.src=fallback;const title=document.createElement('div');title.className='poster-title';title.textContent=a.title||'Untitled Anime';el.append(img,title);el.addEventListener('click',()=>goAnime(a));return el}
+function continueCard(a,i){const el=document.createElement('article');el.className='continue-card';const img=document.createElement('img');img.className='continue-thumb';img.loading='lazy';img.src=safeUrl(a.coverImageUrl||a.posterUrl||a.poster)||fallback;img.alt=a.title||'Anime';img.onerror=()=>img.src=fallback;const title=document.createElement('div');title.className='card-title';title.textContent=a.title||'Untitled Anime';const bar=document.createElement('div');bar.className='progress';const fill=document.createElement('span');fill.style.width=(25+(i*17)%65)+'%';bar.append(fill);el.append(img,title,bar);el.addEventListener('click',()=>goAnime(a));return el}
+function fillRow(id,list,fn){const row=$(id);row.replaceChildren();if(!list.length){const p=document.createElement('p');p.className='empty';p.textContent='Anime will appear here when added to Firebase Realtime Database.';row.append(p);return}list.forEach((a,i)=>row.append(fn(a,i)))}
+function setHero(a){if(!a)return;$('heroTitle').textContent=(a.title||'Featured Anime').toUpperCase();$('heroKicker').textContent=a.seasonPremiere?'SEASON PREMIERE:':'FEATURED SERIES';const img=$('heroImage');img.src=safeUrl(a.bannerImageUrl||a.coverImageUrl||a.posterUrl||a.poster)||fallback;img.onerror=()=>img.src=fallback;$('heroPlay').onclick=()=>goAnime(a)}
+async function loadAnime(){try{const snap=await get(ref(db,'anime'));if(!snap.exists()){fillRow('continueRow',[],continueCard);fillRow('popularRow',[],card);fillRow('newRow',[],card);$('heroTitle').textContent='Add anime to get started';$('heroPlay').style.display='none';return}const raw=snap.val();animeList=Object.entries(raw).filter(([,v])=>v&&typeof v==='object').map(([id,v])=>({id,...v,title:v.title||v.name||'Untitled Anime'}));animeList.sort((a,b)=>{const da=Date.parse(a.createdAt)||Number(a.createdAt)||0,dbb=Date.parse(b.createdAt)||Number(b.createdAt)||0;return dbb-da});setHero(animeList.find(a=>a.featured===true)||animeList[0]);fillRow('continueRow',animeList.slice(0,6),continueCard);fillRow('popularRow',[...animeList].sort((a,b)=>(Number(b.views)||0)-(Number(a.views)||0)).slice(0,12),card);fillRow('newRow',animeList.slice(0,12),card)}catch(e){console.error('Realtime Database error:',e);['continueRow','popularRow','newRow'].forEach(id=>{const row=$(id);row.replaceChildren();const p=document.createElement('p');p.className='empty';p.textContent='Could not load anime. Check Realtime Database rules and /anime data path.';row.append(p)})}}
+const overlay=$('searchOverlay');function openSearch(){overlay.classList.add('active');$('searchInput').focus();renderSearch('')}function closeSearch(){overlay.classList.remove('active');$('searchInput').value='';$('liveSuggestions').replaceChildren()}$('openSearchBtn').addEventListener('click',openSearch);$('closeSearchBtn').addEventListener('click',closeSearch);overlay.addEventListener('click',e=>{if(e.target===overlay)closeSearch()});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSearch()});function renderSearch(term){const box=$('liveSuggestions');box.replaceChildren();const q=term.trim().toLowerCase();const results=animeList.filter(a=>(a.title||'').toLowerCase().includes(q)||(Array.isArray(a.genres)?a.genres.join(' '):String(a.genres||'')).toLowerCase().includes(q)).slice(0,12);if(!results.length){const p=document.createElement('p');p.className='empty';p.textContent='No anime found.';box.append(p);return}results.forEach(a=>{const item=document.createElement('div');item.className='suggestion';const img=document.createElement('img');img.src=safeUrl(a.coverImageUrl||a.posterUrl||a.poster)||fallback;img.alt='';img.onerror=()=>img.src=fallback;const info=document.createElement('div');const title=document.createElement('strong');title.textContent=a.title;const meta=document.createElement('p');meta.textContent=Array.isArray(a.genres)?a.genres.join(', '):String(a.genres||'');info.append(title,meta);item.append(img,info);item.addEventListener('click',()=>goAnime(a));box.append(item)})}$('searchInput').addEventListener('input',e=>renderSearch(e.target.value));loadAnime();
+</script>
+</body></html>
