@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta name="theme-color" content="#09090f">
+  <meta name="description" content="View anime details, seasons, episodes, genres and more on Anime Max Zone.">
+
+  <title>Anime Details | Anime Max Zone</title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    .details-page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 16px 100px;
+    }
+
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 22px;
+      padding: 10px 15px;
+      border: 1px solid #30303e;
+      border-radius: 10px;
+      background: #171720;
+      color: #fff;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .details-hero {
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      gap: 26px;
+      padding: 22px;
+      border: 1px solid #292938;
+      border-radius: 20px;
+      background: linear-gradient(145deg, #191522, #101018);
+    }
+
+    .details-poster {
+      width: 100%;
+      aspect-ratio: 3 / 4;
+      object-fit: cover;
+      border-radius: 14px;
+      background: #242432;
+    }
+
+    .details-info {
+      min-width: 0;
+      align-self: center;
+    }
+
+    .details-badge {
+      display: inline-block;
+      margin-bottom: 12px;
+      padding: 6px 10px;
+      border-radius: 7px;
+      background: #772cff;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .details-title {
+      margin: 0 0 12px;
+      color: #fff;
+      font-size: clamp(25px, 4vw, 38px);
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+    }
+
+    .details-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 16px;
+      color: #c1c1d0;
+      font-size: 13px;
+    }
+
+    .details-description {
+      margin: 0 0 20px;
+      color: #b8b8c8;
+      font-size: 14px;
+      line-height: 1.8;
+      white-space: pre-line;
+    }
+
+    .details-genres {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    .genre-chip {
+      padding: 7px 11px;
+      border: 1px solid #373345;
+      border-radius: 20px;
+      color: #ded8ef;
+      background: #211b2e;
+      font-size: 12px;
+    }
+
+    .watch-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 46px;
+      padding: 0 22px;
+      border: none;
+      border-radius: 11px;
+      background: #7c3cff;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .watch-button:hover {
+      background: #925dff;
+    }
+
+    .episodes-section {
+      margin-top: 32px;
+    }
+
+    .episodes-heading {
+      margin: 0 0 18px;
+      color: #fff;
+      font-size: 22px;
+    }
+
+    .season-select {
+      width: 100%;
+      max-width: 260px;
+      margin-bottom: 18px;
+      padding: 13px;
+      border: 1px solid #333344;
+      border-radius: 10px;
+      outline: none;
+      background: #171720;
+      color: #fff;
+    }
+
+    .episodes-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .episode-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      padding: 12px;
+      border: 1px solid #292938;
+      border-radius: 12px;
+      background: #14141d;
+      color: #fff;
+      text-decoration: none;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .episode-card:hover {
+      border-color: #7c3cff;
+      transform: translateY(-2px);
+    }
+
+    .episode-number {
+      display: flex;
+      flex-shrink: 0;
+      align-items: center;
+      justify-content: center;
+      width: 43px;
+      height: 43px;
+      border-radius: 9px;
+      background: #292039;
+      color: #c6aaff;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .episode-text {
+      min-width: 0;
+    }
+
+    .episode-title {
+      margin: 0 0 5px;
+      font-size: 13px;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .episode-subtitle {
+      margin: 0;
+      color: #9696a9;
+      font-size: 11px;
+    }
+
+    .empty-state {
+      padding: 28px 15px;
+      border: 1px dashed #343444;
+      border-radius: 14px;
+      color: #a9a9bb;
+      text-align: center;
+      line-height: 1.7;
+    }
+
+    .details-loading {
+      padding: 60px 15px;
+      color: #c7c7d5;
+      text-align: center;
+    }
+
+    @media (max-width: 600px) {
+      .details-page {
+        padding: 18px 12px 90px;
+      }
+
+      .details-hero {
+        grid-template-columns: 112px minmax(0, 1fr);
+        gap: 15px;
+        padding: 14px;
+        border-radius: 15px;
+      }
+
+      .details-poster {
+        border-radius: 10px;
+      }
+
+      .details-title {
+        font-size: 22px;
+      }
+
+      .details-description {
+        grid-column: 1 / -1;
+        font-size: 13px;
+        line-height: 1.7;
+      }
+
+      .details-meta {
+        gap: 7px;
+        font-size: 11px;
+      }
+
+      .details-genres {
+        gap: 6px;
+      }
+
+      .genre-chip {
+        padding: 6px 8px;
+        font-size: 10px;
+      }
+
+      .watch-button {
+        min-height: 41px;
+        padding: 0 14px;
+        font-size: 12px;
+      }
+
+      .episodes-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="details-page">
+    <a class="back-button" href="index.html">
+      <span aria-hidden="true">←</span>
+      <span>Back to Home</span>
+    </a>
+
+    <div id="detailsContent" class="details-loading">
+      Loading anime details...
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var detailsContent = document.getElementById("detailsContent");
+
+      /*
+       * Demo data.
+       * Replace this data with your Firebase database data later.
+       */
+      var animeDatabase = {
+        "naruto-shippuden": {
+          id: "naruto-shippuden",
+          title: "Naruto Shippuden",
+          poster: "https://placehold.co/600x800/191522/ffffff?text=Naruto+Shippuden",
+          rating: "8.7",
+          year: "2007",
+          status: "Completed",
+          type: "TV Series",
+          description: "Naruto Uzumaki returns to the Hidden Leaf Village and continues his journey to become a powerful ninja. Join him and his friends on their adventures.",
+          genres: ["Action", "Adventure", "Fantasy"],
+          seasons: [
+            {
+              name: "Season 1",
+              episodes: [
+                {
+                  title: "Homecoming",
+                  number: 1,
+                  url: "watch.html?id=naruto-shippuden&season=1&episode=1"
+                },
+                {
+                  title: "The Akatsuki Makes Its Move",
+                  number: 2,
+                  url: "watch.html?id=naruto-shippuden&season=1&episode=2"
+                }
+              ]
+            }
+          ]
+        },
+
+        "one-piece": {
+          id: "one-piece",
+          title: "One Piece",
+          poster: "https://placehold.co/600x800/191522/ffffff?text=One+Piece",
+          rating: "9.0",
+          year: "1999",
+          status: "Ongoing",
+          type: "TV Series",
+          description: "Monkey D. Luffy sets sail with his crew in search of the legendary treasure known as One Piece.",
+          genres: ["Action", "Adventure", "Comedy"],
+          seasons: [
+            {
+              name: "Season 1",
+              episodes: [
+                {
+                  title: "I'm Luffy! The Man Who's Gonna Be King of the Pirates!",
+                  number: 1,
+                  url: "watch.html?id=one-piece&season=1&episode=1"
+                },
+                {
+                  title: "Enter the Great Swordsman!",
+                  number: 2,
+                  url: "watch.html?id=one-piece&season=1&episode=2"
+                }
+              ]
+            }
+          ]
+        },
+
+        "attack-on-titan": {
+          id: "attack-on-titan",
+          title: "Attack on Titan",
+          poster: "https://placehold.co/600x800/191522/ffffff?text=Attack+on+Titan",
+          rating: "9.1",
+          year: "2013",
+          status: "Completed",
+          type: "TV Series",
+          description: "Humanity fights for survival behind enormous walls while uncovering the mystery of the Titans.",
+          genres: ["Action", "Drama", "Fantasy"],
+          seasons: [
+            {
+              name: "Season 1",
+              episodes: [
+                {
+                  title: "To You, in 2000 Years",
+                  number: 1,
+                  url: "watch.html?id=attack-on-titan&season=1&episode=1"
+                },
+                {
+                  title: "That Day",
+                  number: 2,
+                  url: "watch.html?id=attack-on-titan&season=1&episode=2"
+                }
+              ]
+            }
+          ]
+        },
+
+        "demon-slayer": {
+          id: "demon-slayer",
+          title: "Demon Slayer",
+          poster: "https://placehold.co/600x800/191522/ffffff?text=Demon+Slayer",
+          rating: "8.6",
+          year: "2019",
+          status: "Ongoing",
+          type: "TV Series",
+          description: "Tanjiro Kamado begins a dangerous journey to protect humanity and find a way to help his sister.",
+          genres: ["Action", "Adventure", "Supernatural"],
+          seasons: [
+            {
+              name: "Season 1",
+              episodes: [
+                {
+                  title: "Cruelty",
+                  number: 1,
+                  url: "watch.html?id=demon-slayer&season=1&episode=1"
+                },
+                {
+                  title: "Trainer Sakonji Urokodaki",
+                  number: 2,
+                  url: "watch.html?id=demon-slayer&season=1&episode=2"
+                }
+              ]
+            }
+          ]
+        },
+
+        "jujutsu-kaisen": {
+          id: "jujutsu-kaisen",
+          title: "Jujutsu Kaisen",
+          poster: "https://placehold.co/600x800/191522/ffffff?text=Jujutsu+Kaisen",
+          rating: "8.5",
+          year: "2020",
+          status: "Ongoing",
+          type: "TV Series",
+          description: "Yuji Itadori enters the world of cursed energy and jujutsu sorcerers after an unexpected encounter.",
+          genres: ["Action", "Supernatural", "Fantasy"],
+          seasons: [
+            {
+              name: "Season 1",
+              episodes: [
+                {
+                  title: "Ryomen Sukuna",
+                  number: 1,
+                  url: "watch.html?id=jujutsu-kaisen&season=1&episode=1"
+                },
+                {
+                  title: "For Myself",
+                  number: 2,
+                  url: "watch.html?id=jujutsu-kaisen&season=1&episode=2"
+                }
+              ]
+            }
+          ]
+        },
+
+        "solo-leveling": {
+          id: "solo-leveling",
+          title: "Solo Leveling",
+          poster: "https://placehold.co/600x800/191522/ffffff?text=Solo+Leveling",
+          rating: "8.8",
+          year: "2024",
+          status: "Ongoing",
+          type: "TV Series",
+          description: "A weak hunter receives a mysterious power that allows him to grow stronger and face increasingly dangerous challenges.",
+          genres: ["Action", "Fantasy", "Adventure"],
+          seasons: [
+            {
+              name: "Season 1",
+              episodes: [
+                {
+                  title: "I'm Used to It",
+                  number: 1,
+                  url: "watch.html?id=solo-leveling&season=1&episode=1"
+                },
+                {
+                  title: "If I Had One More Chance",
+                  number: 2,
+                  url: "watch.html?id=solo-leveling&season=1&episode=2"
+                }
+              ]
+            }
+          ]
+        },
+
+        "blue-lock": {
+          id: "blue-lock",
+          title: "Blue Lock",
+          poster: "https://placehold.co/600x800/191522/ffffff?text=Blue+Lock",
+          rating: "8.1",
+          year: "2022",
+          status: "Ongoing",
+          type: "TV Series",
+          description: "Talented young football players compete in an intense program designed to discover Japan's ultimate striker.",
+          genres: ["Sports", "Drama"],
+          seasons: [
+            {
+              name: "Season 1",
+              episodes: [
+                {
+                  title: "Dream",
+                  number: 1,
+                  url: "watch.html?id=blue-lock&season=1&episode=1"
+                },
+                {
+                  title: "Monster",
+                  number: 2,
+                  url: "watch.html?id=blue-lock&season=1&episode=2"
+                }
+              ]
+            }
+          ]
+        }
+      };
+
+      function getAnimeId() {
+        var params = new URLSearchParams(window.location.search);
+        return params.get("id") || "";
+      }
+
+      function escapeHTML(value) {
+        return String(value == null ? "" : value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function safeImageURL(value) {
+        if (typeof value !== "string") return "";
+        if (/^https:\/\/[^"'<> ]+$/i.test(value)) return value;
+        if (/^\.{0,2}\/[a-z0-9_./-]+\.(jpg|jpeg|png|webp)$/i.test(value)) {
+          return value;
+        }
+        return "";
+      }
+
+      function safeWatchURL(value) {
+        if (typeof value !== "string") return "watch.html";
+        if (/^watch\.html(?:\?[a-z0-9_=&%-]*)?$/i.test(value)) {
+          return value;
+        }
+        return "watch.html";
+      }
+
+      function renderAnime(anime) {
+        var poster = safeImageURL(anime.poster);
+        var genres = Array.isArray(anime.genres) ? anime.genres : [];
+        var seasons = Array.isArray(anime.seasons) ? anime.seasons : [];
+
+        var genreHTML = genres.map(function (genre) {
+          return '<span class="genre-chip">' +
+            escapeHTML(genre) +
+            '</span>';
+        }).join("");
+
+        var seasonOptions = seasons.map(function (season, index) {
+          return '<option value="' + index + '">' +
+            escapeHTML(season.name || ("Season " + (index + 1))) +
+            '</option>';
+        }).join("");
+
+        detailsContent.innerHTML =
+          '<section class="details-hero">' +
+            '<img class="details-poster" src="' + escapeHTML(poster) +
+              '" alt="' + escapeHTML(anime.title) + ' poster">' +
+            '<div class="details-info">' +
+              '<span class="details-badge">' + escapeHTML(anime.type || "Anime") + '</span>' +
+              '<h1 class="details-title">' + escapeHTML(anime.title) + '</h1>' +
+              '<div class="details-meta">' +
+                '<span>⭐ ' + escapeHTML(anime.rating || "N/A") + '</span>' +
+                '<span>📅 ' + escapeHTML(anime.year || "N/A") + '</span>' +
+                '<span>' + escapeHTML(anime.status || "Unknown") + '</span>' +
+              '</div>' +
+              '<p class="details-description">' + escapeHTML(anime.description || "No description available.") + '</p>' +
+              '<div class="details-genres">' + genreHTML + '</div>' +
+              '<a class="watch-button" href="' +
+                safeWatchURL(
+                  seasons[0] &&
+                  seasons[0].episodes &&
+                  seasons[0].episodes[0] &&
+                  seasons[0].episodes[0].url
+                ) +
+              '">▶ Watch Now</a>' +
+            '</div>' +
+          '</section>' +
+          '<section class="episodes-section">' +
+            '<h2 class="episodes-heading">Seasons &amp; Episodes</h2>' +
+            (seasons.length ?
+              '<select id="seasonSelect" class="season-select" aria-label="Select season">' +
+                seasonOptions +
+              '</select>' +
+              '<div id="episodesGrid" class="episodes-grid"></div>' :
+              '<div class="empty-state">No episodes have been added yet.</div>') +
+          '</section>';
+
+        var posterElement = detailsContent.querySelector(".details-poster");
+
+        posterElement.addEventListener("error", function () {
+          posterElement.src = "https://placehold.co/600x800/191522/ffffff?text=Anime";
+        });
+
+        if (seasons.length) {
+          var seasonSelect = document.getElementById("seasonSelect");
+
+          seasonSelect.addEventListener("change", function () {
+            renderEpisodes(seasons[Number(seasonSelect.value)]);
+          });
+
+          renderEpisodes(seasons[0]);
+        }
+      }
+
+      function renderEpisodes(season) {
+        var episodesGrid = document.getElementById("episodesGrid");
+        var episodes = season && Array.isArray(season.episodes)
+          ? season.episodes
+          : [];
+
+        if (!episodes.length) {
+          episodesGrid.innerHTML =
+            '<div class="empty-state">No episodes are available in this season yet.</div>';
+          return;
+        }
+
+        episodesGrid.innerHTML = episodes.map(function (episode, index) {
+          var episodeNumber = Number(episode.number) || index + 1;
+          var episodeTitle = episode.title || ("Episode " + episodeNumber);
+          var watchURL = safeWatchURL(episode.url);
+
+          return '<a class="episode-card" href="' + watchURL + '">' +
+            '<span class="episode-number">' +
+              String(episodeNumber).padStart(2, "0") +
+            '</span>' +
+            '<span class="episode-text">' +
+              '<p class="episode-title">' + escapeHTML(episodeTitle) + '</p>' +
+              '<p class="episode-subtitle">Episode ' + episodeNumber + ' · ▶ Watch</p>' +
+            '</span>' +
+          '</a>';
+        }).join("");
+      }
+
+      var animeId = getAnimeId();
+      var anime = animeDatabase[animeId];
+
+      if (!anime) {
+        detailsContent.innerHTML =
+          '<div class="empty-state">' +
+            '<h2>Anime Not Found</h2>' +
+            '<p>This anime is not available in the demo database.</p>' +
+            '<a class="watch-button" href="index.html">Back to Home</a>' +
+          '</div>';
+      } else {
+        document.title = anime.title + " | Anime Max Zone";
+        renderAnime(anime);
+      }
+    })();
+  </script>
+
+</body>
+</html>
