@@ -1,36 +1,696 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Anime Max Zone — Watch Anime Online</title><meta name="description" content="Anime Max Zone - discover your favorite anime."><meta name="theme-color" content="#111027">
-<link rel="icon" type="image/png" href="favicon.png"><link rel="apple-touch-icon" href="favicon.png">
-<style>
-:root{--bg:#0b0b19;--panel:#17172b;--text:#fff;--muted:#aaaabd;--orange:#f47742;--purple:#8b5cf6;--line:#ffffff16}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Arial,sans-serif;background-image:linear-gradient(180deg,#11102bdb,#090914f5),url('anime-bg.jpg');background-size:cover;background-position:center;background-attachment:fixed}button,a{font:inherit}a{color:inherit;text-decoration:none}.navbar{height:112px;padding:20px clamp(18px,4vw,46px);display:flex;align-items:center;justify-content:space-between;gap:18px;background:linear-gradient(90deg,#17122de8,#11152de8);position:relative;z-index:3}.brand{display:flex;align-items:center;gap:13px;min-width:0}.brand img{width:74px;height:74px;object-fit:contain;filter:drop-shadow(0 0 12px #f4774255)}.brand-name{font-size:clamp(22px,4vw,39px);font-weight:950;letter-spacing:.3px;white-space:nowrap}.brand-name span{color:var(--orange)}.icon-btn{width:48px;height:48px;border:0;background:transparent;color:white;display:grid;place-items:center;border-radius:50%}.icon-btn svg{width:34px;height:34px}.icon-btn:active{background:#ffffff18}.page{max-width:1440px;margin:auto;padding:0 clamp(18px,4vw,46px) 110px}.hero{height:clamp(245px,35vw,420px);margin:10px 0 28px;position:relative;overflow:hidden;border-radius:22px;background:linear-gradient(90deg,#08070af5 0%,#08070ac9 36%,#08070a12 72%),#242038;box-shadow:0 18px 40px #0006}.hero-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 35%;opacity:.9}.hero-content{position:absolute;inset:0;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:clamp(22px,5vw,54px);max-width:560px}.hero-kicker{font-size:clamp(25px,4vw,44px);font-weight:900;line-height:1.08;margin:0 0 15px;text-shadow:0 2px 8px #000}.hero-title{font-size:clamp(19px,2.6vw,29px);font-weight:850;line-height:1.25;margin:0 0 19px;text-transform:uppercase}.play-btn{border:0;border-radius:9px;background:var(--orange);color:white;padding:12px 22px;font-weight:850;box-shadow:0 6px 18px #f4774233}.section{margin:26px 0 32px}.section h2{font-size:clamp(20px,2.5vw,28px);margin:0 0 16px;font-weight:900;text-transform:uppercase;letter-spacing:.1px}.row{display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - 36px)/3.25);gap:18px;overflow-x:auto;padding:0 0 8px;scrollbar-width:none}.row::-webkit-scrollbar{display:none}.continue-card{min-width:0;cursor:pointer}.continue-thumb{width:100%;aspect-ratio:1.7/1;object-fit:cover;border-radius:13px;display:block;background:#242438}.card-title{font-size:clamp(14px,1.7vw,20px);line-height:1.25;margin:8px 0 9px;font-weight:500}.progress{height:6px;border-radius:10px;background:#555365;overflow:hidden}.progress span{display:block;height:100%;width:35%;background:var(--orange);border-radius:10px}.poster-row{display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - 40px)/3.25);gap:20px;overflow-x:auto;scrollbar-width:none;padding-bottom:8px}.poster-row::-webkit-scrollbar{display:none}.anime-card{min-width:0;cursor:pointer}.poster{width:100%;aspect-ratio:0.72;object-fit:cover;border-radius:14px;display:block;background:#242438;box-shadow:0 7px 22px #0004;transition:transform .2s}.anime-card:active .poster{transform:scale(.98)}.poster-title{font-size:clamp(15px,1.9vw,22px);font-weight:750;line-height:1.25;margin:10px 0 0}.empty{color:var(--muted);padding:18px 0}.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:10;display:grid;grid-template-columns:repeat(4,1fr);padding:10px 8px calc(9px + env(safe-area-inset-bottom));background:#171629f5;border-top:1px solid #ffffff14;backdrop-filter:blur(18px)}.nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:#8e8da5;background:none;border:0;padding:5px 2px;font-size:14px}.nav-item svg{width:29px;height:29px}.nav-item.active{color:white}.nav-item.active svg{fill:currentColor}.search-overlay{position:fixed;inset:0;z-index:30;background:#05050beF;display:none;padding:22px;overflow:auto}.search-overlay.active{display:block}.search-panel{max-width:760px;margin:20px auto}.search-head{display:flex;gap:12px;align-items:center}.search-input{flex:1;background:#1b1a2c;border:1px solid #ffffff20;border-radius:12px;padding:15px;color:white;font-size:16px;outline:none}.search-close{background:#252438;color:white;border:0;border-radius:10px;width:48px;height:48px;font-size:26px}.suggestions{margin-top:15px}.suggestion{display:flex;align-items:center;gap:13px;padding:10px;border-bottom:1px solid var(--line);cursor:pointer}.suggestion img{width:54px;height:72px;object-fit:cover;border-radius:7px}.suggestion p{margin:5px 0 0;color:var(--muted);font-size:13px}footer{text-align:center;color:#8e8da5;font-size:12px;padding:10px 20px 115px}@media(max-width:600px){.navbar{height:112px;padding:15px 18px}.brand img{width:72px;height:72px}.page{padding-left:18px;padding-right:18px}.hero{height:300px;border-radius:17px;margin-top:0}.hero-image{object-position:58% center}.hero-content{padding:22px;max-width:82%}.hero-kicker{font-size:29px}.hero-title{font-size:21px}.row{grid-auto-columns:75%;gap:16px}.poster-row{grid-auto-columns:calc((100% - 26px)/2.35);gap:13px}.section{margin:24px 0 28px}.section h2{margin-bottom:13px}.nav-item{font-size:12px}.nav-item svg{width:27px;height:27px}}@media(min-width:900px){.row{grid-auto-columns:calc((100% - 54px)/4)}.poster-row{grid-auto-columns:calc((100% - 80px)/5)}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#050817">
+
+    <meta name="description"
+          content="Anime Max Zone - Discover anime, movies, series and latest episodes.">
+
+    <title>Anime Max Zone - Watch Anime Online</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-<header class="navbar"><a class="brand" href="index.html" aria-label="Anime Max Zone home"><img src="favicon.png" alt="Anime Max logo" onerror="this.style.display='none'"><div class="brand-name">ANIME <span>MAX</span></div></a><button class="icon-btn" id="openSearchBtn" aria-label="Search anime"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10.8" cy="10.8" r="7.2"></circle><path d="m16.2 16.2 5 5"></path></svg></button></header>
-<main class="page">
-<section class="hero" id="heroSlider"><img class="hero-image" id="heroImage" alt="Featured anime" src=""><div class="hero-content"><p class="hero-kicker" id="heroKicker">ANIME MAX ZONE</p><h1 class="hero-title" id="heroTitle">Discover your next anime</h1><button class="play-btn" id="heroPlay">▶ &nbsp; PLAY NOW</button></div></section>
-<section class="section"><h2>Continue Watching</h2><div class="row" id="continueRow"><p class="empty">Loading anime...</p></div></section>
-<section class="section"><h2>Popular Series</h2><div class="poster-row" id="popularRow"><p class="empty">Loading anime...</p></div></section>
-<section class="section"><h2>New Releases</h2><div class="poster-row" id="newRow"><p class="empty">Loading anime...</p></div></section>
-</main>
-<footer>© 2026 <strong>Anime Max Zone</strong>. Built with ♥ SM Studio.</footer>
-<nav class="bottom-nav" aria-label="Bottom navigation"><a href="index.html" class="nav-item active"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 10.8 12 3l9 7.8v9a1.2 1.2 0 0 1-1.2 1.2h-5.2v-6.2H9.4V21H4.2A1.2 1.2 0 0 1 3 19.8z"/></svg><span>Home</span></a><a href="discover.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9.5"/><path d="m15.8 8.2-2.3 5.3-5.3 2.3 2.3-5.3z"/></svg><span>Discover</span></a><a href="watchlist.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3.5h12v17L12 17l-6 3.5z"/></svg><span>My List</span></a><a href="settings.html" class="nav-item"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg><span>More</span></a></nav>
-<div class="search-overlay" id="searchOverlay"><div class="search-panel"><div class="search-head"><input class="search-input" id="searchInput" type="search" placeholder="Search anime, genres..." autocomplete="off"><button class="search-close" id="closeSearchBtn" aria-label="Close">×</button></div><div class="suggestions" id="liveSuggestions"></div></div></div>
-<script type="module">
-import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import {getDatabase,ref,get} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
-const firebaseConfig={apiKey:'AIzaSyCpfrluxsBhnz48ve9RykIy1IxzbBfk7dA',authDomain:'sm-studio-7.firebaseapp.com',databaseURL:'https://sm-studio-7-default-rtdb.asia-southeast1.firebasedatabase.app/',projectId:'sm-studio-7',storageBucket:'sm-studio-7.firebasestorage.app',messagingSenderId:'126291501472',appId:'1:126291501472:web:47386660af8ec3a57204c5'};
-const db=getDatabase(initializeApp(firebaseConfig));const $=id=>document.getElementById(id);let animeList=[];const fallback='data:image/svg+xml;charset=UTF-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="420"><rect width="100%" height="100%" fill="#202035"/><text x="50%" y="50%" fill="#aaa" text-anchor="middle" font-size="18">No Poster</text></svg>');
-function safeUrl(value){try{const u=new URL(value);return ['https:','http:'].includes(u.protocol)?u.href:''}catch{return ''}}
-function goAnime(a){location.href='anime.html?id='+encodeURIComponent(a.id)}
-function card(a){const el=document.createElement('article');el.className='anime-card';const img=document.createElement('img');img.className='poster';img.loading='lazy';img.src=safeUrl(a.coverImageUrl||a.posterUrl||a.poster)||fallback;img.alt=a.title||'Anime';img.onerror=()=>img.src=fallback;const title=document.createElement('div');title.className='poster-title';title.textContent=a.title||'Untitled Anime';el.append(img,title);el.addEventListener('click',()=>goAnime(a));return el}
-function continueCard(a,i){const el=document.createElement('article');el.className='continue-card';const img=document.createElement('img');img.className='continue-thumb';img.loading='lazy';img.src=safeUrl(a.coverImageUrl||a.posterUrl||a.poster)||fallback;img.alt=a.title||'Anime';img.onerror=()=>img.src=fallback;const title=document.createElement('div');title.className='card-title';title.textContent=a.title||'Untitled Anime';const bar=document.createElement('div');bar.className='progress';const fill=document.createElement('span');fill.style.width=(25+(i*17)%65)+'%';bar.append(fill);el.append(img,title,bar);el.addEventListener('click',()=>goAnime(a));return el}
-function fillRow(id,list,fn){const row=$(id);row.replaceChildren();if(!list.length){const p=document.createElement('p');p.className='empty';p.textContent='Anime will appear here when added to Firebase Realtime Database.';row.append(p);return}list.forEach((a,i)=>row.append(fn(a,i)))}
-function setHero(a){if(!a)return;$('heroTitle').textContent=(a.title||'Featured Anime').toUpperCase();$('heroKicker').textContent=a.seasonPremiere?'SEASON PREMIERE:':'FEATURED SERIES';const img=$('heroImage');img.src=safeUrl(a.bannerImageUrl||a.coverImageUrl||a.posterUrl||a.poster)||fallback;img.onerror=()=>img.src=fallback;$('heroPlay').onclick=()=>goAnime(a)}
-async function loadAnime(){try{const snap=await get(ref(db,'anime'));if(!snap.exists()){fillRow('continueRow',[],continueCard);fillRow('popularRow',[],card);fillRow('newRow',[],card);$('heroTitle').textContent='Add anime to get started';$('heroPlay').style.display='none';return}const raw=snap.val();animeList=Object.entries(raw).filter(([,v])=>v&&typeof v==='object').map(([id,v])=>({id,...v,title:v.title||v.name||'Untitled Anime'}));animeList.sort((a,b)=>{const da=Date.parse(a.createdAt)||Number(a.createdAt)||0,dbb=Date.parse(b.createdAt)||Number(b.createdAt)||0;return dbb-da});setHero(animeList.find(a=>a.featured===true)||animeList[0]);fillRow('continueRow',animeList.slice(0,6),continueCard);fillRow('popularRow',[...animeList].sort((a,b)=>(Number(b.views)||0)-(Number(a.views)||0)).slice(0,12),card);fillRow('newRow',animeList.slice(0,12),card)}catch(e){console.error('Realtime Database error:',e);['continueRow','popularRow','newRow'].forEach(id=>{const row=$(id);row.replaceChildren();const p=document.createElement('p');p.className='empty';p.textContent='Could not load anime. Check Realtime Database rules and /anime data path.';row.append(p)})}}
-const overlay=$('searchOverlay');function openSearch(){overlay.classList.add('active');$('searchInput').focus();renderSearch('')}function closeSearch(){overlay.classList.remove('active');$('searchInput').value='';$('liveSuggestions').replaceChildren()}$('openSearchBtn').addEventListener('click',openSearch);$('closeSearchBtn').addEventListener('click',closeSearch);overlay.addEventListener('click',e=>{if(e.target===overlay)closeSearch()});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSearch()});function renderSearch(term){const box=$('liveSuggestions');box.replaceChildren();const q=term.trim().toLowerCase();const results=animeList.filter(a=>(a.title||'').toLowerCase().includes(q)||(Array.isArray(a.genres)?a.genres.join(' '):String(a.genres||'')).toLowerCase().includes(q)).slice(0,12);if(!results.length){const p=document.createElement('p');p.className='empty';p.textContent='No anime found.';box.append(p);return}results.forEach(a=>{const item=document.createElement('div');item.className='suggestion';const img=document.createElement('img');img.src=safeUrl(a.coverImageUrl||a.posterUrl||a.poster)||fallback;img.alt='';img.onerror=()=>img.src=fallback;const info=document.createElement('div');const title=document.createElement('strong');title.textContent=a.title;const meta=document.createElement('p');meta.textContent=Array.isArray(a.genres)?a.genres.join(', '):String(a.genres||'');info.append(title,meta);item.append(img,info);item.addEventListener('click',()=>goAnime(a));box.append(item)})}$('searchInput').addEventListener('input',e=>renderSearch(e.target.value));loadAnime();
-</script>
-</body></html>
+
+    <!-- HEADER -->
+
+    <header class="site-header">
+
+        <div class="header-container">
+
+            <a href="index.html" class="brand">
+
+                <div class="brand-icon">A</div>
+
+                <div class="brand-text">
+                    <h1>Anime <span>Max Zone</span></h1>
+                    <p>Watch Anime · Anytime · Anywhere</p>
+                </div>
+
+            </a>
+
+            <button
+                type="button"
+                class="search-toggle"
+                id="searchToggle"
+                aria-label="Open search"
+                aria-expanded="false"
+                aria-controls="searchPanel">
+
+                <svg viewBox="0 0 24 24"
+                     width="25"
+                     height="25"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="2.2"
+                     stroke-linecap="round">
+
+                    <circle cx="10.8" cy="10.8" r="7"></circle>
+                    <path d="M16 16 L21 21"></path>
+
+                </svg>
+
+            </button>
+
+        </div>
+
+
+        <!-- LIVE SEARCH PANEL -->
+
+        <section class="search-panel"
+                 id="searchPanel"
+                 aria-label="Anime search"
+                 hidden>
+
+            <div class="search-panel-header">
+
+                <div>
+                    <h2>Search Anime</h2>
+                    <p>Find your favorite anime and episodes.</p>
+                </div>
+
+                <button
+                    type="button"
+                    class="search-close"
+                    id="searchClose"
+                    aria-label="Close search">
+
+                    &times;
+
+                </button>
+
+            </div>
+
+
+            <form id="searchForm" class="search-form" role="search">
+
+                <svg viewBox="0 0 24 24"
+                     width="22"
+                     height="22"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="2"
+                     stroke-linecap="round"
+                     aria-hidden="true">
+
+                    <circle cx="10.8" cy="10.8" r="7"></circle>
+                    <path d="M16 16 L21 21"></path>
+
+                </svg>
+
+                <input
+                    type="search"
+                    id="searchInput"
+                    placeholder="Search anime, movies..."
+                    autocomplete="off"
+                    aria-label="Search anime"
+                    aria-controls="searchResults"
+                    aria-autocomplete="list">
+
+                <button type="submit" class="search-submit">
+                    Search
+                </button>
+
+            </form>
+
+
+            <!-- Suggestions appear while typing -->
+
+            <div class="search-suggestions" id="searchSuggestions">
+
+                <h3>Popular Searches</h3>
+
+                <div class="suggestion-list">
+
+                    <button type="button" class="search-suggestion"
+                            data-query="One Piece">
+                        One Piece
+                    </button>
+
+                    <button type="button" class="search-suggestion"
+                            data-query="Naruto">
+                        Naruto
+                    </button>
+
+                    <button type="button" class="search-suggestion"
+                            data-query="Demon Slayer">
+                        Demon Slayer
+                    </button>
+
+                    <button type="button" class="search-suggestion"
+                            data-query="Jujutsu Kaisen">
+                        Jujutsu Kaisen
+                    </button>
+
+                    <button type="button" class="search-suggestion"
+                            data-query="Solo Leveling">
+                        Solo Leveling
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- Live results container -->
+
+            <div
+                class="search-results"
+                id="searchResults"
+                role="listbox"
+                aria-label="Search suggestions"
+                aria-live="polite">
+
+            </div>
+
+        </section>
+
+    </header>
+
+
+    <!-- MAIN CONTENT -->
+
+    <main class="main-content">
+
+
+        <!-- FEATURED ANIME -->
+
+        <section class="featured-section">
+
+            <div class="featured-card">
+
+                <img
+                    class="featured-image"
+                    src="https://placehold.co/1000x600/101020/9b5cff?text=Featured+Anime"
+                    alt="Featured anime"
+                    loading="eager">
+
+                <div class="featured-overlay"></div>
+
+                <div class="featured-content">
+
+                    <span class="featured-badge">Popular Now</span>
+
+                    <h2>Naruto Shippuden</h2>
+
+                    <div class="anime-meta">
+                        <span class="rating">★ 8.7/10</span>
+                        <span>▣ 2007 - 2017</span>
+                    </div>
+
+                    <p class="featured-genres">
+                        Action, Adventure, Fantasy
+                    </p>
+
+                    <p class="featured-description">
+                        Naruto Uzumaki continues his journey as a ninja,
+                        facing stronger opponents and chasing his dream.
+                    </p>
+
+                    <div class="featured-actions">
+
+                        <a href="watch.html?id=naruto-shippuden"
+                           class="button button-primary">
+                            <span>▶</span> Watch Now
+                        </a>
+
+                        <a href="details.html?id=naruto-shippuden"
+                           class="button button-secondary">
+                            More Details
+                        </a>
+
+                    </div>
+
+                </div>
+
+                <div class="slider-indicators">
+                    <span class="indicator active"></span>
+                    <span class="indicator"></span>
+                    <span class="indicator"></span>
+                    <span class="indicator"></span>
+                    <span class="indicator"></span>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- GENRES -->
+
+        <section class="content-section genre-section">
+
+            <div class="section-heading">
+                <h2>Browse by Genre</h2>
+
+                <a href="genres.html" class="view-all">
+                    See All <span>›</span>
+                </a>
+            </div>
+
+            <div class="genre-grid">
+
+                <a href="genres.html?genre=action" class="genre-card">
+                    <span class="genre-icon action-icon">⚔</span>
+                    <span>Action</span>
+                </a>
+
+                <a href="genres.html?genre=adventure" class="genre-card">
+                    <span class="genre-icon adventure-icon">◆</span>
+                    <span>Adventure</span>
+                </a>
+
+                <a href="genres.html?genre=comedy" class="genre-card">
+                    <span class="genre-icon comedy-icon">☻</span>
+                    <span>Comedy</span>
+                </a>
+
+                <a href="genres.html?genre=drama" class="genre-card">
+                    <span class="genre-icon drama-icon">☠</span>
+                    <span>Drama</span>
+                </a>
+
+                <a href="genres.html?genre=fantasy" class="genre-card">
+                    <span class="genre-icon fantasy-icon">♨</span>
+                    <span>Fantasy</span>
+                </a>
+
+                <a href="genres.html?genre=horror" class="genre-card">
+                    <span class="genre-icon horror-icon">☻</span>
+                    <span>Horror</span>
+                </a>
+
+                <a href="genres.html?genre=romance" class="genre-card">
+                    <span class="genre-icon romance-icon">♥</span>
+                    <span>Romance</span>
+                </a>
+
+                <a href="genres.html?genre=sci-fi" class="genre-card">
+                    <span class="genre-icon scifi-icon">🪐</span>
+                    <span>Sci-Fi</span>
+                </a>
+
+                <a href="genres.html?genre=slice-of-life" class="genre-card">
+                    <span class="genre-icon slice-icon">❋</span>
+                    <span>Slice of Life</span>
+                </a>
+
+            </div>
+
+        </section>
+
+
+        <!-- TRENDING ANIME -->
+
+        <section class="content-section">
+
+            <div class="section-heading">
+
+                <h2>
+                    <span class="heading-icon">♨</span>
+                    Trending Anime
+                </h2>
+
+                <a href="anime.html?category=trending" class="view-all">
+                    See All <span>›</span>
+                </a>
+
+            </div>
+
+
+            <div class="anime-grid">
+
+                <article class="anime-card"
+                         data-title="One Piece"
+                         data-genre="Action Adventure Fantasy">
+
+                    <a href="details.html?id=one-piece"
+                       class="anime-poster-link">
+
+                        <div class="anime-poster">
+
+                            <img
+                                src="https://placehold.co/400x550/172e55/ffffff?text=One+Piece"
+                                alt="One Piece"
+                                loading="lazy">
+
+                            <span class="episode-badge">Ep 120</span>
+
+                        </div>
+
+                    </a>
+
+                    <div class="anime-info">
+                        <h3>
+                            <a href="details.html?id=one-piece">One Piece</a>
+                        </h3>
+
+                        <p>Action · Adventure</p>
+                        <span class="anime-year">1999</span>
+                    </div>
+
+                </article>
+
+
+                <article class="anime-card"
+                         data-title="Attack on Titan"
+                         data-genre="Action Drama Fantasy">
+
+                    <a href="details.html?id=attack-on-titan"
+                       class="anime-poster-link">
+
+                        <div class="anime-poster">
+
+                            <img
+                                src="https://placehold.co/400x550/372020/ffffff?text=Attack+on+Titan"
+                                alt="Attack on Titan"
+                                loading="lazy">
+
+                            <span class="episode-badge">Ep 87</span>
+
+                        </div>
+
+                    </a>
+
+                    <div class="anime-info">
+                        <h3>
+                            <a href="details.html?id=attack-on-titan">
+                                Attack on Titan
+                            </a>
+                        </h3>
+
+                        <p>Action · Drama</p>
+                        <span class="anime-year">2013</span>
+                    </div>
+
+                </article>
+
+
+                <article class="anime-card"
+                         data-title="Demon Slayer"
+                         data-genre="Action Adventure Fantasy">
+
+                    <a href="details.html?id=demon-slayer"
+                       class="anime-poster-link">
+
+                        <div class="anime-poster">
+
+                            <img
+                                src="https://placehold.co/400x550/174d63/ffffff?text=Demon+Slayer"
+                                alt="Demon Slayer"
+                                loading="lazy">
+
+                            <span class="episode-badge">Ep 26</span>
+
+                        </div>
+
+                    </a>
+
+                    <div class="anime-info">
+                        <h3>
+                            <a href="details.html?id=demon-slayer">
+                                Demon Slayer
+                            </a>
+                        </h3>
+
+                        <p>Action · Fantasy</p>
+                        <span class="anime-year">2019</span>
+                    </div>
+
+                </article>
+
+
+                <article class="anime-card"
+                         data-title="Jujutsu Kaisen"
+                         data-genre="Action Supernatural School">
+
+                    <a href="details.html?id=jujutsu-kaisen"
+                       class="anime-poster-link">
+
+                        <div class="anime-poster">
+
+                            <img
+                                src="https://placehold.co/400x550/34205b/ffffff?text=Jujutsu+Kaisen"
+                                alt="Jujutsu Kaisen"
+                                loading="lazy">
+
+                            <span class="episode-badge">Ep 47</span>
+
+                        </div>
+
+                    </a>
+
+                    <div class="anime-info">
+                        <h3>
+                            <a href="details.html?id=jujutsu-kaisen">
+                                Jujutsu Kaisen
+                            </a>
+                        </h3>
+
+                        <p>Action · Supernatural</p>
+                        <span class="anime-year">2020</span>
+                    </div>
+
+                </article>
+
+
+                <article class="anime-card"
+                         data-title="Solo Leveling"
+                         data-genre="Action Adventure Fantasy">
+
+                    <a href="details.html?id=solo-leveling"
+                       class="anime-poster-link">
+
+                        <div class="anime-poster">
+
+                            <img
+                                src="https://placehold.co/400x550/17264c/ffffff?text=Solo+Leveling"
+                                alt="Solo Leveling"
+                                loading="lazy">
+
+                            <span class="episode-badge">Ep 24</span>
+
+                        </div>
+
+                    </a>
+
+                    <div class="anime-info">
+                        <h3>
+                            <a href="details.html?id=solo-leveling">
+                                Solo Leveling
+                            </a>
+                        </h3>
+
+                        <p>Action · Fantasy</p>
+                        <span class="anime-year">2024</span>
+                    </div>
+
+                </article>
+
+
+                <article class="anime-card"
+                         data-title="Blue Lock"
+                         data-genre="Sports Drama School">
+
+                    <a href="details.html?id=blue-lock"
+                       class="anime-poster-link">
+
+                        <div class="anime-poster">
+
+                            <img
+                                src="https://placehold.co/400x550/163b65/ffffff?text=Blue+Lock"
+                                alt="Blue Lock"
+                                loading="lazy">
+
+                            <span class="episode-badge">Ep 14</span>
+
+                        </div>
+
+                    </a>
+
+                    <div class="anime-info">
+                        <h3>
+                            <a href="details.html?id=blue-lock">Blue Lock</a>
+                        </h3>
+
+                        <p>Sports · Drama</p>
+                        <span class="anime-year">2022</span>
+                    </div>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <!-- LATEST EPISODES -->
+
+        <section class="content-section latest-section">
+
+            <div class="section-heading">
+
+                <h2>
+                    <span class="heading-icon">▶</span>
+                    Latest Episodes
+                </h2>
+
+                <a href="episodes.html" class="view-all">
+                    See All <span>›</span>
+                </a>
+
+            </div>
+
+
+            <div class="latest-grid">
+
+                <a href="watch.html?id=naruto-shippuden"
+                   class="latest-card">
+
+                    <div class="latest-thumbnail">
+
+                        <img
+                            src="https://placehold.co/600x300/25213f/ffffff?text=Naruto+Shippuden"
+                            alt="Naruto Shippuden"
+                            loading="lazy">
+
+                        <span class="episode-badge">Ep 120</span>
+                        <span class="play-button">▶</span>
+
+                    </div>
+
+                    <div class="latest-info">
+                        <h3>Naruto Shippuden</h3>
+                        <p>Season 19 · Episode 120</p>
+                    </div>
+
+                </a>
+
+
+                <a href="watch.html?id=demon-slayer"
+                   class="latest-card">
+
+                    <div class="latest-thumbnail">
+
+                        <img
+                            src="https://placehold.co/600x300/183f51/ffffff?text=Demon+Slayer"
+                            alt="Demon Slayer"
+                            loading="lazy">
+
+                        <span class="episode-badge">Ep 26</span>
+                        <span class="play-button">▶</span>
+
+                    </div>
+
+                    <div class="latest-info">
+                        <h3>Demon Slayer</h3>
+                        <p>Season 2 · Episode 26</p>
+                    </div>
+
+                </a>
+
+
+                <a href="watch.html?id=jujutsu-kaisen"
+                   class="latest-card">
+
+                    <div class="latest-thumbnail">
+
+                        <img
+                            src="https://placehold.co/600x300/302044/ffffff?text=Jujutsu+Kaisen"
+                            alt="Jujutsu Kaisen"
+                            loading="lazy">
+
+                        <span class="episode-badge">Ep 47</span>
+                        <span class="play-button">▶</span>
+
+                    </div>
+
+                    <div class="latest-info">
+                        <h3>Jujutsu Kaisen</h3>
+                        <p>Season 2 · Episode 47</p>
+                    </div>
+
+                </a>
+
+            </div>
+
+        </section>
+
+
+        <!-- NO RESULTS -->
+
+        <div id="noResults" class="no-results" hidden>
+            <div class="empty-icon">⌕</div>
+            <h2>No Anime Found</h2>
+            <p>Try searching with another anime title.</p>
+        </div>
+
+    </main>
+
+
+    <!-- BOTTOM NAVIGATION -->
+
+    <nav class="bottom-navigation" aria-label="Main navigation">
+
+        <a href="index.html"
+           class="nav-item active"
+           aria-current="page">
+            <span class="nav-icon">◆</span>
+            <span>Home</span>
+        </a>
+
+        <a href="movies.html" class="nav-item">
+            <span class="nav-icon">▣</span>
+            <span>Movies</span>
+        </a>
+
+        <a href="series.html" class="nav-item">
+            <span class="nav-icon">▤</span>
+            <span>Series</span>
+        </a>
+
+        <a href="genres.html" class="nav-item">
+            <span class="nav-icon">▦</span>
+            <span>Genres</span>
+        </a>
+
+        <a href="my-list.html" class="nav-item">
+            <span class="nav-icon">♡</span>
+            <span>My List</span>
+        </a>
+
+    </nav>
+
+
+    <!-- FOOTER -->
+
+    <footer class="site-footer">
+
+        <div class="footer-brand">
+            Anime <span>Max Zone</span>
+        </div>
+
+        <p>Discover anime adventures, movies and series.</p>
+
+        <p class="copyright">
+            &copy; <span id="currentYear">2026</span>
+            Anime Max Zone. All rights reserved.
+        </p>
+
+    </footer>
+
+
+    <script src="script.js"></script>
+
+</body>
+</html>
