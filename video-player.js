@@ -850,3 +850,1194 @@ function setupVideoEvents() {
 // ============================================================
 // END OF PART 3
 // ============================================================
+// ============================================================
+// VIDEO PROGRESS BAR
+// ============================================================
+
+function updateProgress() {
+  if (!video) {
+    return;
+  }
+
+  const current = video.currentTime || 0;
+  const duration = video.duration || 0;
+
+  const progressBar = $("progressBar");
+  const progressFill = $("progressFill");
+  const seekBar = $("seekBar");
+  const currentTimeText = $("currentTimeText");
+  const durationText = $("durationText");
+
+  const percentage =
+    duration > 0 ? (current / duration) * 100 : 0;
+
+  if (progressFill) {
+    progressFill.style.width = `${percentage}%`;
+  }
+
+  if (progressBar) {
+    progressBar.style.width = `${percentage}%`;
+  }
+
+  if (seekBar && duration > 0) {
+    seekBar.value = String(percentage);
+    seekBar.setAttribute(
+      "aria-valuenow",
+      String(Math.round(percentage))
+    );
+  }
+
+  if (currentTimeText) {
+    currentTimeText.textContent = formatTime(current);
+  }
+
+  if (durationText) {
+    durationText.textContent = formatTime(duration);
+  }
+}
+
+// ============================================================
+// SEEK VIDEO
+// ============================================================
+
+function seekToPercentage(value) {
+  if (!video || !Number.isFinite(video.duration)) {
+    return;
+  }
+
+  const percentage = Math.max(
+    0,
+    Math.min(100, Number(value) || 0)
+  );
+
+  video.currentTime =
+    (percentage / 100) * video.duration;
+
+  updateProgress();
+}
+
+function setupSeekBar() {
+  const seekBar = $("seekBar");
+
+  if (!seekBar) {
+    return;
+  }
+
+  seekBar.addEventListener("input", (event) => {
+    seekToPercentage(event.target.value);
+  });
+
+  seekBar.addEventListener("change", (event) => {
+    seekToPercentage(event.target.value);
+  });
+}
+
+// ============================================================
+// SKIP FORWARD / BACKWARD
+// ============================================================
+
+function skipForward(seconds = 10) {
+  if (!video || !Number.isFinite(video.duration)) {
+    return;
+  }
+
+  video.currentTime = Math.min(
+    video.duration,
+    video.currentTime + seconds
+  );
+
+  updateProgress();
+}
+
+function skipBackward(seconds = 10) {
+  if (!video) {
+    return;
+  }
+
+  video.currentTime = Math.max(
+    0,
+    video.currentTime - seconds
+  );
+
+  updateProgress();
+}
+
+// ============================================================
+// VOLUME CONTROL
+// ============================================================
+
+function updateVolumeUI() {
+  if (!video) {
+    return;
+  }
+
+  const volumeSlider = $("volumeSlider");
+  const muteButton = $("muteButton");
+
+  if (volumeSlider) {
+    volumeSlider.value = String(
+      video.muted ? 0 : video.volume
+    );
+  }
+
+  if (muteButton) {
+    muteButton.textContent =
+      video.muted || video.volume === 0
+        ? "🔇"
+        : video.volume < 0.5
+          ? "🔉"
+          : "🔊";
+
+    muteButton.setAttribute(
+      "aria-label",
+      video.muted ? "Unmute" : "Mute"
+    );
+  }
+}
+
+function setVolume(value) {
+  if (!video) {
+    return;
+  }
+
+  const volume = Math.max(
+    0,
+    Math.min(1, Number(value) || 0)
+  );
+
+  video.volume = volume;
+  video.muted = volume === 0;
+
+  updateVolumeUI();
+}
+
+function toggleMute() {
+  if (!video) {
+    return;
+  }
+
+  video.muted = !video.muted;
+  updateVolumeUI();
+}
+
+function setupVolumeControls() {
+  const volumeSlider = $("volumeSlider");
+  const muteButton = $("muteButton");
+
+  if (volumeSlider) {
+    volumeSlider.addEventListener("input", (event) => {
+      setVolume(event.target.value);
+    });
+  }
+
+  if (muteButton) {
+    muteButton.addEventListener("click", toggleMute);
+  }
+
+  updateVolumeUI();
+}
+
+// ============================================================
+// PLAYBACK SPEED
+// ============================================================
+
+function setPlaybackSpeed(speed) {
+  if (!video) {
+    return;
+  }
+
+  const allowedSpeeds = [
+    0.25,
+    0.5,
+    0.75,
+    1,
+    1.25,
+    1.5,
+    1.75,
+    2
+  ];
+
+  const selectedSpeed = Number(speed);
+
+  if (!allowedSpeeds.includes(selectedSpeed)) {
+    return;
+  }
+
+  video.playbackRate = selectedSpeed;
+
+  setText(
+    "playbackSpeedLabel",
+    `${selectedSpeed}x`
+  );
+
+  hide("speedMenu");
+}
+
+function setupPlaybackSpeed() {
+  const speedButton = $("speedButton");
+  const speedMenu = $("speedMenu");
+
+  if (speedButton && speedMenu) {
+    speedButton.addEventListener("click", () => {
+      speedMenu.hidden = !speedMenu.hidden;
+    });
+
+    speedMenu
+      .querySelectorAll("[data-speed]")
+      .forEach((button) => {
+        button.addEventListener("click", () => {
+          setPlaybackSpeed(
+            button.getAttribute("data-speed")
+          );
+        });
+      });
+  }
+}
+
+// ============================================================
+// DOUBLE-TAP SEEK
+// ============================================================
+
+let lastTapTime = 0;
+let lastTapSide = "";
+
+function setupDoubleTapSeek() {
+  if (!player) {
+    return;
+  }
+
+  player.addEventListener("touchend", (event) => {
+    if (
+      event.target.closest("button") ||
+      event.target.closest("input") ||
+      event.target.closest("select")
+    ) {
+      return;
+    }
+
+    const now = Date.now();
+    const touch = event.changedTouches[0];
+    const rect = player.getBoundingClientRect();
+
+    const x = touch.clientX - rect.left;
+    const side =
+      x < rect.width / 2 ? "left" : "right";
+
+    if (
+      now - lastTapTime < 320 &&
+      side === lastTapSide
+    ) {
+      if (side === "left") {
+        skipBackward(10);
+      } else {
+        skipForward(10);
+      }
+
+      lastTapTime = 0;
+      lastTapSide = "";
+      return;
+    }
+
+    lastTapTime = now;
+    lastTapSide = side;
+  });
+}
+
+// ============================================================
+// END OF PART 4
+// ============================================================
+// ============================================================
+// FULLSCREEN MODE
+// ============================================================
+
+function isPlayerFullscreen() {
+  return Boolean(
+    document.fullscreenElement ||
+    document.webkitFullscreenElement
+  );
+}
+
+async function toggleFullscreen() {
+  const target = player || video;
+
+  if (!target) {
+    return;
+  }
+
+  try {
+    if (isPlayerFullscreen()) {
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      }
+
+      return;
+    }
+
+    if (target.requestFullscreen) {
+      await target.requestFullscreen();
+    } else if (target.webkitRequestFullscreen) {
+      target.webkitRequestFullscreen();
+    } else if (video?.webkitEnterFullscreen) {
+      video.webkitEnterFullscreen();
+    } else {
+      console.warn("Fullscreen is not supported.");
+    }
+  } catch (error) {
+    console.error("Fullscreen error:", error);
+  }
+}
+
+function updateFullscreenButton() {
+  const button = $("fullscreenButton");
+
+  if (!button) {
+    return;
+  }
+
+  const fullscreen = isPlayerFullscreen();
+
+  button.textContent = fullscreen ? "⛶" : "⛶";
+
+  button.setAttribute(
+    "aria-label",
+    fullscreen ? "Exit fullscreen" : "Enter fullscreen"
+  );
+}
+
+function setupFullscreen() {
+  const button = $("fullscreenButton");
+
+  if (button) {
+    button.addEventListener("click", toggleFullscreen);
+  }
+
+  document.addEventListener(
+    "fullscreenchange",
+    updateFullscreenButton
+  );
+
+  document.addEventListener(
+    "webkitfullscreenchange",
+    updateFullscreenButton
+  );
+}
+
+// ============================================================
+// PICTURE-IN-PICTURE MODE
+// ============================================================
+
+async function togglePictureInPicture() {
+  if (!video) {
+    return;
+  }
+
+  try {
+    if (document.pictureInPictureElement) {
+      await document.exitPictureInPicture();
+      return;
+    }
+
+    if (
+      document.pictureInPictureEnabled &&
+      video.readyState >= 1
+    ) {
+      await video.requestPictureInPicture();
+    } else {
+      console.warn(
+        "Picture-in-Picture is not available."
+      );
+    }
+  } catch (error) {
+    console.error("Picture-in-Picture error:", error);
+  }
+}
+
+function setupPictureInPicture() {
+  const button = $("pipButton");
+
+  if (!button) {
+    return;
+  }
+
+  button.addEventListener(
+    "click",
+    togglePictureInPicture
+  );
+
+  if (!document.pictureInPictureEnabled) {
+    button.disabled = true;
+    button.title = "Picture-in-Picture not supported";
+  }
+}
+
+// ============================================================
+// PLAYER CONTROLS VISIBILITY
+// ============================================================
+
+function showPlayerControls() {
+  if (!player || controlsLocked) {
+    return;
+  }
+
+  player.classList.remove("controls-hidden");
+
+  clearTimeout(controlsTimer);
+
+  if (video && !video.paused) {
+    controlsTimer = window.setTimeout(() => {
+      if (
+        !video.paused &&
+        !controlsLocked &&
+        !isPlayerFullscreen()
+      ) {
+        player.classList.add("controls-hidden");
+      }
+    }, 3500);
+  }
+}
+
+function hidePlayerControls() {
+  if (!player || controlsLocked) {
+    return;
+  }
+
+  player.classList.add("controls-hidden");
+}
+
+function setupControlsVisibility() {
+  if (!player) {
+    return;
+  }
+
+  player.addEventListener("mousemove", () => {
+    showPlayerControls();
+  });
+
+  player.addEventListener("touchstart", () => {
+    showPlayerControls();
+  }, { passive: true });
+
+  player.addEventListener("click", (event) => {
+    if (
+      event.target.closest("button") ||
+      event.target.closest("input") ||
+      event.target.closest("select")
+    ) {
+      showPlayerControls();
+      return;
+    }
+
+    if (player.classList.contains("controls-hidden")) {
+      showPlayerControls();
+    } else {
+      showPlayerControls();
+    }
+  });
+
+  video?.addEventListener("play", () => {
+    showPlayerControls();
+  });
+
+  video?.addEventListener("pause", () => {
+    showPlayerControls();
+  });
+}
+
+// ============================================================
+// LOCK PLAYER CONTROLS
+// ============================================================
+
+function toggleControlsLock() {
+  controlsLocked = !controlsLocked;
+
+  const button = $("lockControlsButton");
+
+  if (button) {
+    button.textContent = controlsLocked ? "🔒" : "🔓";
+
+    button.setAttribute(
+      "aria-label",
+      controlsLocked
+        ? "Unlock player controls"
+        : "Lock player controls"
+    );
+  }
+
+  if (player) {
+    player.classList.toggle(
+      "controls-locked",
+      controlsLocked
+    );
+  }
+
+  if (controlsLocked) {
+    clearTimeout(controlsTimer);
+  } else {
+    showPlayerControls();
+  }
+}
+
+function setupControlsLock() {
+  const button = $("lockControlsButton");
+
+  if (button) {
+    button.addEventListener(
+      "click",
+      toggleControlsLock
+    );
+  }
+}
+
+// ============================================================
+// KEYBOARD SHORTCUTS
+// ============================================================
+
+function setupKeyboardControls() {
+  document.addEventListener("keydown", (event) => {
+    const target = event.target;
+
+    if (
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement ||
+      target instanceof HTMLSelectElement ||
+      target?.isContentEditable
+    ) {
+      return;
+    }
+
+    switch (event.key.toLowerCase()) {
+      case " ":
+      case "k":
+        event.preventDefault();
+        togglePlayPause();
+        break;
+
+      case "arrowright":
+        event.preventDefault();
+        skipForward(10);
+        break;
+
+      case "arrowleft":
+        event.preventDefault();
+        skipBackward(10);
+        break;
+
+      case "arrowup":
+        event.preventDefault();
+        setVolume((video?.volume || 0) + 0.05);
+        break;
+
+      case "arrowdown":
+        event.preventDefault();
+        setVolume((video?.volume || 0) - 0.05);
+        break;
+
+      case "m":
+        toggleMute();
+        break;
+
+      case "f":
+        toggleFullscreen();
+        break;
+
+      case "escape":
+        showPlayerControls();
+        break;
+    }
+  });
+}
+
+// ============================================================
+// END OF PART 5
+// ============================================================
+// ============================================================
+// SUBTITLE MANAGEMENT
+// ============================================================
+
+function clearSubtitles() {
+  if (!video || !video.textTracks) {
+    return;
+  }
+
+  for (const track of video.textTracks) {
+    track.mode = "disabled";
+  }
+}
+
+function getSubtitleUrl(item) {
+  if (!item) {
+    return "";
+  }
+
+  return normalizeGoogleDriveUrl(
+    item.url ||
+    item.subtitleUrl ||
+    item.fileUrl
+  );
+}
+
+function loadSubtitleOptions(subtitles) {
+  const select = $("subtitleSelect");
+
+  if (!select) {
+    return;
+  }
+
+  select.replaceChildren();
+
+  const offOption = document.createElement("option");
+  offOption.value = "";
+  offOption.textContent = "Subtitles Off";
+
+  select.appendChild(offOption);
+
+  availableSubtitles = {};
+
+  if (!Array.isArray(subtitles)) {
+    return;
+  }
+
+  subtitles.forEach((item, index) => {
+    const url = getSubtitleUrl(item);
+
+    if (!url) {
+      return;
+    }
+
+    const option = document.createElement("option");
+
+    option.value = String(index);
+    option.textContent =
+      safeText(item.label || item.language, `Subtitle ${index + 1}`);
+
+    availableSubtitles[index] = {
+      ...item,
+      url
+    };
+
+    select.appendChild(option);
+  });
+}
+
+async function selectSubtitle(index) {
+  if (!video) {
+    return;
+  }
+
+  video.querySelectorAll("track").forEach((track) => {
+    track.remove();
+  });
+
+  clearSubtitles();
+
+  if (index === "") {
+    return;
+  }
+
+  const subtitle = availableSubtitles[index];
+
+  if (!subtitle) {
+    return;
+  }
+
+  const trackElement = document.createElement("track");
+
+  trackElement.kind = "subtitles";
+  trackElement.label =
+    safeText(subtitle.label || subtitle.language, "Subtitle");
+
+  trackElement.srclang =
+    safeText(subtitle.languageCode, "en");
+
+  trackElement.src = subtitle.url;
+  trackElement.default = true;
+
+  video.appendChild(trackElement);
+
+  trackElement.addEventListener("load", () => {
+    const tracks = video.textTracks;
+
+    for (let i = 0; i < tracks.length; i++) {
+      tracks[i].mode = "disabled";
+    }
+
+    if (tracks.length > 0) {
+      tracks[tracks.length - 1].mode = "showing";
+    }
+  });
+}
+
+function setupSubtitleControls() {
+  const select = $("subtitleSelect");
+
+  if (select) {
+    select.addEventListener("change", () => {
+      selectSubtitle(select.value);
+    });
+  }
+}
+
+// ============================================================
+// AUDIO TRACK MANAGEMENT
+// ============================================================
+
+function setupAudioTrackControls() {
+  const select = $("audioTrackSelect");
+
+  if (!select || !video) {
+    return;
+  }
+
+  select.replaceChildren();
+
+  const defaultOption = document.createElement("option");
+
+  defaultOption.value = "default";
+  defaultOption.textContent = "Default Audio";
+
+  select.appendChild(defaultOption);
+
+  /*
+   * Native HTML video does not expose a consistent,
+   * cross-browser API for selecting alternate audio tracks.
+   *
+   * This selector therefore keeps the default audio selected.
+   * Alternate-track selection requires compatible media,
+   * browser support, and a suitable streaming implementation.
+   */
+
+  select.disabled = true;
+}
+
+// ============================================================
+// VIDEO QUALITY MENU
+// ============================================================
+
+function setupQualityControls() {
+  const select = $("qualitySelect");
+
+  if (!select) {
+    return;
+  }
+
+  select.replaceChildren();
+
+  const option = document.createElement("option");
+
+  option.value = "auto";
+  option.textContent = "Original Quality";
+
+  select.appendChild(option);
+
+  /*
+   * A Google Drive URL generally represents one video file,
+   * not a list of selectable streaming quality variants.
+   *
+   * Real quality switching requires separate compatible
+   * video sources or a streaming manifest.
+   */
+
+  select.disabled = true;
+}
+
+// ============================================================
+// PLAYBACK SETTINGS MENU
+// ============================================================
+
+function setupSettingsMenu() {
+  const settingsButton = $("settingsButton");
+  const settingsMenu = $("settingsMenu");
+
+  if (!settingsButton || !settingsMenu) {
+    return;
+  }
+
+  settingsButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+
+    settingsMenu.hidden = !settingsMenu.hidden;
+  });
+
+  document.addEventListener("click", (event) => {
+    if (
+      !settingsMenu.contains(event.target) &&
+      !settingsButton.contains(event.target)
+    ) {
+      settingsMenu.hidden = true;
+    }
+  });
+}
+
+// ============================================================
+// SHARE CURRENT EPISODE
+// ============================================================
+
+async function shareCurrentEpisode() {
+  const shareData = {
+    title: document.title,
+    text: `${getAnimeName()} - ${getEpisodeName()}`,
+    url: window.location.href
+  };
+
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData);
+    } else if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(shareData.url);
+
+      setText("shareMessage", "Link copied!");
+
+      window.setTimeout(() => {
+        setText("shareMessage", "");
+      }, 2000);
+    } else {
+      window.prompt("Copy this link:", shareData.url);
+    }
+  } catch (error) {
+    if (error.name !== "AbortError") {
+      console.error("Share failed:", error);
+    }
+  }
+}
+
+function setupShareButton() {
+  const button = $("shareButton");
+
+  if (button) {
+    button.addEventListener("click", shareCurrentEpisode);
+  }
+}
+
+// ============================================================
+// END OF PART 6
+// ============================================================
+// ============================================================
+// CINEMATIC INTRO
+// ============================================================
+
+function hideCinematicIntro() {
+  clearTimeout(introTimer);
+
+  const intro = $("cinematicIntro");
+
+  if (intro) {
+    intro.classList.remove("show");
+    intro.hidden = true;
+  }
+}
+
+function showCinematicIntro() {
+  const intro = $("cinematicIntro");
+
+  if (!intro) {
+    return;
+  }
+
+  setText("introAnimeTitle", getAnimeName());
+  setText("introEpisodeTitle", getEpisodeName());
+
+  intro.hidden = false;
+
+  requestAnimationFrame(() => {
+    intro.classList.add("show");
+  });
+
+  clearTimeout(introTimer);
+
+  introTimer = window.setTimeout(() => {
+    hideCinematicIntro();
+  }, 2500);
+}
+
+function setupCinematicIntro() {
+  const skipButton = $("skipIntroButton");
+
+  if (skipButton) {
+    skipButton.addEventListener(
+      "click",
+      hideCinematicIntro
+    );
+  }
+}
+
+// ============================================================
+// LOADING INDICATOR
+// ============================================================
+
+function setupLoadingIndicator() {
+  if (!video) {
+    return;
+  }
+
+  video.addEventListener("loadstart", () => {
+    setLoading("Video load ho raha hai...");
+  });
+
+  video.addEventListener("waiting", () => {
+    if (!video.paused) {
+      setLoading("Buffering...");
+    }
+  });
+
+  video.addEventListener("playing", () => {
+    hideLoading();
+  });
+
+  video.addEventListener("canplay", () => {
+    hideLoading();
+  });
+
+  video.addEventListener("stalled", () => {
+    if (!video.paused) {
+      setLoading("Connection slow hai...");
+    }
+  });
+}
+
+// ============================================================
+// RETRY BUTTON
+// ============================================================
+
+function setupRetryButton() {
+  const retryButton = $("retryButton");
+
+  if (retryButton) {
+    retryButton.addEventListener("click", () => {
+      retryVideo();
+    });
+  }
+}
+
+// ============================================================
+// BROWSER ONLINE / OFFLINE STATUS
+// ============================================================
+
+function setupNetworkStatus() {
+  window.addEventListener("offline", () => {
+    if (video && !video.paused) {
+      video.pause();
+    }
+
+    showError(
+      "Internet connection nahi hai. Connection check karke retry karo."
+    );
+  });
+
+  window.addEventListener("online", () => {
+    hide("playerError");
+    setText(
+      "networkStatus",
+      "Connection restored"
+    );
+  });
+}
+
+// ============================================================
+// PREVENT UNEXPECTED PAGE SCROLL IN FULLSCREEN
+// ============================================================
+
+function setupFullscreenLayout() {
+  document.addEventListener("fullscreenchange", () => {
+    document.body.classList.toggle(
+      "player-fullscreen",
+      Boolean(document.fullscreenElement)
+    );
+  });
+}
+
+// ============================================================
+// PLAYER CONTROL BUTTONS
+// ============================================================
+
+function setupMainPlayerButtons() {
+  const playButton = $("playPauseButton");
+  const backwardButton = $("backwardButton");
+  const forwardButton = $("forwardButton");
+
+  if (playButton) {
+    playButton.addEventListener(
+      "click",
+      togglePlayPause
+    );
+  }
+
+  if (backwardButton) {
+    backwardButton.addEventListener("click", () => {
+      skipBackward(10);
+    });
+  }
+
+  if (forwardButton) {
+    forwardButton.addEventListener("click", () => {
+      skipForward(10);
+    });
+  }
+}
+
+// ============================================================
+// ACCESSIBILITY
+// ============================================================
+
+function setupAccessibility() {
+  if (!video) {
+    return;
+  }
+
+  video.setAttribute("playsinline", "");
+  video.setAttribute("webkit-playsinline", "");
+  video.setAttribute("preload", "metadata");
+
+  const controls = [
+    "playPauseButton",
+    "fullscreenButton",
+    "pipButton",
+    "muteButton",
+    "settingsButton",
+    "shareButton",
+    "previousEpisode",
+    "nextEpisode"
+  ];
+
+  controls.forEach((id) => {
+    const element = $(id);
+
+    if (
+      element &&
+      element.tagName === "BUTTON" &&
+      !element.hasAttribute("type")
+    ) {
+      element.type = "button";
+    }
+  });
+}
+
+// ============================================================
+// CLEANUP
+// ============================================================
+
+function cleanupPlayer() {
+  clearTimeout(introTimer);
+  clearTimeout(controlsTimer);
+
+  if (video) {
+    video.pause();
+  }
+}
+
+window.addEventListener("pagehide", cleanupPlayer);
+
+// ============================================================
+// END OF PART 7
+// ============================================================
+// ============================================================
+// INITIALIZE VIDEO PLAYER
+// ============================================================
+
+async function initializeVideoPlayer() {
+  try {
+    setLoading("Anime Max Zone not loaded");
+
+    // Set up player controls and event listeners.
+    setupVideoEvents();
+    setupSeekBar();
+    setupVolumeControls();
+    setupPlaybackSpeed();
+    setupFullscreen();
+    setupPictureInPicture();
+    setupControlsVisibility();
+    setupControlsLock();
+    setupKeyboardControls();
+    setupDoubleTapSeek();
+    setupSubtitleControls();
+    setupAudioTrackControls();
+    setupQualityControls();
+    setupSettingsMenu();
+    setupShareButton();
+    setupCinematicIntro();
+    setupLoadingIndicator();
+    setupRetryButton();
+    setupNetworkStatus();
+    setupFullscreenLayout();
+    setupMainPlayerButtons();
+    setupAccessibility();
+
+    // Load information from Firebase when IDs are supplied.
+    if (animeId) {
+      await loadAnimeInformation();
+      episodes = await loadEpisodeList();
+    }
+
+    // Resolve the current episode.
+    if (episodeId) {
+      episodeData = await loadEpisodeInformation();
+    } else if (directUrl) {
+      episodeData = {
+        title: directEpisodeTitle || directTitle || "Now Playing",
+        videoUrl: directUrl
+      };
+    } else if (episodes.length > 0) {
+      episodeData = episodes[0];
+    }
+
+    // Update the page title and episode details.
+    updateEpisodeInformation();
+
+    // Read the Google Drive video URL.
+    const source = getVideoSource();
+
+    if (!source) {
+      showError(
+        "Video URL nahi mila. Valid Google Drive link check karo."
+      );
+
+      return;
+    }
+
+    // Load and prepare the video.
+    loadVideoSource(source);
+
+    // Populate subtitle options if available.
+    const subtitleList =
+      episodeData.subtitles ||
+      episodeData.subtitleTracks ||
+      [];
+
+    loadSubtitleOptions(subtitleList);
+
+    // Display the cinematic intro if available.
+    showCinematicIntro();
+
+    console.log(
+      "ANIME MAX ZONE player initialized successfully."
+    );
+  } catch (error) {
+    console.error(
+      "Player initialization failed:",
+      error
+    );
+
+    showError(
+      "Player load nahi ho paya. Page refresh karke dobara try karo."
+    );
+  }
+}
+
+// ============================================================
+// START PLAYER WHEN PAGE IS READY
+// ============================================================
+
+if (document.readyState === "loading") {
+  document.addEventListener(
+    "DOMContentLoaded",
+    initializeVideoPlayer,
+    { once: true }
+  );
+} else {
+  initializeVideoPlayer();
+}
+
+// ============================================================
+// END OF VIDEO-PLAYER.JS
+// ============================================================
