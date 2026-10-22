@@ -1,371 +1,800 @@
-/* ============================================================
-   ANIME MAX ZONE — User Panel Logic
-   ============================================================ */
+/* =========================================
+   ANIME MAX ZONE
+   Main JavaScript
+========================================= */
 
-// ---------- 1. Firebase Imports (v10 modular) ----------
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {
-    getFirestore, collection, getDocs, query, orderBy, limit
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+document.addEventListener("DOMContentLoaded", function () {
 
-// ---------- 2. Firebase Config ----------
-const firebaseConfig = {
-    apiKey: "AIzaSyCpfrluxsBhnz48ve9RykIy1IxzbBfk7dA",
-    authDomain: "sm-studio-7.firebaseapp.com",
-    projectId: "sm-studio-7",
-    storageBucket: "sm-studio-7.firebasestorage.app",
-    messagingSenderId: "126291501472",
-    appId: "1:126291501472:web:47386660af8ec3a57204c5"
-};
+    "use strict";
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+    /* =====================================
+       ELEMENTS
+    ===================================== */
 
-// ---------- 3. DOM References ----------
-const grid = document.getElementById("animeGrid");
-const preloader = document.getElementById("preloader");
+    var searchToggle = document.getElementById("searchToggle");
+    var searchPanel = document.getElementById("searchPanel");
+    var searchClose = document.getElementById("searchClose");
 
-// Search Overlay Elements
-const openSearchBtn = document.getElementById("openSearchBtn");
-const navSearchBtn = document.getElementById("navSearchBtn");
-const closeSearchBtn = document.getElementById("closeSearchBtn");
-const searchOverlay = document.getElementById("searchOverlay");
-const searchInput = document.getElementById("searchInput");
-const liveSuggestions = document.getElementById("liveSuggestions");
+    var searchForm = document.getElementById("searchForm");
+    var searchInput = document.getElementById("searchInput");
+    var searchResults = document.getElementById("searchResults");
 
-let allAnime = [];
+    var noResults = document.getElementById("noResults");
 
-// Demo Data (Used if Firebase is empty or throws an error)
-const demoData = [
-    { id: '1', title: 'Demon Slayer', genres: ['Action', 'Fantasy'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1286/99889.jpg', status: 'Ongoing' },
-    { id: '2', title: 'Jujutsu Kaisen', genres: ['Action', 'Supernatural'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1171/109222.jpg', status: 'Completed' },
-    { id: '3', title: 'One Piece', genres: ['Action', 'Adventure'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/6/73245.jpg', status: 'Ongoing' },
-    { id: '4', title: 'Attack on Titan', genres: ['Action', 'Drama'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/10/47347.jpg', status: 'Completed' },
-    { id: '5', title: 'Naruto', genres: ['Action', 'Adventure'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/13/17405.jpg', status: 'Completed' }
-];
+    var currentYear = document.getElementById("currentYear");
 
-// ============================================================
-// ---------- 4. PRELOADER LOGIC ----------
-// ============================================================
-function hidePreloader() {
-    if (preloader && !preloader.classList.contains("hidden")) {
-        preloader.classList.add("hidden");
-        setTimeout(() => { preloader.style.display = 'none'; }, 500);
-    }
-}
+    var searchSuggestions = document.querySelectorAll(".search-suggestion");
 
-// Show for 2.5s on first visit, then 0.5s on subsequent visits
-if (!sessionStorage.getItem("hasVisited")) {
-    sessionStorage.setItem("hasVisited", "true");
-    setTimeout(hidePreloader, 2500);
-} else {
-    setTimeout(hidePreloader, 500);
-}
+    var animeCards = document.querySelectorAll(".anime-card");
+    var latestCards = document.querySelectorAll(".latest-card");
 
-// Emergency Backup: Force hide after 5 seconds
-setTimeout(hidePreloader, 5000);
+    var mainContent = document.querySelector(".main-content");
+
+    var searchTimer = null;
 
 
-// ---------- 5. Security Helpers ----------
-function escapeHTML(str) {
-    if (str == null) return "";
-    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-}
+    /* =====================================
+       CURRENT YEAR
+    ===================================== */
 
-function safeImageUrl(url) {
-    if (typeof url !== "string") return "";
-    try {
-        const u = new URL(url);
-        if (u.protocol === "http:" || u.protocol === "https:") return u.href;
-    } catch (_) {}
-    return "";
-}
-
-const FALLBACK_POSTER = "data:image/svg+xml;utf8," + encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300">
-        <rect width="200" height="300" fill="#1a1a24"/>
-        <text x="100" y="150" fill="#555" text-anchor="middle" font-family="sans-serif" font-size="14">No Image</text>
-     </svg>`
-);
-
-// ---------- 6. Main Grid Card Renderer ----------
-function renderCard(anime) {
-    const title = escapeHTML(anime.title || "Untitled");
-    const genres = Array.isArray(anime.genres) ? anime.genres.map(escapeHTML).join(", ") : escapeHTML(anime.genres || "");
-    const poster = safeImageUrl(anime.coverImageUrl) || FALLBACK_POSTER;
-
-    const status = (anime.status || "").toLowerCase();
-    const statusClass = status === "ongoing" ? "badge status-ongoing" : status === "completed" ? "badge status-completed" : "badge";
-    const statusLabel = escapeHTML(anime.status || "");
-
-    const card = document.createElement("article");
-    card.className = "anime-card";
-    card.setAttribute("role", "link");
-    card.setAttribute("tabindex", "0");
-
-    const safeId = encodeURIComponent(anime.id || "");
-    
-    // RELATIVE PATH (No leading slash) -> Fix for GitHub Pages
-    card.dataset.href = `anime.html?id=${safeId}`;
-
-    card.innerHTML = `
-        <div class="poster">
-            ${statusLabel ? `<span class="${statusClass}">${statusLabel}</span>` : ""}
-            <img src="${poster}" alt="${title} poster" loading="lazy" />
-        </div>
-        <div class="info">
-            <h3 title="${title}">${title}</h3>
-            <p class="genres">${genres || "&nbsp;"}</p>
-        </div>
-    `;
-
-    const img = card.querySelector("img");
-    img.addEventListener("error", () => { img.src = FALLBACK_POSTER; }, { once: true });
-
-    const go = () => { window.location.href = card.dataset.href; };
-    card.addEventListener("click", go);
-    card.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); }
-    });
-
-    return card;
-}
-
-// ---------- 7. Main Grid List Renderer ----------
-function renderList(list) {
-    grid.innerHTML = "";
-    if (!list.length) {
-        grid.innerHTML = `<div class="message">No anime found 😕</div>`; 
-        return;
-    }
-    const frag = document.createDocumentFragment();
-    list.forEach((a) => frag.appendChild(renderCard(a)));
-    grid.appendChild(frag);
-}
-
-// ============================================================
-// ---------- 8. HERO SLIDER LOGIC (Card Style) ----------
-// ============================================================
-let slideInterval;
-let currentSlide = 0;
-let sliderAnimeList = [];
-
-function renderHeroSlider(animeList) {
-    const sliderContainer = document.getElementById("heroSlider");
-    if (!sliderContainer) return;
-
-    sliderAnimeList = animeList.slice(0, 5); // Top 5 Anime
-    if (sliderAnimeList.length === 0) return;
-
-    sliderContainer.innerHTML = ""; // Remove placeholder
-
-    // Generate Slides
-    sliderAnimeList.forEach((anime, index) => {
-        const title = escapeHTML(anime.title || "Untitled");
-        const bannerImg = safeImageUrl(anime.coverImageUrl) || FALLBACK_POSTER;
-        const genres = Array.isArray(anime.genres) ? anime.genres.map(escapeHTML).join(" • ") : escapeHTML(anime.genres || "Action");
-        const status = escapeHTML(anime.status || "Anime");
-        
-        const slide = document.createElement("a");
-        slide.className = `slide ${index === 0 ? 'active' : ''}`;
-        
-        // RELATIVE PATH (No leading slash) -> Fix for GitHub Pages
-        slide.href = `anime.html?id=${encodeURIComponent(anime.id)}`;
-        slide.style.backgroundImage = `url('${bannerImg}')`;
-
-        slide.innerHTML = `
-            <div class="slide-content">
-                <h1>${title}</h1>
-                <p>${genres}</p>
-                <div class="meta-info">
-                    <span>${status}</span> • <span>Latest Episodes</span>
-                </div>
-            </div>
-        `;
-        sliderContainer.appendChild(slide);
-    });
-
-    // Dots Container
-    const dotsContainer = document.createElement("div");
-    dotsContainer.className = "slider-dots";
-    sliderAnimeList.forEach((_, index) => {
-        const dot = document.createElement("div");
-        dot.className = `dot ${index === 0 ? 'active' : ''}`;
-        dot.addEventListener("click", (e) => { e.preventDefault(); goToSlide(index); });
-        dotsContainer.appendChild(dot);
-    });
-    sliderContainer.appendChild(dotsContainer);
-
-    // Arrows Container
-    const arrowsContainer = document.createElement("div");
-    arrowsContainer.className = "slider-arrows";
-    arrowsContainer.innerHTML = `
-        <button class="arrow-btn" id="prevBtn" aria-label="Previous">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
-        </button>
-        <button class="arrow-btn" id="nextBtn" aria-label="Next">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
-        </button>
-    `;
-    sliderContainer.appendChild(arrowsContainer);
-
-    // Arrow Event Listeners
-    document.getElementById("prevBtn").addEventListener("click", (e) => { e.preventDefault(); prevSlide(); });
-    document.getElementById("nextBtn").addEventListener("click", (e) => { e.preventDefault(); nextSlide(); });
-
-    startSlideShow();
-}
-
-function goToSlide(index) {
-    const slides = document.querySelectorAll(".slide");
-    const dots = document.querySelectorAll(".dot");
-    if (slides.length === 0) return;
-
-    slides[currentSlide].classList.remove("active");
-    dots[currentSlide].classList.remove("active");
-
-    currentSlide = (index + slides.length) % slides.length; // Loop
-
-    slides[currentSlide].classList.add("active");
-    dots[currentSlide].classList.add("active");
-
-    resetSlideTimer();
-}
-
-function nextSlide() { goToSlide(currentSlide + 1); }
-function prevSlide() { goToSlide(currentSlide - 1); }
-
-function startSlideShow() {
-    slideInterval = setInterval(nextSlide, 5000); // Changes every 5 seconds
-}
-
-function resetSlideTimer() {
-    clearInterval(slideInterval);
-    startSlideShow();
-}
-
-// ============================================================
-// ---------- 9. Live Suggestions Renderer ----------
-// ============================================================
-function renderSuggestions(term) {
-    liveSuggestions.innerHTML = "";
-    liveSuggestions.style.display = "block"; 
-
-    let filtered = [];
-
-    // If search is empty, show "Trending Now"
-    if (!term) {
-        liveSuggestions.innerHTML = `<div class="suggestion-title">Trending Now</div>`;
-        filtered = allAnime.slice(0, 5); // Top 5
-    } else {
-        // If user has typed something, filter the results
-        filtered = allAnime.filter((a) => {
-            const t = (a.title || "").toLowerCase();
-            const g = Array.isArray(a.genres) ? a.genres.join(" ").toLowerCase() : String(a.genres || "").toLowerCase();
-            return t.includes(term) || g.includes(term);
-        }).slice(0, 10); // Max 10 results
+    if (currentYear) {
+        currentYear.textContent = new Date().getFullYear();
     }
 
-    // If nothing matches the typed query
-    if (filtered.length === 0 && term) {
-        liveSuggestions.innerHTML = `<p class="empty-msg">No results found for "${escapeHTML(term)}"</p>`;
-        return;
-    }
 
-    // Render results
-    filtered.forEach(anime => {
-        const title = escapeHTML(anime.title || "Untitled");
-        const poster = safeImageUrl(anime.coverImageUrl) || FALLBACK_POSTER;
-        const safeId = encodeURIComponent(anime.id || "");
+    /* =====================================
+       ANIME DATABASE
+       Demo data from existing HTML
+    ===================================== */
 
-        const div = document.createElement("div");
-        div.className = "suggestion-item";
-        div.innerHTML = `
-            <img src="${poster}" alt="${title}" />
-            <div class="suggestion-info">
-                <h4>${title}</h4>
-                <p>${Array.isArray(anime.genres) ? anime.genres.map(escapeHTML).join(", ") : escapeHTML(anime.genres || "")}</p>
-            </div>
-        `;
-        
-        div.addEventListener("click", () => {
-            // RELATIVE PATH (No leading slash) -> Fix for GitHub Pages
-            window.location.href = `anime.html?id=${safeId}`;
-        });
+    var animeDatabase = [
+        {
+            id: "naruto-shippuden",
+            title: "Naruto Shippuden",
+            genre: "Action, Adventure, Fantasy",
+            year: "2007 - 2017",
+            episodes: "500 Episodes",
+            image: "https://placehold.co/400x550/25213f/ffffff?text=Naruto+Shippuden",
+            url: "details.html?id=naruto-shippuden"
+        },
+        {
+            id: "one-piece",
+            title: "One Piece",
+            genre: "Action, Adventure",
+            year: "1999",
+            episodes: "1200+ Episodes",
+            image: "https://placehold.co/400x550/172e55/ffffff?text=One+Piece",
+            url: "details.html?id=one-piece"
+        },
+        {
+            id: "attack-on-titan",
+            title: "Attack on Titan",
+            genre: "Action, Drama, Fantasy",
+            year: "2013",
+            episodes: "87 Episodes",
+            image: "https://placehold.co/400x550/372020/ffffff?text=Attack+on+Titan",
+            url: "details.html?id=attack-on-titan"
+        },
+        {
+            id: "demon-slayer",
+            title: "Demon Slayer",
+            genre: "Action, Adventure, Fantasy",
+            year: "2019",
+            episodes: "26 Episodes",
+            image: "https://placehold.co/400x550/174d63/ffffff?text=Demon+Slayer",
+            url: "details.html?id=demon-slayer"
+        },
+        {
+            id: "jujutsu-kaisen",
+            title: "Jujutsu Kaisen",
+            genre: "Action, Supernatural",
+            year: "2020",
+            episodes: "47 Episodes",
+            image: "https://placehold.co/400x550/34205b/ffffff?text=Jujutsu+Kaisen",
+            url: "details.html?id=jujutsu-kaisen"
+        },
+        {
+            id: "solo-leveling",
+            title: "Solo Leveling",
+            genre: "Action, Adventure, Fantasy",
+            year: "2024",
+            episodes: "24 Episodes",
+            image: "https://placehold.co/400x550/17264c/ffffff?text=Solo+Leveling",
+            url: "details.html?id=solo-leveling"
+        },
+        {
+            id: "blue-lock",
+            title: "Blue Lock",
+            genre: "Sports, Drama",
+            year: "2022",
+            episodes: "14 Episodes",
+            image: "https://placehold.co/400x550/163b65/ffffff?text=Blue+Lock",
+            url: "details.html?id=blue-lock"
+        }
+    ];
 
-        liveSuggestions.appendChild(div);
-    });
-}
 
-// ---------- 10. Firestore Loader ----------
-async function loadAnime() {
-    try {
-        const q = query(collection(db, "anime"), orderBy("createdAt", "desc"), limit(60));
-        const snap = await getDocs(q);
+    /* =====================================
+       SEARCH PANEL OPEN
+    ===================================== */
 
-        allAnime = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-        
-        // If database is empty, load demo data
-        if(allAnime.length === 0) {
-            allAnime = demoData;
+    function openSearch() {
+
+        if (!searchPanel) {
+            return;
         }
 
-    } catch (err) {
-        console.error("Firestore error:", err);
-        // If an error occurs, also load demo data
-        allAnime = demoData; 
-    } finally {
-        // Render Main Grid and Hero Slider after data is ready
-        renderList(allAnime);
-        renderHeroSlider(allAnime);
+        searchPanel.hidden = false;
+
+        if (searchToggle) {
+            searchToggle.setAttribute("aria-expanded", "true");
+        }
+
+        document.body.classList.add("search-open");
+
+        window.setTimeout(function () {
+
+            if (searchInput) {
+                searchInput.focus();
+            }
+
+        }, 100);
+
     }
-}
 
-// ---------- 11. Search Panel Logic ----------
-function openSearch() {
-    searchOverlay.classList.add("active");
-    searchInput.focus();
-    document.body.style.overflow = "hidden";
-    
-    // Load "Trending Now" as soon as search opens (pass empty string)
-    renderSuggestions(""); 
-}
 
-function closeSearch() {
-    searchOverlay.classList.remove("active");
-    searchInput.value = "";
-    liveSuggestions.style.display = "none"; 
-    liveSuggestions.innerHTML = "";
-    document.body.style.overflow = "";
-}
+    /* =====================================
+       SEARCH PANEL CLOSE
+    ===================================== */
 
-// Event Listeners
-openSearchBtn.addEventListener("click", openSearch);
-if(navSearchBtn) navSearchBtn.addEventListener("click", openSearch);
-closeSearchBtn.addEventListener("click", closeSearch);
+    function closeSearch() {
 
-// Close when clicking outside the overlay
-searchOverlay.addEventListener("click", (e) => {
-    if (e.target === searchOverlay) closeSearch();
-});
+        if (!searchPanel) {
+            return;
+        }
 
-// Close on Escape key
-document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && searchOverlay.classList.contains("active")) {
+        searchPanel.hidden = true;
+
+        if (searchToggle) {
+            searchToggle.setAttribute("aria-expanded", "false");
+            searchToggle.focus();
+        }
+
+        document.body.classList.remove("search-open");
+
+        if (searchInput) {
+            searchInput.value = "";
+        }
+
+        if (searchResults) {
+            searchResults.innerHTML = "";
+        }
+
+        if (searchTimer) {
+            window.clearTimeout(searchTimer);
+        }
+
+    }
+
+
+    if (searchToggle) {
+
+        searchToggle.addEventListener("click", function () {
+
+            if (searchPanel.hidden) {
+                openSearch();
+            } else {
+                closeSearch();
+            }
+
+        });
+
+    }
+
+
+    if (searchClose) {
+
+        searchClose.addEventListener("click", function () {
+            closeSearch();
+        });
+
+    }
+
+
+    /* =====================================
+       CLOSE WITH ESCAPE
+    ===================================== */
+
+    document.addEventListener("keydown", function (event) {
+
+        if (event.key === "Escape" &&
+            searchPanel &&
+            !searchPanel.hidden) {
+
+            closeSearch();
+
+        }
+
+    });
+
+
+    /* =====================================
+       SEARCH NORMALIZATION
+    ===================================== */
+
+    function normalizeText(value) {
+
+        return String(value || "")
+            .toLowerCase()
+            .trim()
+            .replace(/\s+/g, " ");
+
+    }
+
+
+    /* =====================================
+       GET SEARCHABLE ANIME
+
+       Combines demo database and HTML cards
+    ===================================== */
+
+    function getAnimeList() {
+
+        var list = animeDatabase.slice();
+
+        var knownIds = {};
+
+        for (var i = 0; i < list.length; i++) {
+            knownIds[list[i].id] = true;
+        }
+
+        for (var j = 0; j < animeCards.length; j++) {
+
+            var card = animeCards[j];
+
+            var title = card.getAttribute("data-title") || "";
+
+            var genre = card.getAttribute("data-genre") || "";
+
+            var link = card.querySelector("h3 a");
+
+            var poster = card.querySelector(".anime-poster img");
+
+            var yearElement = card.querySelector(".anime-year");
+
+            if (!title) {
+                continue;
+            }
+
+            var slug = title
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-|-$/g, "");
+
+            if (knownIds[slug]) {
+                continue;
+            }
+
+            list.push({
+
+                id: slug,
+
+                title: title,
+
+                genre: genre.replace(/\s+/g, ", "),
+
+                year: yearElement ?
+                    yearElement.textContent.trim() : "",
+
+                episodes: "",
+
+                image: poster ?
+                    poster.getAttribute("src") : "",
+
+                url: link ?
+                    link.getAttribute("href") :
+                    "details.html?id=" + encodeURIComponent(slug)
+
+            });
+
+            knownIds[slug] = true;
+
+        }
+
+        return list;
+
+    }
+
+
+    /* =====================================
+       MATCH SEARCH QUERY
+    ===================================== */
+
+    function findAnime(query) {
+
+        var normalizedQuery = normalizeText(query);
+
+        if (!normalizedQuery) {
+            return [];
+        }
+
+        var animeList = getAnimeList();
+
+        var results = [];
+
+        for (var i = 0; i < animeList.length; i++) {
+
+            var anime = animeList[i];
+
+            var title = normalizeText(anime.title);
+
+            var genre = normalizeText(anime.genre);
+
+            var year = normalizeText(anime.year);
+
+            var searchableText = title + " " + genre + " " + year;
+
+            if (searchableText.indexOf(normalizedQuery) !== -1) {
+
+                results.push(anime);
+
+                continue;
+
+            }
+
+            /* Match individual words */
+
+            var queryWords = normalizedQuery.split(" ");
+
+            var allWordsMatch = true;
+
+            for (var j = 0; j < queryWords.length; j++) {
+
+                if (searchableText.indexOf(queryWords[j]) === -1) {
+
+                    allWordsMatch = false;
+
+                    break;
+
+                }
+
+            }
+
+            if (allWordsMatch) {
+                results.push(anime);
+            }
+
+        }
+
+        return results;
+
+    }
+
+
+    /* =====================================
+       SAFE HTML HELPERS
+    ===================================== */
+
+    function escapeHTML(value) {
+
+        return String(value || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+
+    }
+
+
+    function safeImageURL(value) {
+
+        var url = String(value || "");
+
+        if (/^https:\/\/[^\s"'<>]+$/i.test(url) ||
+            /^\/(?!\/)[^\s"'<>]*$/i.test(url) ||
+            /^(?!\/)[a-z0-9_-]+(?:\/[a-z0-9._-]+)*\.(?:png|jpe?g|webp|avif)$/i.test(url)) {
+
+            return url;
+
+        }
+
+        return "https://placehold.co/400x550/101020/ffffff?text=Anime";
+
+    }
+
+
+    function safePageURL(value) {
+
+        var url = String(value || "");
+
+        if (/^details\.html(?:\?[a-z0-9_=&%-]*)?$/i.test(url) ||
+            /^watch\.html(?:\?[a-z0-9_=&%-]*)?$/i.test(url) ||
+            /^anime\.html(?:\?[a-z0-9_=&%-]*)?$/i.test(url)) {
+
+            return url;
+
+        }
+
+        return "details.html?id=" +
+            encodeURIComponent(String(value || ""));
+
+    }
+
+
+    /* =====================================
+       RENDER LIVE SEARCH RESULTS
+    ===================================== */
+
+    function renderResults(results, query) {
+
+        if (!searchResults) {
+            return;
+        }
+
+        searchResults.innerHTML = "";
+
+        if (!query) {
+            return;
+        }
+
+        var heading = document.createElement("h3");
+
+        heading.className = "search-results-heading";
+
+        heading.textContent = results.length > 0 ?
+            "Search Results (" + results.length + ")" :
+            "Search Results";
+
+        searchResults.appendChild(heading);
+
+
+        if (results.length === 0) {
+
+            var empty = document.createElement("div");
+
+            empty.className = "search-empty";
+
+            empty.innerHTML =
+                "<strong>No Anime Found</strong>" +
+                "<p>Try another anime title.</p>";
+
+            searchResults.appendChild(empty);
+
+            return;
+
+        }
+
+
+        var fragment = document.createDocumentFragment();
+
+        /* Limit the number of visible suggestions */
+
+        var maxResults = Math.min(results.length, 12);
+
+        for (var i = 0; i < maxResults; i++) {
+
+            var anime = results[i];
+
+            var link = document.createElement("a");
+
+            link.className = "search-result-item";
+
+            link.href = safePageURL(anime.url);
+
+            var poster = document.createElement("div");
+
+            poster.className = "search-result-poster";
+
+            var image = document.createElement("img");
+
+            image.src = safeImageURL(anime.image);
+
+            image.alt = anime.title;
+
+            image.loading = "lazy";
+
+            image.onerror = function () {
+
+                this.onerror = null;
+
+                this.src =
+                    "https://placehold.co/400x550/101020/ffffff?text=Anime";
+
+            };
+
+            poster.appendChild(image);
+
+
+            var info = document.createElement("div");
+
+            info.className = "search-result-info";
+
+            var title = document.createElement("h4");
+
+            title.textContent = anime.title;
+
+            var description = document.createElement("p");
+
+            var descriptionParts = [];
+
+            if (anime.genre) {
+                descriptionParts.push(anime.genre);
+            }
+
+            if (anime.year) {
+                descriptionParts.push(anime.year);
+            }
+
+            if (anime.episodes) {
+                descriptionParts.push(anime.episodes);
+            }
+
+            description.textContent =
+                descriptionParts.join(" · ") || "Anime";
+
+            info.appendChild(title);
+
+            info.appendChild(description);
+
+
+            var arrow = document.createElement("span");
+
+            arrow.className = "search-result-arrow";
+
+            arrow.textContent = "›";
+
+            arrow.setAttribute("aria-hidden", "true");
+
+
+            link.appendChild(poster);
+
+            link.appendChild(info);
+
+            link.appendChild(arrow);
+
+            fragment.appendChild(link);
+
+        }
+
+        searchResults.appendChild(fragment);
+
+    }
+
+
+    /* =====================================
+       LIVE SEARCH
+    ===================================== */
+
+    function performLiveSearch() {
+
+        if (!searchInput) {
+            return;
+        }
+
+        var query = searchInput.value.trim();
+
+        if (!query) {
+
+            if (searchResults) {
+                searchResults.innerHTML = "";
+            }
+
+            return;
+
+        }
+
+        var results = findAnime(query);
+
+        renderResults(results, query);
+
+    }
+
+
+    if (searchInput) {
+
+        searchInput.addEventListener("input", function () {
+
+            if (searchTimer) {
+                window.clearTimeout(searchTimer);
+            }
+
+            searchTimer = window.setTimeout(function () {
+
+                performLiveSearch();
+
+            }, 120);
+
+        });
+
+    }
+
+
+    /* =====================================
+       SEARCH FORM SUBMIT
+    ===================================== */
+
+    if (searchForm) {
+
+        searchForm.addEventListener("submit", function (event) {
+
+            event.preventDefault();
+
+            if (!searchInput) {
+                return;
+            }
+
+            var query = searchInput.value.trim();
+
+            if (!query) {
+
+                searchInput.focus();
+
+                return;
+
+            }
+
+            var results = findAnime(query);
+
+            renderResults(results, query);
+
+            if (results.length > 0) {
+
+                window.location.href =
+                    safePageURL(results[0].url);
+
+            }
+
+        });
+
+    }
+
+
+    /* =====================================
+       POPULAR SEARCH BUTTONS
+    ===================================== */
+
+    for (var i = 0; i < searchSuggestions.length; i++) {
+
+        searchSuggestions[i].addEventListener("click", function () {
+
+            var query = this.textContent.trim();
+
+            if (!searchInput) {
+                return;
+            }
+
+            searchInput.value = query;
+
+            openSearch();
+
+            performLiveSearch();
+
+        });
+
+    }
+
+
+    /* =====================================
+       FILTER ANIME CARDS
+    ===================================== */
+
+    function filterAnimeCards(query) {
+
+        var normalizedQuery = normalizeText(query);
+
+        var visibleCount = 0;
+
+        for (var i = 0; i < animeCards.length; i++) {
+
+            var card = animeCards[i];
+
+            var title = normalizeText(
+                card.getAttribute("data-title")
+            );
+
+            var genre = normalizeText(
+                card.getAttribute("data-genre")
+            );
+
+            var matches = !normalizedQuery ||
+                title.indexOf(normalizedQuery) !== -1 ||
+                genre.indexOf(normalizedQuery) !== -1;
+
+            card.style.display = matches ? "" : "none";
+
+            if (matches) {
+                visibleCount++;
+            }
+
+        }
+
+        if (noResults) {
+
+            noResults.hidden =
+                normalizedQuery !== "" && visibleCount === 0;
+
+        }
+
+    }
+
+
+    /* =====================================
+       BOTTOM NAVIGATION ACTIVE STATE
+    ===================================== */
+
+    var navItems = document.querySelectorAll(".nav-item");
+
+    for (var i = 0; i < navItems.length; i++) {
+
+        navItems[i].addEventListener("click", function () {
+
+            for (var j = 0; j < navItems.length; j++) {
+
+                navItems[j].classList.remove("active");
+
+                navItems[j].removeAttribute("aria-current");
+
+            }
+
+            this.classList.add("active");
+
+            this.setAttribute("aria-current", "page");
+
+        });
+
+    }
+
+
+    /* =====================================
+       IMAGE FALLBACK
+    ===================================== */
+
+    var allImages = document.querySelectorAll("img");
+
+    for (var i = 0; i < allImages.length; i++) {
+
+        allImages[i].addEventListener("error", function () {
+
+            if (this.getAttribute("data-fallback-used") === "true") {
+                return;
+            }
+
+            this.setAttribute("data-fallback-used", "true");
+
+            this.style.backgroundColor = "#101936";
+
+        });
+
+    }
+
+
+    /* =====================================
+       EXTERNAL CLICK CLOSE
+    ===================================== */
+
+    document.addEventListener("click", function (event) {
+
+        if (!searchPanel || searchPanel.hidden) {
+            return;
+        }
+
+        if (
+            searchPanel.contains(event.target) ||
+            (searchToggle && searchToggle.contains(event.target))
+        ) {
+            return;
+        }
+
         closeSearch();
-    }
+
+    });
+
+
+    /* =====================================
+       INITIALIZE
+    ===================================== */
+
+    filterAnimeCards("");
+
 });
-
-// Live Search Input Handler
-let searchTimer;
-searchInput.addEventListener("input", (e) => {
-    clearTimeout(searchTimer);
-    const term = e.target.value.trim().toLowerCase();
-
-    searchTimer = setTimeout(() => {
-        renderSuggestions(term);
-    }, 250);
-});
-
-// ---------- 12. Boot ----------
-loadAnime();
