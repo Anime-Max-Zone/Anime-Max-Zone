@@ -1,25 +1,38 @@
 /* ============================================================
    ANIME MAX ZONE — Details Page Logic (anime.js)
+   Firebase Realtime Database Edition
    ============================================================ */
 
-// ---------- 1. Firebase Imports ----------
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// ---------- 2. Firebase Config ----------
+import {
+    getDatabase,
+    ref,
+    get,
+    child
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+/* ============================================================
+   1. FIREBASE CONFIGURATION
+   ============================================================ */
+
 const firebaseConfig = {
     apiKey: "AIzaSyCpfrluxsBhnz48ve9RykIy1IxzbBfk7dA",
     authDomain: "sm-studio-7.firebaseapp.com",
+    databaseURL: "https://sm-studio-7-default-rtdb.asia-southeast1.firebasedatabase.app/",
     projectId: "sm-studio-7",
     storageBucket: "sm-studio-7.firebasestorage.app",
     messagingSenderId: "126291501472",
-    appId: "1:126291501472:web:47386660af8ec3a57204c5"
+    appId: "1:291501472:web:47386660af8ec3a57204c5"
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const database = getDatabase(app);
 
-// ---------- 3. DOM References ----------
+/* ============================================================
+   2. DOM REFERENCES
+   ============================================================ */
+
 const openSearchBtn = document.getElementById("openSearchBtn");
 const navSearchBtn = document.getElementById("navSearchBtn");
 const closeSearchBtn = document.getElementById("closeSearchBtn");
@@ -27,219 +40,473 @@ const searchOverlay = document.getElementById("searchOverlay");
 const searchInput = document.getElementById("searchInput");
 const liveSuggestions = document.getElementById("liveSuggestions");
 
-let allAnimeForSearch = []; 
+const detailsLoading = document.getElementById("detailsLoading");
+const detailsContent = document.getElementById("detailsContent");
 
-// ---------- 4. Security Helpers ----------
-function escapeHTML(str) {
-    if (str == null) return "";
-    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+let allAnimeForSearch = [];
+let searchTimer = null;
+
+/* ============================================================
+   3. HELPERS
+   ============================================================ */
+
+function escapeHTML(value) {
+    if (value == null) return "";
+
+    return String(value).replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[char]);
 }
 
-function safeImageUrl(url) {
-    if (typeof url !== "string") return "";
+function safeImageUrl(value) {
+    if (typeof value !== "string" || !value.trim()) {
+        return "";
+    }
+
     try {
-        const u = new URL(url);
-        if (u.protocol === "http:" || u.protocol === "https:") return u.href;
+        const url = new URL(value);
+
+        if (url.protocol === "https:" || url.protocol === "http:") {
+            return url.href;
+        }
     } catch (_) {}
+
     return "";
 }
 
-const FALLBACK_POSTER = "data:image/svg+xml;utf8," + encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300">
-        <rect width="200" height="300" fill="#1a1a24"/>
-        <text x="100" y="150" fill="#555" text-anchor="middle" font-family="sans-serif" font-size="14">No Image</text>
-     </svg>`
-);
+const FALLBACK_POSTER =
+    "data:image/svg+xml;charset=UTF-8," +
+    encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="200" height="300">
+            <rect width="200" height="300" fill="#1a1a24"/>
+            <text x="100" y="150" fill="#777"
+                  text-anchor="middle"
+                  font-family="sans-serif"
+                  font-size="14">No Image</text>
+        </svg>
+    `);
 
-// Demo Data (Fallback)
-const demoData = [
-    { id: '1', title: 'Demon Slayer', genres: ['Action', 'Fantasy'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1286/99889.jpg', status: 'Ongoing', description: 'Tanjiro Kamado sets out to become a demon slayer after his family is slaughtered and his sister is turned into a demon.' },
-    { id: '2', title: 'Jujutsu Kaisen', genres: ['Action', 'Supernatural'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/1171/109222.jpg', status: 'Completed', description: 'A boy swallows a cursed talisman - the finger of a demon - and becomes cursed himself.' },
-    { id: '3', title: 'One Piece', genres: ['Action', 'Adventure'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/6/73245.jpg', status: 'Ongoing', description: 'Follows the adventures of Monkey D. Luffy and his pirate crew in order to find the greatest treasure ever left by the legendary Pirate, Gold Roger.' },
-    { id: '4', title: 'Attack on Titan', genres: ['Action', 'Drama'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/10/47347.jpg', status: 'Completed', description: 'After his hometown is destroyed and his mother is killed, young Eren Jaeger vows to cleanse the earth of the giant humanoid Titans.' },
-    { id: '5', title: 'Naruto', genres: ['Action', 'Adventure'], coverImageUrl: 'https://cdn.myanimelist.net/images/anime/13/17405.jpg', status: 'Completed', description: 'Naruto Uzumaki, a mischievous adolescent ninja, struggles as he searches for recognition and dreams of becoming the Hokage.' }
-];
+/* ============================================================
+   4. REALTIME DATABASE DATA FORMAT
+   ============================================================ */
 
-// ============================================================
-// ---------- 5. SEARCH OVERLAY LOGIC ----------
-// ============================================================
+/*
+Expected structure:
+
+anime/
+  animeId/
+    title: "Naruto"
+    coverImageUrl: "https://..."
+    description: "..."
+    status: "Ongoing"
+    genres:
+      0: "Action"
+      1: "Adventure"
+    episodes:
+      1:
+        title: "Episode 1"
+        videoUrl: "https://drive.google.com/file/d/FILE_ID/view"
+      2:
+        title: "Episode 2"
+        videoUrl: "https://drive.google.com/file/d/FILE_ID/view"
+
+This code reads your existing Realtime Database.
+It does not create or modify database records.
+*/
+
+/* ============================================================
+   5. NORMALIZE DATABASE DATA
+   ============================================================ */
+
+function normalizeAnime(id, value) {
+    const anime = value && typeof value === "object" ? value : {};
+
+    let genres = anime.genres || [];
+
+    if (typeof genres === "string") {
+        genres = genres.split(",").map(item => item.trim()).filter(Boolean);
+    } else if (!Array.isArray(genres)) {
+        genres = Object.values(genres);
+    }
+
+    const episodesValue = anime.episodes || {};
+    const episodes = Array.isArray(episodesValue)
+        ? episodesValue
+        : Object.entries(episodesValue).map(([key, episode]) => ({
+            episodeNumber: key,
+            ...(episode && typeof episode === "object" ? episode : {})
+        }));
+
+    return {
+        id,
+        title: anime.title || anime.name || "Untitled",
+        coverImageUrl: anime.coverImageUrl || anime.posterUrl || anime.poster || "",
+        description: anime.description || "",
+        status: anime.status || "Unknown",
+        genres,
+        episodes,
+        createdAt: anime.createdAt || null
+    };
+}
+
+/* ============================================================
+   6. FETCH ANIME FROM REALTIME DATABASE
+   ============================================================ */
+
 async function fetchAnimeForSearch() {
     try {
-        const q = query(collection(db, "anime"), orderBy("createdAt", "desc"), limit(60));
-        const snap = await getDocs(q);
-        allAnimeForSearch = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        if(allAnimeForSearch.length === 0) allAnimeForSearch = demoData;
-    } catch (err) {
-        console.error("Search Fetch error:", err);
-        allAnimeForSearch = demoData;
+        const snapshot = await get(ref(database, "anime"));
+
+        if (!snapshot.exists()) {
+            allAnimeForSearch = [];
+            console.warn("No anime records found at /anime.");
+            return;
+        }
+
+        const data = snapshot.val();
+
+        allAnimeForSearch = Object.entries(data)
+            .filter(([, value]) => value && typeof value === "object")
+            .map(([id, value]) => normalizeAnime(id, value));
+
+        allAnimeForSearch.sort((a, b) => {
+            const dateA = Number(a.createdAt) || Date.parse(a.createdAt) || 0;
+            const dateB = Number(b.createdAt) || Date.parse(b.createdAt) || 0;
+            return dateB - dateA;
+        });
+
+    } catch (error) {
+        console.error("Realtime Database search error:", error);
+        allAnimeForSearch = [];
     }
 }
 
-function renderSuggestions(term) {
-    liveSuggestions.innerHTML = "";
-    liveSuggestions.style.display = "block"; 
+/* ============================================================
+   7. SEARCH SUGGESTIONS
+   ============================================================ */
 
-    let filtered = [];
+function renderSuggestions(searchTerm = "") {
+    if (!liveSuggestions) return;
+
+    liveSuggestions.replaceChildren();
+    liveSuggestions.style.display = "block";
+
+    const term = String(searchTerm).trim().toLowerCase();
+
+    let filtered;
 
     if (!term) {
-        liveSuggestions.innerHTML = `<div class="suggestion-title">Trending Now</div>`;
+        const heading = document.createElement("div");
+        heading.className = "suggestion-title";
+        heading.textContent = "Anime";
+        liveSuggestions.appendChild(heading);
+
         filtered = allAnimeForSearch.slice(0, 5);
     } else {
-        filtered = allAnimeForSearch.filter((a) => {
-            const t = (a.title || "").toLowerCase();
-            const g = Array.isArray(a.genres) ? a.genres.join(" ").toLowerCase() : String(a.genres || "").toLowerCase();
-            return t.includes(term) || g.includes(term);
+        filtered = allAnimeForSearch.filter(anime => {
+            const title = String(anime.title || "").toLowerCase();
+            const genres = (anime.genres || []).join(" ").toLowerCase();
+
+            return title.includes(term) || genres.includes(term);
         }).slice(0, 10);
     }
 
-    if (filtered.length === 0 && term) {
-        liveSuggestions.innerHTML = `<p class="empty-msg">No results found for "${escapeHTML(term)}"</p>`;
+    if (!filtered.length) {
+        const empty = document.createElement("p");
+        empty.className = "empty-msg";
+        empty.textContent = term
+            ? `No results found for "${searchTerm}"`
+            : "No anime available yet.";
+
+        liveSuggestions.appendChild(empty);
         return;
     }
 
     filtered.forEach(anime => {
-        const title = escapeHTML(anime.title || "Untitled");
-        const poster = safeImageUrl(anime.coverImageUrl) || FALLBACK_POSTER;
-        const safeId = encodeURIComponent(anime.id || "");
+        const item = document.createElement("div");
+        item.className = "suggestion-item";
+        item.tabIndex = 0;
+        item.setAttribute("role", "button");
 
-        const div = document.createElement("div");
-        div.className = "suggestion-item";
-        div.innerHTML = `
-            <img src="${poster}" alt="${title}" />
-            <div class="suggestion-info">
-                <h4>${title}</h4>
-                <p>${Array.isArray(anime.genres) ? anime.genres.map(escapeHTML).join(", ") : escapeHTML(anime.genres || "")}</p>
-            </div>
-        `;
-        
-        div.addEventListener("click", () => {
-            window.location.href = `anime.html?id=${safeId}`;
+        const image = document.createElement("img");
+        image.src = safeImageUrl(anime.coverImageUrl) || FALLBACK_POSTER;
+        image.alt = anime.title;
+        image.loading = "lazy";
+
+        image.addEventListener("error", () => {
+            image.src = FALLBACK_POSTER;
+        }, { once: true });
+
+        const info = document.createElement("div");
+        info.className = "suggestion-info";
+
+        const heading = document.createElement("h4");
+        heading.textContent = anime.title;
+
+        const genreText = document.createElement("p");
+        genreText.textContent = anime.genres.join(", ");
+
+        info.append(heading, genreText);
+        item.append(image, info);
+
+        const openAnime = () => {
+            window.location.href =
+                `anime.html?id=${encodeURIComponent(anime.id)}`;
+        };
+
+        item.addEventListener("click", openAnime);
+
+        item.addEventListener("keydown", event => {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openAnime();
+            }
         });
 
-        liveSuggestions.appendChild(div);
+        liveSuggestions.appendChild(item);
     });
 }
 
+/* ============================================================
+   8. SEARCH OVERLAY
+   ============================================================ */
+
 function openSearch() {
-    if(!searchOverlay) return;
+    if (!searchOverlay) return;
+
     searchOverlay.classList.add("active");
-    searchInput.focus();
     document.body.style.overflow = "hidden";
-    renderSuggestions(""); 
+
+    renderSuggestions("");
+
+    searchInput?.focus();
 }
 
 function closeSearch() {
-    if(!searchOverlay) return;
+    if (!searchOverlay) return;
+
     searchOverlay.classList.remove("active");
-    searchInput.value = "";
-    liveSuggestions.style.display = "none"; 
-    liveSuggestions.innerHTML = "";
     document.body.style.overflow = "";
+
+    if (searchInput) {
+        searchInput.value = "";
+    }
+
+    if (liveSuggestions) {
+        liveSuggestions.style.display = "none";
+        liveSuggestions.replaceChildren();
+    }
+
+    clearTimeout(searchTimer);
 }
 
-if(openSearchBtn) openSearchBtn.addEventListener("click", openSearch);
-if(navSearchBtn) navSearchBtn.addEventListener("click", openSearch);
-if(closeSearchBtn) closeSearchBtn.addEventListener("click", closeSearch);
+openSearchBtn?.addEventListener("click", openSearch);
+navSearchBtn?.addEventListener("click", openSearch);
+closeSearchBtn?.addEventListener("click", closeSearch);
 
-if(searchOverlay) {
-    searchOverlay.addEventListener("click", (e) => {
-        if (e.target === searchOverlay) closeSearch();
-    });
-}
-
-document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && searchOverlay && searchOverlay.classList.contains("active")) {
+searchOverlay?.addEventListener("click", event => {
+    if (event.target === searchOverlay) {
         closeSearch();
     }
 });
 
-let searchTimer;
-if(searchInput) {
-    searchInput.addEventListener("input", (e) => {
-        clearTimeout(searchTimer);
-        const term = e.target.value.trim().toLowerCase();
-        searchTimer = setTimeout(() => {
-            renderSuggestions(term);
-        }, 250);
-    });
-}
+document.addEventListener("keydown", event => {
+    if (
+        event.key === "Escape" &&
+        searchOverlay?.classList.contains("active")
+    ) {
+        closeSearch();
+    }
+});
 
-// ============================================================
-// ---------- 6. DETAILS PAGE LOGIC ----------
-// ============================================================
+searchInput?.addEventListener("input", event => {
+    clearTimeout(searchTimer);
+
+    const term = event.target.value.trim();
+
+    searchTimer = setTimeout(() => {
+        renderSuggestions(term);
+    }, 250);
+});
+
+/* ============================================================
+   9. LOAD ANIME DETAILS
+   ============================================================ */
+
 async function loadAnimeDetails() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const animeId = urlParams.get('id');
+    const params = new URLSearchParams(window.location.search);
+    const animeId = params.get("id");
 
     if (!animeId) {
-        window.location.href = "index.html"; 
+        window.location.replace("index.html");
         return;
     }
 
-    let animeData = null;
+    if (detailsLoading) {
+        detailsLoading.style.display = "block";
+    }
+
+    if (detailsContent) {
+        detailsContent.style.display = "none";
+    }
 
     try {
-        const docRef = doc(db, "anime", animeId);
-        const docSnap = await getDoc(docRef);
+        const snapshot = await get(child(ref(database), `anime/${animeId}`));
 
-        if (docSnap.exists()) {
-            animeData = { id: docSnap.id, ...docSnap.data() };
-        } else {
-            animeData = demoData.find(a => a.id === animeId);
+        if (!snapshot.exists()) {
+            showAnimeNotFound();
+            return;
         }
-    } catch (err) {
-        console.error("Error fetching details:", err);
-        animeData = demoData.find(a => a.id === animeId);
-    }
 
-    if (!animeData) {
-        document.getElementById('detailsLoading').innerHTML = `
-            <div style="padding: 4rem 2rem; text-align: center;">
-                <h2 style="color: #ff6b6b; margin-bottom: 1rem;">Anime Not Found</h2>
-                <p style="color: var(--text-muted); margin-bottom: 1.5rem;">The anime you are looking for does not exist or has been removed.</p>
-                <a href="index.html" class="btn-watch-now" style="display: inline-flex;">Go Back Home</a>
+        const anime = normalizeAnime(animeId, snapshot.val());
+        renderDetailsUI(anime);
+
+    } catch (error) {
+        console.error("Failed to load anime details:", error);
+
+        showDetailsError(
+            "Unable to load anime. Check your internet connection and Realtime Database rules."
+        );
+    }
+}
+
+function showAnimeNotFound() {
+    if (detailsLoading) {
+        detailsLoading.style.display = "block";
+
+        detailsLoading.innerHTML = `
+            <div style="padding:4rem 2rem;text-align:center;">
+                <h2 style="color:#ff6b6b;margin-bottom:1rem;">
+                    Anime Not Found
+                </h2>
+                <p style="color:var(--text-muted);margin-bottom:1.5rem;">
+                    This anime does not exist in the Realtime Database.
+                </p>
+                <a href="index.html" class="btn-watch-now"
+                   style="display:inline-flex;">
+                    Go Back Home
+                </a>
             </div>
         `;
+    }
+
+    if (detailsContent) {
+        detailsContent.style.display = "none";
+    }
+}
+
+function showDetailsError(message) {
+    if (detailsLoading) {
+        detailsLoading.style.display = "block";
+
+        const paragraph = document.createElement("p");
+        paragraph.textContent = message;
+
+        detailsLoading.replaceChildren(paragraph);
+    }
+
+    if (detailsContent) {
+        detailsContent.style.display = "none";
+    }
+}
+
+/* ============================================================
+   10. RENDER DETAILS UI
+   ============================================================ */
+
+function renderDetailsUI(anime) {
+    if (!detailsContent) {
+        console.error("Missing #detailsContent in anime.html");
         return;
     }
 
-    renderDetailsUI(animeData);
-}
-
-function renderDetailsUI(anime) {
-    document.getElementById('detailsLoading').style.display = 'none';
-    const container = document.getElementById('detailsContent');
-    container.style.display = 'block';
-
-    document.title = `${anime.title || "Anime"} — Anime Max Zone`;
-
-    const title = escapeHTML(anime.title || "Untitled");
-    const desc = escapeHTML(anime.description || "No description available for this anime yet. Stay tuned!");
-    const poster = safeImageUrl(anime.coverImageUrl) || FALLBACK_POSTER;
-    const status = escapeHTML(anime.status || "Unknown");
-    const genres = Array.isArray(anime.genres) ? anime.genres : [];
-
-    const genresHTML = genres.map(g => `<span>${escapeHTML(g)}</span>`).join("");
-
-    // Generate episodes (1 to 12)
-    let episodesHTML = "";
-    for (let i = 1; i <= 12; i++) {
-        episodesHTML += `<div class="ep-btn">${i}</div>`;
+    if (detailsLoading) {
+        detailsLoading.style.display = "none";
     }
 
-    container.innerHTML = `
-        <section class="anime-hero" style="background-image: url('${poster}');">
+    detailsContent.style.display = "block";
+
+    document.title = `${anime.title} — Anime Max Zone`;
+
+    const title = escapeHTML(anime.title);
+    const description = escapeHTML(
+        anime.description || "No description available for this anime yet."
+    );
+
+    const poster = safeImageUrl(anime.coverImageUrl) || FALLBACK_POSTER;
+    const status = escapeHTML(anime.status);
+
+    const genresHTML = anime.genres
+        .map(genre => `<span>${escapeHTML(genre)}</span>`)
+        .join("");
+
+    let episodesHTML = "";
+
+    if (anime.episodes.length) {
+        anime.episodes.forEach((episode, index) => {
+            const episodeNumber = String(
+                episode.episodeNumber || episode.number || index + 1
+            );
+
+            episodesHTML += `
+                <button
+                    type="button"
+                    class="ep-btn"
+                    data-episode="${escapeHTML(episodeNumber)}">
+                    ${escapeHTML(episodeNumber)}
+                </button>
+            `;
+        });
+    } else {
+        episodesHTML = `
+            <p class="empty-msg">
+                No episodes have been added yet.
+            </p>
+        `;
+    }
+
+    detailsContent.innerHTML = `
+        <section class="anime-hero"
+                 style="background-image:url('${poster}');">
+
             <div class="anime-hero-content">
-                <img src="${poster}" alt="${title}" class="anime-poster" onerror="this.src='${FALLBACK_POSTER}'" />
+                <img
+                    src="${poster}"
+                    alt="${title}"
+                    class="anime-poster"
+                >
+
                 <div class="anime-info">
                     <h1>${title}</h1>
+
                     <div class="anime-meta-badges">
-                        <span style="background:var(--primary); border:none;">${status}</span>
+                        <span style="background:var(--primary);border:none;">
+                            ${status}
+                        </span>
                         ${genresHTML}
                     </div>
-                    <p class="anime-description">${desc}</p>
-                    <button class="btn-watch-now" id="playFirstBtn">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" width="20" height="20"><path d="M8 5v14l11-7z"/></svg>
+
+                    <p class="anime-description">${description}</p>
+
+                    <button
+                        type="button"
+                        class="btn-watch-now"
+                        id="playFirstBtn">
+
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                            width="20"
+                            height="20"
+                            aria-hidden="true">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+
                         Watch Episode 1
                     </button>
                 </div>
@@ -254,24 +521,51 @@ function renderDetailsUI(anime) {
         </section>
     `;
 
-    // FIX: Redirect to watch.html when episode is clicked
-    const epBtns = document.querySelectorAll('.ep-btn');
-    epBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            epBtns.forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            
-            const selectedEp = e.target.innerText;
-            window.location.href = `watch.html?animeId=${anime.id}&ep=${selectedEp}`;
+    detailsContent.querySelectorAll("img").forEach(image => {
+        image.addEventListener("error", () => {
+            image.src = FALLBACK_POSTER;
+        }, { once: true });
+    });
+
+    function openEpisode(episodeNumber) {
+        if (!anime.id || !episodeNumber) return;
+
+        window.location.href =
+            `video-player.html?animeId=${encodeURIComponent(anime.id)}` +
+            `&ep=${encodeURIComponent(episodeNumber)}`;
+    }
+
+    detailsContent.querySelectorAll(".ep-btn").forEach(button => {
+        button.addEventListener("click", () => {
+            openEpisode(button.dataset.episode);
         });
     });
 
-    // FIX: Redirect to watch.html for Episode 1
-    document.getElementById('playFirstBtn').addEventListener('click', () => {
-        window.location.href = `watch.html?animeId=${anime.id}&ep=1`;
+    document.getElementById("playFirstBtn")?.addEventListener("click", () => {
+        const firstEpisode = anime.episodes[0];
+
+        if (!firstEpisode) {
+            alert("No episodes are available for this anime yet.");
+            return;
+        }
+
+        openEpisode(
+            firstEpisode.episodeNumber ||
+            firstEpisode.number ||
+            1
+        );
     });
 }
 
-// ---------- 7. Boot ----------
-fetchAnimeForSearch(); 
-loadAnimeDetails();    
+/* ============================================================
+   11. INITIALIZE
+   ============================================================ */
+
+async function initializePage() {
+    await Promise.allSettled([
+        fetchAnimeForSearch(),
+        loadAnimeDetails()
+    ]);
+}
+
+initializePage();
