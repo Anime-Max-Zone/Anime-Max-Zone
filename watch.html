@@ -5,22 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title id="pageTitle">Anime Max Zone</title>
     
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     
-    <!-- Main CSS File -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="watch-page-body">
 
-    <!-- Header Section (Sticky) -->
     <header class="app-header">
         <div class="logo-area">
             <div class="logo-icon"><i class="fa-solid fa-play"></i></div>
@@ -32,7 +27,6 @@
         <div class="search-area" id="openSearchBtn"><i class="fa-solid fa-magnifying-glass"></i></div>
     </header>
 
-    <!-- Search Overlay Panel -->
     <div class="search-overlay" id="searchPanel">
         <div class="search-header">
             <div class="search-input-box">
@@ -44,18 +38,20 @@
         <div class="search-results" id="searchResults"><p class="search-hint">Start typing to search...</p></div>
     </div>
 
-    <!-- Main Content: Video Player -->
     <main class="main-content">
         <!-- Video Player Wrapper -->
         <div class="player-wrapper" id="playerWrapper">
             
-            <!-- Top Left Back Button -->
-            <a href="javascript:history.back()" class="player-back-btn" id="backBtn"><i class="fa-solid fa-arrow-left"></i></a>
+            <!-- Top Controls Wrapper (Back Button & Top Right Icons) -->
+            <div id="topControls" class="top-controls">
+                <!-- Top Left Back Button -->
+                <a href="javascript:history.back()" class="player-back-btn" id="backBtn"><i class="fa-solid fa-arrow-left"></i></a>
 
-            <!-- Top Right Icons (Audio & Subtitle) -->
-            <div class="top-right-controls" id="topRightIcons">
-                <button id="audioIconBtn" class="top-icon-btn" title="Audio Track"><i class="fa-solid fa-headphones"></i></button>
-                <button id="subtitleIconBtn" class="top-icon-btn" title="Subtitles"><i class="fa-solid fa-closed-captioning"></i></button>
+                <!-- Top Right Icons (Audio & Subtitle) -->
+                <div class="top-right-controls" id="topRightIcons">
+                    <button id="audioIconBtn" class="top-icon-btn" title="Audio Track"><i class="fa-solid fa-headphones"></i></button>
+                    <button id="subtitleIconBtn" class="top-icon-btn" title="Subtitles"><i class="fa-solid fa-closed-captioning"></i></button>
+                </div>
             </div>
 
             <!-- Audio Menu (Top Right) -->
@@ -70,7 +66,7 @@
                 <div id="subtitleOptions" class="settings-options"></div>
             </div>
 
-            <!-- TAP OVERLAYS (Double Tap Feature) -->
+            <!-- TAP OVERLAYS (Double Tap Feature & Single Tap Show/Hide) -->
             <div id="seekLeftOverlay" class="tap-overlay left-tap">
                 <div class="tap-feedback"><i class="fa-solid fa-backward"></i> 10s</div>
             </div>
@@ -123,7 +119,7 @@
                 Loading description...
             </p>
 
-            <!-- 🔥 NEW: Comments Trigger Button 🔥 -->
+            <!-- Comments Trigger Button -->
             <button id="openCommentsBtn" class="comment-trigger-btn">
                 <i class="fa-regular fa-comments"></i> View Comments
             </button>
@@ -145,12 +141,9 @@
     </nav>
 
     <!-- ================= COMMENTS BOTTOM SHEET ================= -->
-    <!-- Background Overlay -->
     <div id="bottomSheetBackdrop" class="bottom-sheet-backdrop"></div>
 
-    <!-- Bottom Sheet UI -->
     <div id="commentsBottomSheet" class="bottom-sheet">
-        <!-- Drag Handle -->
         <div class="bottom-sheet-drag-handle"></div>
         
         <div class="bottom-sheet-header">
@@ -159,7 +152,6 @@
         </div>
 
         <div class="bottom-sheet-content">
-            <!-- Comment Form -->
             <form id="commentForm" class="comment-form">
                 <div class="form-row">
                     <input type="text" id="commentName" placeholder="Your Name" required>
@@ -169,9 +161,7 @@
                 <button type="submit" class="submit-comment-btn"><i class="fa-solid fa-paper-plane"></i> Post Comment</button>
             </form>
 
-            <!-- Comments List -->
             <div id="commentsList" class="comments-list">
-                <!-- Comments load honge yahan -->
                 <p style="color: #888; font-size: 13px; text-align: center;">Loading comments...</p>
             </div>
         </div>
