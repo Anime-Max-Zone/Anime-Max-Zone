@@ -489,7 +489,7 @@ if (document.getElementById('customVideo') && database) {
         qualityMenu.style.display = 'none';
     }
 
-    // Seamless Video Playback (With Resume Time)
+    // 🔥 Auto-Play & Seamless Switch Logic 🔥
     function playVideoUrl(url) {
         if(!url) return;
         const previousTime = video.currentTime;
@@ -509,6 +509,11 @@ if (document.getElementById('customVideo') && database) {
         let finalUrl = fileId ? `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=AIzaSyCpfrluxsBhnz48ve9RykIy1IxzbBfk7dA` : url;
 
         if(videoLoader) videoLoader.style.display = 'block';
+        
+        // 🔥 AUTO-PLAY FIX: Video ko mute karke play karna zaroori hai 🔥
+        video.muted = true; 
+        if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+
         video.src = finalUrl;
         video.load();
         
@@ -516,9 +521,13 @@ if (document.getElementById('customVideo') && database) {
             if(previousTime > 0 && previousTime < video.duration) {
                 video.currentTime = previousTime;
             }
-            if(wasPlaying) {
-                video.play().catch(e => console.log("Autoplay blocked", e));
-            }
+            
+            // Force Autoplay
+            video.play().catch(e => {
+                console.log("Autoplay blocked by browser", e);
+                if(playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+            });
+            
             video.onloadedmetadata = null; 
         };
     }
@@ -629,9 +638,8 @@ if (document.getElementById('customVideo') && database) {
         showControls();
     });
 
-    // Jab mouse move ya touch ho toh controls show karein
-    playerWrapper.addEventListener('mousemove', showControls);
-    playerWrapper.addEventListener('touchstart', showControls);
+    // ❌ FLICKER FIX: Maine yahan se mousemove aur touchstart hata diya hai ❌
+    // Kyunki unki wajah se controls blink kar rahe the. Ab sirf Tap (click) kaam karega.
 
     // --- Single Tap / Double Tap Logic ---
     let lastTap = 0;
@@ -683,13 +691,11 @@ if (document.getElementById('customVideo') && database) {
     const commentForm = document.getElementById('commentForm');
     const commentsList = document.getElementById('commentsList');
 
-    // Bottom Sheet Elements
     const openCommentsBtn = document.getElementById('openCommentsBtn');
     const closeCommentsBtn = document.getElementById('closeCommentsBtn');
     const bottomSheet = document.getElementById('commentsBottomSheet');
     const backdrop = document.getElementById('bottomSheetBackdrop');
 
-    // Bottom Sheet Open/Close Logic
     if(openCommentsBtn && bottomSheet) {
         openCommentsBtn.addEventListener('click', () => {
             bottomSheet.classList.add('active');
@@ -707,7 +713,6 @@ if (document.getElementById('customVideo') && database) {
         });
     }
 
-    // Local User ID (For self-delete)
     let localCommentUserId = localStorage.getItem('commentUserId');
     if (!localCommentUserId) {
         localCommentUserId = 'user_' + Math.random().toString(36).substr(2, 9);
@@ -718,7 +723,7 @@ if (document.getElementById('customVideo') && database) {
     firebase.auth().onAuthStateChanged((user) => {
         if (user) {
             isAdmin = true;
-            loadComments(); // Re-render to show delete buttons
+            loadComments(); 
         }
     });
 
