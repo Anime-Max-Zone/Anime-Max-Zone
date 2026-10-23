@@ -934,7 +934,6 @@ input:checked + .slider:before {
 }
 
 /* ================= SEASONS & EPISODES INSIDE WATCH PAGE ================= */
-/* Season Tabs Horizontal Scroll */
 .season-tabs {
     display: flex;
     gap: 10px;
@@ -969,12 +968,10 @@ input:checked + .slider:before {
     box-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
 }
 
-/* Watch Page Episode List */
 .watch-episode-list {
     margin-bottom: 20px;
 }
 
-/* Currently Playing Episode Highlight */
 .episode-card.active {
     border-color: #a855f7;
     background: rgba(168, 85, 247, 0.1);
@@ -983,4 +980,80 @@ input:checked + .slider:before {
 .episode-card.active .ep-play-icon {
     background: #a855f7;
     color: white;
+}
+
+/* ================= SPLASH SCREEN (ADDED) ================= */
+#splash-screen {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100vh;
+    background-color: #09090b;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+#splash-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+.splash-logo {
+    width: 70px; height: 70px;
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    border-radius: 20px;
+    display: flex; justify-content: center; align-items: center;
+    font-size: 32px; color: white;
+    padding-left: 5px;
+    margin-bottom: 20px;
+    animation: pulseLogo 1.5s infinite alternate;
+}
+@keyframes pulseLogo {
+    0% { transform: scale(1); box-shadow: 0 0 0 rgba(106, 17, 203, 0); }
+    100% { transform: scale(1.1); box-shadow: 0 0 30px rgba(106, 17, 203, 0.6); }
+}
+.splash-text {
+    font-size: 22px; font-weight: 700; letter-spacing: 1px; margin-bottom: 5px;
+}
+.splash-text .purple-text { color: #a855f7; }
+.splash-subtext {
+    font-size: 12px; color: #888; margin-bottom: 30px;
+}
+.splash-loader {
+    width: 40px; height: 40px;
+    border: 3px solid rgba(168, 85, 247, 0.3);
+    border-top-color: #a855f7;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ================= SHIMMER SKELETON LOADING (ADDED) ================= */
+.skeleton-card {
+    flex: 0 0 auto;
+    width: 130px;
+    height: 190px;
+    border-radius: 12px;
+    background: #1a1a24;
+    background-image: linear-gradient(90deg, #1a1a24 0px, #2a2a35 40px, #1a1a24 80px);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+}
+
+.skeleton-grid-card {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    border-radius: 10px;
+    background: #1a1a24;
+    background-image: linear-gradient(90deg, #1a1a24 0px, #2a2a35 40px, #1a1a24 80px);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
 }
