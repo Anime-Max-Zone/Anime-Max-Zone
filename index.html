@@ -16,6 +16,17 @@
 </head>
 <body>
 
+    <!-- ================= SPLASH LOADING SCREEN ================= -->
+    <div id="splash-screen">
+        <div class="splash-logo">
+            <i class="fa-solid fa-play"></i>
+        </div>
+        <h1 class="splash-text">ANIME <span class="purple-text">MAX</span> ZONE</h1>
+        <p class="splash-subtext">Watch Your Favourite Anime</p>
+        <div class="splash-loader"></div>
+    </div>
+    <!-- ========================================================= -->
+
     <!-- Header Section (Sticky) -->
     <header class="app-header">
         <div class="logo-area">
@@ -51,6 +62,7 @@
 
     <!-- Main Content -->
     <main class="main-content">
+        
         <!-- Section 1: Latest Anime -->
         <section class="content-section">
             <div class="section-title">
@@ -58,20 +70,14 @@
                     <span class="vertical-bar"></span>
                     <h2>Latest Anime</h2>
                 </div>
-                <a href="#" class="view-more">View More »</a>
+                <a href="anime.html" class="view-more">View More »</a>
             </div>
             
-            <div class="cards-container">
-                <!-- Yahan links anime-details.html par bhej rahe hain -->
-                <a href="anime-details.html?id=GDRIVE_ID_SOLOLEVELING" class="anime-card">
-                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSVistBjvjjsTvMYAczgOZ7jv8d4hxGEO8nS8iPpCkSVQ&s=10" alt="Solo Leveling">
-                </a>
-                <a href="anime-details.html?id=GDRIVE_ID_DEMONSLAYER" class="anime-card">
-                    <img src="https://image.tmdb.org/t/p/w500/xUfRZu2mi8jH6SzQEJGP6tjBuYj.jpg" alt="Demon Slayer">
-                </a>
-                <a href="anime-details.html?id=GDRIVE_ID_AOT" class="anime-card">
-                    <img src="https://image.tmdb.org/t/p/w500/hTP1DtLGFamjfu8WqjnuQdP1n4i.jpg" alt="Attack on Titan">
-                </a>
+            <!-- Shimmer Skeleton Container -->
+            <div class="cards-container" id="latestContainer">
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
             </div>
         </section>
         
@@ -82,19 +88,14 @@
                     <span class="vertical-bar"></span>
                     <h2>On-Air Series</h2>
                 </div>
-                <a href="#" class="view-more">View More »</a>
+                <a href="anime.html" class="view-more">View More »</a>
             </div>
             
-            <div class="cards-container">
-                <a href="anime-details.html?id=GDRIVE_ID_ONEPIECE" class="anime-card">
-                    <img src="https://image.tmdb.org/t/p/w500/cMD9Ygz11zjJzAovURpO75Qg7rT.jpg" alt="One Piece">
-                </a>
-                <a href="anime-details.html?id=GDRIVE_ID_SPYFAMILY" class="anime-card">
-                    <img src="https://image.tmdb.org/t/p/w500/7m8pP0R4y5I5z3x2c1v0b9n8m7.jpg" alt="Spy x Family">
-                </a>
-                <a href="anime-details.html?id=GDRIVE_ID_JUJUTSU" class="anime-card">
-                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTh3hSw1X2eKkBBNgd3rEtwENN-wnk38NLfJMpUoPiNlw&s=10" alt="Jujutsu Kaisen">
-                </a>
+            <!-- Shimmer Skeleton Container -->
+            <div class="cards-container" id="onAirContainer">
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
             </div>
         </section>
 
@@ -105,22 +106,15 @@
                     <span class="vertical-bar"></span>
                     <h2>New Anime Arrivals</h2>
                 </div>
-                <a href="#" class="view-more">View More »</a>
+                <a href="anime.html" class="view-more">View More »</a>
             </div>
             
-            <div class="cards-container">
-                <a href="anime-details.html?id=GDRIVE_ID_NARUTO" class="anime-card">
-                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQcAKuYWXQrNb83dn8l0C9PCjYvUrsYBfO63qTUMIujTg&s=10" alt="Naruto">
-                </a>
-                <a href="anime-details.html?id=GDRIVE_ID_DEMONSLAYER" class="anime-card">
-                    <img src="https://image.tmdb.org/t/p/w500/xUfRZu2mi8jH6SzQEJGP6tjBuYj.jpg" alt="Demon Slayer">
-                </a>
-                <a href="anime-details.html?id=GDRIVE_ID_AOT" class="anime-card">
-                    <img src="https://image.tmdb.org/t/p/w500/hTP1DtLGFamjfu8WqjnuQdP1n4i.jpg" alt="Attack on Titan">
-                </a>
-                <a href="anime-details.html?id=GDRIVE_ID_DEMONSLAYER" class="anime-card">
-                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT0fMxjRck-hY6tdV_nW-SnIWjFEvO3SGjYc77oCHjPUg&s=10" alt="Demon Slayer">
-                </a>
+            <!-- Shimmer Skeleton Container -->
+            <div class="cards-container" id="newArrivalsContainer">
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
             </div>
         </section>
     </main>
@@ -142,7 +136,7 @@
             <i class="fa-solid fa-clapperboard"></i>
             <span>Movies</span>
         </a>
-        <!-- Settings Tab (Icon Updated to Gear) -->
+        <!-- Settings Tab -->
         <a href="settings.html" class="nav-item">
             <i class="fa-solid fa-gear"></i>
             <span>Settings</span>
