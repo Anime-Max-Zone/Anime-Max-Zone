@@ -1,4 +1,4 @@
-// ================= 1. DUMMY DATA =================
+// ================= 1. DUMMY DATA (ANIME) =================
 // (Baad me aap ise Firebase Realtime Database se fetch kar sakte hain)
 const animeDatabase = [
     { title: "Solo Leveling", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSVistBjvjjsTvMYAczgOZ7jv8d4hxGEO8nS8iPpCkSVQ&s=10", id: "GDRIVE_ID_SOLOLEVELING" },
@@ -10,21 +10,34 @@ const animeDatabase = [
     { title: "Naruto", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQcAKuYWXQrNb83dn8l0C9PCjYvUrsYBfO63qTUMIujTg&s=10", id: "GDRIVE_ID_NARUTO" }
 ];
 
-// ================= 2. DOM ELEMENTS =================
+// ================= 2. DUMMY DATA (MOVIES) =================
+const movieDatabase = [
+    { title: "Jawan", image: "https://image.tmdb.org/t/p/w500/jJ63h5Gq6o8yG7x6s5d4f3g2h1.jpg", id: "MOVIE_JAWAN" },
+    { title: "Pathaan", image: "https://image.tmdb.org/t/p/w500/7m8pP0R4y5I5z3x2c1v0b9n8m7.jpg", id: "MOVIE_PATHAAN" },
+    { title: "Interstellar", image: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg", id: "MOVIE_INTERSTELLAR" },
+    { title: "Inception", image: "https://image.tmdb.org/t/p/w500/oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg", id: "MOVIE_INCEPTION" },
+    { title: "Your Name", image: "https://image.tmdb.org/t/p/w500/q719jXXEzOoYaps6babgKnONONX.jpg", id: "MOVIE_YOURNAME" },
+    { title: "Spirited Away", image: "https://image.tmdb.org/t/p/w500/39wmItIWsg5sZMyRUHLkWBcuVCM.jpg", id: "MOVIE_SPIRITEDAWAY" }
+];
+
+// Search bar me dono (Anime + Movies) ek sath search ho sake, isliye dono ko mila diya
+const allContentDatabase = [...animeDatabase, ...movieDatabase];
+
+
+// ================= 3. DOM ELEMENTS =================
 const searchPanel = document.getElementById('searchPanel');
 const openSearchBtn = document.getElementById('openSearchBtn');
 const closeSearchBtn = document.getElementById('closeSearchBtn');
 const searchInput = document.getElementById('searchInput');
 const searchResults = document.getElementById('searchResults');
 
-// ================= 3. SEARCH PANEL LOGIC =================
-// Check karein ki elements exist karte hain (Safety check)
+
+// ================= 4. SEARCH PANEL LOGIC =================
 if (openSearchBtn && searchPanel) {
     
     // Open Panel
     openSearchBtn.addEventListener('click', () => {
         searchPanel.classList.add('active');
-        // Thoda delay taaki animation complete ho jaye, phir keyboard open ho
         setTimeout(() => {
             searchInput.focus(); 
         }, 300);
@@ -33,79 +46,68 @@ if (openSearchBtn && searchPanel) {
     // Close Panel
     closeSearchBtn.addEventListener('click', () => {
         searchPanel.classList.remove('active');
-        
-        // Panel band hone ke baad usko reset karein
         setTimeout(() => {
             searchInput.value = ''; 
             searchResults.innerHTML = '<p class="search-hint">Start typing to search...</p>';
         }, 300);
     });
 
-    // LIVE SUGGESTION LOGIC (Input event)
+    // LIVE SUGGESTION LOGIC
     searchInput.addEventListener('input', (e) => {
         const query = e.target.value.toLowerCase().trim();
         
-        // Agar input khali hai toh hint dikhao
         if (query === '') {
             searchResults.innerHTML = '<p class="search-hint">Start typing to search...</p>';
             return;
         }
 
-        // Database me se title ko match karo
-        const filteredAnime = animeDatabase.filter(anime => 
-            anime.title.toLowerCase().includes(query)
+        // Ab hum allContentDatabase (Anime + Movies) me search karenge
+        const filteredContent = allContentDatabase.filter(item => 
+            item.title.toLowerCase().includes(query)
         );
 
-        // Result render karo
-        renderSearchResults(filteredAnime);
+        renderSearchResults(filteredContent);
     });
 }
 
-// ================= 4. RESULT RENDER FUNCTION (For Search) =================
+
+// ================= 5. RESULT RENDER FUNCTION (For Search) =================
 function renderSearchResults(results) {
-    if (!searchResults) return; // Safety check
+    if (!searchResults) return; 
 
-    searchResults.innerHTML = ''; // Pehle clear karo
+    searchResults.innerHTML = ''; 
 
-    // Agar kuch na mile
     if (results.length === 0) {
         searchResults.innerHTML = `<p class="search-hint">No results found for "${searchInput.value}"</p>`;
         return;
     }
 
-    // Agar mile toh loop chalao
-    results.forEach(anime => {
-        // Har result ke liye ek clickable link banaya
-        const item = document.createElement('a');
-        // Yahan aap anime-details.html?id=... bhi kar sakte hain agar wo page use kar rahe hain
-        item.href = `watch.html?id=${anime.id}`; 
-        item.className = 'search-item';
+    results.forEach(item => {
+        const link = document.createElement('a');
+        link.href = `watch.html?id=${item.id}`; 
+        link.className = 'search-item';
         
-        // HTML structure
-        item.innerHTML = `
-            <img src="${anime.image}" alt="${anime.title}">
+        link.innerHTML = `
+            <img src="${item.image}" alt="${item.title}" onerror="this.src='https://via.placeholder.com/55x75?text=No+Image'">
             <div class="search-item-info">
-                <h3>${anime.title}</h3>
+                <h3>${item.title}</h3>
                 <p>Tap to watch</p>
             </div>
             <i class="fa-solid fa-chevron-right"></i>
         `;
         
-        // List me add karo
-        searchResults.appendChild(item);
+        searchResults.appendChild(link);
     });
 }
 
-// ================= 5. ANIME GRID PAGE LOGIC =================
-// Ye code check karega ki kya hum Anime page (anime.html) par hain
+
+// ================= 6. ANIME GRID PAGE LOGIC (anime.html) =================
 const animeGridContainer = document.getElementById('animeGrid');
 
 if (animeGridContainer) {
-    // Agar grid container mil gaya, toh saare anime render karo
     animeDatabase.forEach(anime => {
-        // Card banayein
         const card = document.createElement('a');
-        card.href = `watch.html?id=${anime.id}`; // Click karne par watch page khulega
+        card.href = `watch.html?id=${anime.id}`; 
         card.className = 'grid-card';
         
         card.innerHTML = `
@@ -113,7 +115,25 @@ if (animeGridContainer) {
             <div class="grid-card-title">${anime.title}</div>
         `;
         
-        // Grid me card add karein
         animeGridContainer.appendChild(card);
+    });
+}
+
+
+// ================= 7. MOVIES GRID PAGE LOGIC (movies.html) =================
+const movieGridContainer = document.getElementById('movieGrid');
+
+if (movieGridContainer) {
+    movieDatabase.forEach(movie => {
+        const card = document.createElement('a');
+        card.href = `watch.html?id=${movie.id}`; 
+        card.className = 'grid-card';
+        
+        card.innerHTML = `
+            <img src="${movie.image}" alt="${movie.title}" onerror="this.src='https://via.placeholder.com/150x225?text=No+Image'">
+            <div class="grid-card-title">${movie.title}</div>
+        `;
+        
+        movieGridContainer.appendChild(card);
     });
 }
