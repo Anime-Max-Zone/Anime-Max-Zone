@@ -61,12 +61,31 @@
             <!-- Back Button (Top Left) -->
             <a href="javascript:history.back()" class="player-back-btn"><i class="fa-solid fa-arrow-left"></i></a>
 
-            <!-- HTML5 Video Tag (NO 'controls' attribute) -->
-            <video id="customVideo" playsinline></video>
+            <!-- HTML5 Video Tag (NO default 'controls' attribute) -->
+            <!-- Added track for subtitles support -->
+            <video id="customVideo" playsinline crossorigin="anonymous">
+                <track id="subtitleTrack" label="Subtitles" kind="subtitles" srclang="en" default>
+            </video>
 
             <!-- Loading Spinner -->
             <div class="loading-spinner" id="videoLoader">
                 <i class="fa-solid fa-spinner fa-spin"></i>
+            </div>
+
+            <!-- Settings Menu (Audio, Quality, Subtitle) -->
+            <div id="settingsMenu" class="settings-menu">
+                <div id="audioSection" style="display: none; margin-bottom: 10px;">
+                    <h4>Audio</h4>
+                    <div id="audioOptions" class="settings-options"></div>
+                </div>
+                <div id="qualitySection" style="display: none; margin-bottom: 10px;">
+                    <h4>Quality</h4>
+                    <div id="qualityOptions" class="settings-options"></div>
+                </div>
+                <div id="subtitleSection" style="display: none;">
+                    <h4>Subtitles</h4>
+                    <div id="subtitleOptions" class="settings-options"></div>
+                </div>
             </div>
 
             <!-- Custom Controller Overlay -->
@@ -83,6 +102,7 @@
                     <div class="right-controls">
                         <button id="skipBackBtn"><i class="fa-solid fa-rotate-left"></i> 10s</button>
                         <button id="skipForwardBtn">10s <i class="fa-solid fa-rotate-right"></i></button>
+                        <button id="settingsBtn"><i class="fa-solid fa-gear"></i></button>
                         <button id="fullscreenBtn"><i class="fa-solid fa-expand"></i></button>
                     </div>
                 </div>
