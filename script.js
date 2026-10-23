@@ -22,7 +22,6 @@ const movieDatabase = [
 // Search bar me dono (Anime + Movies) ek sath search ho sake
 const allContentDatabase = [...animeDatabase, ...movieDatabase];
 
-
 // ================= 3. DOM ELEMENTS =================
 const searchPanel = document.getElementById('searchPanel');
 const openSearchBtn = document.getElementById('openSearchBtn');
@@ -30,10 +29,8 @@ const closeSearchBtn = document.getElementById('closeSearchBtn');
 const searchInput = document.getElementById('searchInput');
 const searchResults = document.getElementById('searchResults');
 
-
 // ================= 4. SEARCH PANEL LOGIC =================
 if (openSearchBtn && searchPanel) {
-    
     openSearchBtn.addEventListener('click', () => {
         searchPanel.classList.add('active');
         setTimeout(() => { searchInput.focus(); }, 300);
@@ -63,7 +60,6 @@ if (openSearchBtn && searchPanel) {
     });
 }
 
-
 // ================= 5. RESULT RENDER FUNCTION (For Search) =================
 function renderSearchResults(results) {
     if (!searchResults) return; 
@@ -92,7 +88,6 @@ function renderSearchResults(results) {
     });
 }
 
-
 // ================= 6. ANIME GRID PAGE LOGIC (anime.html) =================
 const animeGridContainer = document.getElementById('animeGrid');
 
@@ -110,7 +105,6 @@ if (animeGridContainer) {
         animeGridContainer.appendChild(card);
     });
 }
-
 
 // ================= 7. MOVIES GRID PAGE LOGIC (movies.html) =================
 const movieGridContainer = document.getElementById('movieGrid');
@@ -130,9 +124,7 @@ if (movieGridContainer) {
     });
 }
 
-
 // ================= 8. ANIME DETAILS PAGE LOGIC (anime-details.html) =================
-// Dummy Details Database (Isko aap Firebase se replace karenge)
 const animeDetailsDB = {
     "GDRIVE_ID_SOLOLEVELING": {
         title: "Solo Leveling",
@@ -143,7 +135,7 @@ const animeDetailsDB = {
         genres: ["Action", "Fantasy"],
         synopsis: "In a world where hunters with magical powers must battle deadly monsters to protect the human race, Sung Jinwoo, a notoriously weak hunter, finds himself in a struggle for survival.",
         episodes: [
-            { ep: 1, title: "I'm Used to It", gdrive_id: "TEST_VIDEO_ID" }, // Test ke liye dummy ID
+            { ep: 1, title: "I'm Used to It", gdrive_id: "TEST_VIDEO_ID" },
             { ep: 2, title: "If I Had One More Chance", gdrive_id: "TEST_VIDEO_ID" }
         ]
     },
@@ -161,49 +153,59 @@ const animeDetailsDB = {
     }
 };
 
-const urlParams = new URLSearchParams(window.location.search);
-const detailAnimeId = urlParams.get('id');
+// DOMContentLoaded lagaya hai taaki elements load hone ke baad hi script chale
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('detailTitle')) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const detailAnimeId = urlParams.get('id');
 
-if (document.getElementById('detailTitle')) {
-    const data = animeDetailsDB[detailAnimeId];
+        // Check karein agar URL me id nahi hai
+        if (!detailAnimeId) {
+            document.getElementById('detailTitle').innerText = "No Anime Selected";
+            document.getElementById('detailSynopsis').innerText = "Please go back and select an anime or movie from the home page.";
+            document.getElementById('episodeList').innerHTML = "<p style='color:#666;'>No episodes to display.</p>";
+            document.getElementById('detailPoster').style.display = 'none'; // Hide empty poster
+            return;
+        }
 
-    if (!data) {
-        document.getElementById('detailTitle').innerText = "Anime Not Found";
-        document.getElementById('detailSynopsis').innerText = "Content does not exist.";
-        document.getElementById('episodeList').innerHTML = "";
-    } else {
-        document.title = `${data.title} - Anime Max Zone`;
-        document.getElementById('detailBanner').style.backgroundImage = `url(${data.banner})`;
-        document.getElementById('detailPoster').src = data.poster;
-        document.getElementById('detailTitle').innerText = data.title;
-        document.getElementById('detailRating').innerText = data.rating;
-        document.getElementById('detailYear').innerText = data.year;
-        document.getElementById('detailSynopsis').innerText = data.synopsis;
+        const data = animeDetailsDB[detailAnimeId];
 
-        document.getElementById('detailGenres').innerHTML = data.genres.map(g => `<span class="genre-tag">${g}</span>`).join('');
+        if (!data) {
+            document.getElementById('detailTitle').innerText = "Anime Not Found";
+            document.getElementById('detailSynopsis').innerText = "Content does not exist in our database.";
+            document.getElementById('episodeList').innerHTML = "";
+        } else {
+            document.title = `${data.title} - Anime Max Zone`;
+            document.getElementById('detailBanner').style.backgroundImage = `url(${data.banner})`;
+            document.getElementById('detailPoster').src = data.poster;
+            document.getElementById('detailTitle').innerText = data.title;
+            document.getElementById('detailRating').innerText = data.rating;
+            document.getElementById('detailYear').innerText = data.year;
+            document.getElementById('detailSynopsis').innerText = data.synopsis;
 
-        const episodeList = document.getElementById('episodeList');
-        document.getElementById('episodeCount').innerText = `${data.episodes.length} Episodes`;
-        episodeList.innerHTML = '';
+            document.getElementById('detailGenres').innerHTML = data.genres.map(g => `<span class="genre-tag">${g}</span>`).join('');
 
-        data.episodes.forEach(episode => {
-            const epCard = document.createElement('a');
-            // Yahan se Watch page par jayenge
-            epCard.href = `watch.html?id=${episode.gdrive_id}&title=${encodeURIComponent(data.title + ' - Ep ' + episode.ep)}`; 
-            epCard.className = 'episode-card';
-            epCard.innerHTML = `
-                <div class="ep-play-icon"><i class="fa-solid fa-play"></i></div>
-                <div class="ep-info">
-                    <h4>Episode ${episode.ep}</h4>
-                    <p>${episode.title}</p>
-                </div>
-                <i class="fa-solid fa-chevron-right ep-arrow"></i>
-            `;
-            episodeList.appendChild(epCard);
-        });
+            const episodeList = document.getElementById('episodeList');
+            document.getElementById('episodeCount').innerText = `${data.episodes.length} Episodes`;
+            episodeList.innerHTML = '';
+
+            data.episodes.forEach(episode => {
+                const epCard = document.createElement('a');
+                epCard.href = `watch.html?id=${episode.gdrive_id}&title=${encodeURIComponent(data.title + ' - Ep ' + episode.ep)}`; 
+                epCard.className = 'episode-card';
+                epCard.innerHTML = `
+                    <div class="ep-play-icon"><i class="fa-solid fa-play"></i></div>
+                    <div class="ep-info">
+                        <h4>Episode ${episode.ep}</h4>
+                        <p>${episode.title}</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right ep-arrow"></i>
+                `;
+                episodeList.appendChild(epCard);
+            });
+        }
     }
-}
-
+});
 
 // ================= 9. WATCH PAGE (CUSTOM VIDEO PLAYER) =================
 if (document.getElementById('customVideo')) {
@@ -219,19 +221,15 @@ if (document.getElementById('customVideo')) {
     const playerWrapper = document.getElementById('playerWrapper');
     const videoLoader = document.getElementById('videoLoader');
 
-    // URL se Video ID aur Title nikalna
     const watchUrlParams = new URLSearchParams(window.location.search);
     let videoId = watchUrlParams.get('id');
     let videoTitle = watchUrlParams.get('title') || "Now Playing";
     
-    // Title update karna (agar page par tag hai toh)
     const titleTag = document.querySelector('.video-info-section h2');
     if(titleTag) titleTag.innerText = videoTitle;
 
-    // GDrive Auto-Detect (Test ke liye BigBuckBunny video fallback)
     let finalVideoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
     
-    // Agar ID real hai aur TEST_VIDEO_ID nahi hai, toh GDrive API use karo
     if (videoId && !videoId.includes("TEST_VIDEO_ID")) {
         function extractFileId(url) {
             const patterns = [/\/file\/d\/([a-zA-Z0-9_-]+)/, /[?&]id=([a-zA-Z0-9_-]+)/];
@@ -242,14 +240,13 @@ if (document.getElementById('customVideo')) {
             return url;
         }
         let fileId = extractFileId(videoId);
-        const API_KEY = "YOUR_GOOGLE_DRIVE_API_KEY"; // Apni API key yahan daalein
+        const API_KEY = "YOUR_GOOGLE_DRIVE_API_KEY"; 
         finalVideoUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${API_KEY}`;
     }
 
     video.src = finalVideoUrl;
     videoLoader.style.display = 'block';
 
-    // Controls Logic
     video.addEventListener('waiting', () => videoLoader.style.display = 'block');
     video.addEventListener('playing', () => videoLoader.style.display = 'none');
 
@@ -290,7 +287,6 @@ if (document.getElementById('customVideo')) {
         else document.exitFullscreen();
     });
 
-    // Auto-Hide Controls
     let controlTimeout;
     function showControls() {
         controlsBar.classList.remove('hidden');
