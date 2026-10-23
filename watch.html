@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Watching - Anime Max Zone</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Main CSS File -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="watch-page-body">
+
+    <!-- Header Section (Sticky) -->
+    <header class="app-header">
+        <div class="logo-area">
+            <div class="logo-icon">
+                <i class="fa-solid fa-play"></i>
+            </div>
+            <div class="logo-text">
+                <h1>ANIME <span class="purple-text">MAX</span> ZONE</h1>
+                <p>Watch Your Favourite Anime</p>
+            </div>
+        </div>
+        <div class="search-area" id="openSearchBtn">
+            <i class="fa-solid fa-magnifying-glass"></i>
+        </div>
+    </header>
+
+    <!-- ================= SEARCH OVERLAY PANEL ================= -->
+    <div class="search-overlay" id="searchPanel">
+        <div class="search-header">
+            <div class="search-input-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="searchInput" placeholder="Search anime, movies, cartoons..." autocomplete="off">
+            </div>
+            <button class="cancel-btn" id="closeSearchBtn">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="search-results" id="searchResults">
+            <p class="search-hint">Start typing to search...</p>
+        </div>
+    </div>
+    <!-- ========================================================= -->
+
+    <!-- Main Content: Video Player -->
+    <main class="main-content">
+        <!-- Video Player Wrapper -->
+        <div class="player-wrapper" id="playerWrapper">
+            <!-- Back Button (Top Left) -->
+            <a href="javascript:history.back()" class="player-back-btn"><i class="fa-solid fa-arrow-left"></i></a>
+
+            <!-- HTML5 Video Tag (NO 'controls' attribute) -->
+            <video id="customVideo" playsinline></video>
+
+            <!-- Loading Spinner -->
+            <div class="loading-spinner" id="videoLoader">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+            </div>
+
+            <!-- Custom Controller Overlay -->
+            <div class="custom-controls" id="controlsBar">
+                
+                <!-- Progress Bar -->
+                <div class="progress-container">
+                    <input type="range" id="seekBar" value="0" min="0" max="100" step="0.1">
+                </div>
+                
+                <!-- Buttons Row -->
+                <div class="controls-row">
+                    <!-- Left Side -->
+                    <div class="left-controls">
+                        <button id="playPauseBtn"><i class="fa-solid fa-play"></i></button>
+                        <button id="muteBtn"><i class="fa-solid fa-volume-high"></i></button>
+                        <span id="timeDisplay">0:00 / 0:00</span>
+                    </div>
+                    
+                    <!-- Right Side -->
+                    <div class="right-controls">
+                        <button id="skipBackBtn"><i class="fa-solid fa-rotate-left"></i> 10s</button>
+                        <button id="skipForwardBtn">10s <i class="fa-solid fa-rotate-right"></i></button>
+                        <button id="fullscreenBtn"><i class="fa-solid fa-expand"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Optional: Video Title or Details (Agar aap chahein toh yahan text daal sakte hain) -->
+        <div class="video-info-section" style="padding: 15px; color: #fff;">
+            <h2 style="font-size: 18px; margin-bottom: 5px;">Now Playing</h2>
+            <p style="font-size: 12px; color: #888;">Enjoy your favourite anime in HD quality.</p>
+        </div>
+
+    </main>
+
+    <!-- Animated Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </a>
+        <a href="anime.html" class="nav-item">
+            <i class="fa-solid fa-face-smile"></i>
+            <span>Anime</span>
+        </a>
+        <a href="movies.html" class="nav-item">
+            <i class="fa-solid fa-clapperboard"></i>
+            <span>Movies</span>
+        </a>
+        <a href="settings.html" class="nav-item">
+            <i class="fa-solid fa-gear"></i>
+            <span>Settings</span>
+        </a>
+    </nav>
+
+    <!-- Main JavaScript File -->
+    <script src="script.js"></script>
+</body>
+</html>
