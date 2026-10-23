@@ -1,4 +1,4 @@
-// ================= 1. FIREBASE SETUP (Aapka Real Project) =================
+// ================= 1. FIREBASE SETUP =================
 const firebaseConfig = {
     apiKey: "AIzaSyCpfrluxsBhnz48ve9RykIy1IxzbBfk7dA",
     authDomain: "sm-studio-7.firebaseapp.com",
@@ -10,45 +10,38 @@ const firebaseConfig = {
     measurementId: "G-4X9Q0761SB"
 };
 
-// Initialize Firebase (Compat version for HTML/JS)
 let database;
 try {
     firebase.initializeApp(firebaseConfig);
     database = firebase.database();
-    console.log("Firebase Connected Successfully!");
+    console.log("Firebase Connected!");
 } catch (error) {
     console.error("Firebase Init Error:", error);
 }
 
-// Ye array Firebase se data store karega
 let allContentDatabase = [];
+let currentAudio = null;
+let currentQuality = null;
 
 // ================= 2. SPLASH SCREEN & INITIAL LOAD =================
 document.addEventListener('DOMContentLoaded', () => {
-    // Splash Screen Hide (2 second baad)
     const splashScreen = document.getElementById('splash-screen');
     if (splashScreen) {
         setTimeout(() => splashScreen.classList.add('hidden'), 2000);
     }
 
-    // Firebase se REAL data fetch karein
     if (database) {
         database.ref('content').once('value')
             .then((snapshot) => {
                 const data = snapshot.val();
-                
                 if (data) {
-                    // Data mil gaya (Object to Array)
                     allContentDatabase = Object.keys(data).map(key => ({
                         firebaseKey: key,
                         ...data[key]
                     }));
-                    console.log("Real Data Loaded:", allContentDatabase);
-                    
                     loadHomePageData();
                     initSearchAndGrids();
                 } else {
-                    console.warn("Database is empty.");
                     showNoDataFound();
                 }
             })
@@ -63,13 +56,11 @@ function showNoDataFound() {
     const containers = ['latestContainer', 'onAirContainer', 'newArrivalsContainer', 'animeGrid', 'movieGrid'];
     containers.forEach(id => {
         const el = document.getElementById(id);
-        if (el) {
-            el.innerHTML = `<p style="color:#888; padding: 20px; width:100%; text-align:center;">No Content Available. Please add data in Firebase Console.</p>`;
-        }
+        if (el) el.innerHTML = `<p style="color:#888; padding: 20px; width:100%; text-align:center;">No Content Available.</p>`;
     });
 }
 
-// ================= 3. HOME PAGE DATA RENDER =================
+// ================= 3. HOME PAGE DATA =================
 function loadHomePageData() {
     const latestContainer = document.getElementById('latestContainer');
     const onAirContainer = document.getElementById('onAirContainer');
@@ -77,11 +68,8 @@ function loadHomePageData() {
 
     if (latestContainer && onAirContainer && newArrivalsContainer) {
         setTimeout(() => {
-            latestContainer.innerHTML = '';
-            onAirContainer.innerHTML = '';
-            newArrivalsContainer.innerHTML = '';
+            latestContainer.innerHTML = ''; onAirContainer.innerHTML = ''; newArrivalsContainer.innerHTML = '';
 
-            // Data ko sections me divide karein
             const latestAnime = allContentDatabase.slice(0, 3);
             const onAirAnime = allContentDatabase.slice(3, 6);
             const newArrivals = allContentDatabase.slice(6, 10);
@@ -97,8 +85,7 @@ function loadHomePageData() {
             if (latestAnime.length) latestAnime.forEach(item => latestContainer.appendChild(createCard(item)));
             if (onAirAnime.length) onAirAnime.forEach(item => onAirContainer.appendChild(createCard(item)));
             if (newArrivals.length) newArrivals.forEach(item => newArrivalsContainer.appendChild(createCard(item)));
-
-        }, 1000); // Shimmer effect ke liye delay
+        }, 1000); 
     }
 }
 
@@ -130,10 +117,8 @@ function initSearchAndGrids() {
                 searchResults.innerHTML = '<p class="search-hint">Start typing to search...</p>';
                 return;
             }
-            const filteredContent = allContentDatabase.filter(item => 
-                item.title && item.title.toLowerCase().includes(query)
-            );
-            renderSearchResults(filteredContent);
+            const filtered = allContentDatabase.filter(item => item.title && item.title.toLowerCase().includes(query));
+            renderSearchResults(filtered);
         });
     }
 
@@ -162,12 +147,11 @@ function initSearchAndGrids() {
         });
     }
 
-    // --- ANIME GRID PAGE ---
+    // --- ANIME GRID ---
     const animeGridContainer = document.getElementById('animeGrid');
     if (animeGridContainer) {
         animeGridContainer.innerHTML = ''; 
         const animeOnly = allContentDatabase.filter(item => item.type === 'anime' || !item.type);
-        
         if(animeOnly.length === 0) animeGridContainer.innerHTML = "<p style='color:#888; text-align:center; width:100%;'>No Anime found.</p>";
         
         animeOnly.forEach(item => {
@@ -182,12 +166,11 @@ function initSearchAndGrids() {
         });
     }
 
-    // --- MOVIES GRID PAGE ---
+    // --- MOVIES GRID ---
     const movieGridContainer = document.getElementById('movieGrid');
     if (movieGridContainer) {
         movieGridContainer.innerHTML = '';
         const moviesOnly = allContentDatabase.filter(item => item.type === 'movie');
-        
         if(moviesOnly.length === 0) movieGridContainer.innerHTML = "<p style='color:#888; text-align:center; width:100%;'>No Movies found.</p>";
 
         moviesOnly.forEach(item => {
@@ -206,69 +189,86 @@ function initSearchAndGrids() {
 // ================= 5. ANIME DETAILS PAGE =================
 document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('detailTitle') && database) {
-        const urlParams = new URLSearchParams(window.location.search);
-        const animeId = urlParams.get('id');
+        const animeId = new URLSearchParams(window.location.search).get('id');
 
         if (!animeId) {
             document.getElementById('detailTitle').innerText = "No ID Provided";
             return;
         }
 
-        database.ref('content/' + animeId).once('value')
-            .then((snapshot) => {
-                const data = snapshot.val();
-                
-                if (!data) {
-                    document.getElementById('detailTitle').innerText = "Content Not Found";
-                    document.getElementById('detailSynopsis').innerText = "This content does not exist in database.";
-                    return;
-                }
+        database.ref('content/' + animeId).once('value').then((snapshot) => {
+            const data = snapshot.val();
+            
+            if (!data) {
+                document.getElementById('detailTitle').innerText = "Content Not Found";
+                document.getElementById('detailSynopsis').innerText = "This content does not exist.";
+                return;
+            }
 
-                // Details Update
-                document.title = `${data.title} - Anime Max Zone`;
-                document.getElementById('detailBanner').style.backgroundImage = `url(${data.banner || data.image})`;
-                document.getElementById('detailPoster').src = data.image;
-                document.getElementById('detailTitle').innerText = data.title;
-                document.getElementById('detailRating').innerText = data.rating || "0.0";
-                document.getElementById('detailYear').innerText = data.year || "----";
-                document.getElementById('detailSynopsis').innerText = data.synopsis || "No description available.";
-                
-                if (data.genres && Array.isArray(data.genres)) {
-                    document.getElementById('detailGenres').innerHTML = data.genres.map(g => `<span class="genre-tag">${g}</span>`).join('');
-                }
+            // Details Update
+            document.title = `${data.title} - Anime Max Zone`;
+            document.getElementById('detailBanner').style.backgroundImage = `url(${data.banner || data.image})`;
+            document.getElementById('detailPoster').src = data.image;
+            document.getElementById('detailTitle').innerText = data.title;
+            document.getElementById('detailRating').innerText = data.rating || "0.0";
+            document.getElementById('detailYear').innerText = data.year || "----";
+            document.getElementById('detailSynopsis').innerText = data.synopsis || "No description available.";
+            
+            if (data.genres && Array.isArray(data.genres)) {
+                document.getElementById('detailGenres').innerHTML = data.genres.map(g => `<span class="genre-tag">${g}</span>`).join('');
+            }
 
-                const episodesSection = document.querySelector('.episodes-section');
-                const episodeList = document.getElementById('episodeList');
+            const episodesSection = document.querySelector('.episodes-section');
+            const episodeList = document.getElementById('episodeList');
 
-                // Movie Logic
-                if (data.type === 'movie' || !data.seasons) {
-                    if (episodesSection) episodesSection.style.display = 'none';
-                } else {
-                    if (episodesSection) episodesSection.style.display = 'block';
-                    let totalEps = 0;
-                    Object.keys(data.seasons).forEach(season => { totalEps += data.seasons[season].length; });
-                    document.getElementById('episodeCount').innerText = `${totalEps} Episodes`;
-                    episodeList.innerHTML = '';
+            // Agar Movie hai toh watch page ka direct button ya hide episodes
+            if (data.type === 'movie' || !data.seasons) {
+                if (episodesSection) episodesSection.style.display = 'none';
+                // Ek "Watch Now" button add kar sakte hain yahan
+                const watchBtn = document.createElement('a');
+                watchBtn.href = `watch.html?id=${animeId}`;
+                watchBtn.className = 'admin-btn'; // Reusing button style
+                watchBtn.style.display = 'block';
+                watchBtn.style.textAlign = 'center';
+                watchBtn.style.marginTop = '20px';
+                watchBtn.innerHTML = `<i class="fa-solid fa-play"></i> Watch Movie Now`;
+                document.querySelector('.synopsis-section').appendChild(watchBtn);
 
-                    const firstSeason = Object.keys(data.seasons)[0];
-                    if (firstSeason) {
-                        data.seasons[firstSeason].forEach(episode => {
-                            const epCard = document.createElement('a');
-                            epCard.href = `watch.html?id=${animeId}&ep=${episode.gdrive_id}`; 
-                            epCard.className = 'episode-card';
-                            epCard.innerHTML = `
-                                <div class="ep-play-icon"><i class="fa-solid fa-play"></i></div>
-                                <div class="ep-info">
-                                    <h4>${firstSeason} - Episode ${episode.ep}</h4>
-                                    <p>${episode.title}</p>
-                                </div>
-                                <i class="fa-solid fa-chevron-right ep-arrow"></i>
-                            `;
-                            episodeList.appendChild(epCard);
-                        });
+            } else {
+                if (episodesSection) episodesSection.style.display = 'block';
+                let totalEps = 0;
+                episodeList.innerHTML = '';
+
+                // Loop through all seasons
+                Object.keys(data.seasons).forEach(seasonName => {
+                    const episodesObj = data.seasons[seasonName];
+                    const epArray = Object.keys(episodesObj).map(k => ({ firebaseKey: k, ...episodesObj[k] }));
+                    totalEps += epArray.length;
+
+                    // Season Header (optional)
+                    if (Object.keys(data.seasons).length > 1) {
+                        episodeList.innerHTML += `<h4 style="color:#a855f7; margin: 10px 0 5px 0; font-size: 14px;">${seasonName}</h4>`;
                     }
-                }
-            });
+
+                    epArray.forEach(episode => {
+                        const epCard = document.createElement('a');
+                        // Link now passes: id, season and episode key
+                        epCard.href = `watch.html?id=${animeId}&season=${encodeURIComponent(seasonName)}&ep=${episode.firebaseKey}`; 
+                        epCard.className = 'episode-card';
+                        epCard.innerHTML = `
+                            <div class="ep-play-icon"><i class="fa-solid fa-play"></i></div>
+                            <div class="ep-info">
+                                <h4>Episode ${episode.ep}</h4>
+                                <p>${episode.title}</p>
+                            </div>
+                            <i class="fa-solid fa-chevron-right ep-arrow"></i>
+                        `;
+                        episodeList.appendChild(epCard);
+                    });
+                });
+                document.getElementById('episodeCount').innerText = `${totalEps} Episodes`;
+            }
+        });
     }
 });
 
@@ -276,105 +276,164 @@ document.addEventListener('DOMContentLoaded', () => {
 if (document.getElementById('customVideo') && database) {
     const video = document.getElementById('customVideo');
     const videoLoader = document.getElementById('videoLoader');
-    const seasonTabs = document.getElementById('seasonTabs');
-    const episodeListContainer = document.getElementById('watchEpisodeList');
-    const watchAnimeTitle = document.getElementById('watchAnimeTitle');
-    const watchAnimeDesc = document.getElementById('watchAnimeDesc');
-
+    
+    // Get URL Params
     const urlParams = new URLSearchParams(window.location.search);
     const animeId = urlParams.get('id'); 
-    const currentEpId = urlParams.get('ep'); 
+    const seasonName = urlParams.get('season');
+    const epKey = urlParams.get('ep');
 
     database.ref('content/' + animeId).once('value').then((snapshot) => {
         const animeData = snapshot.val();
         
         if (animeData) {
-            watchAnimeTitle.innerText = animeData.title;
-            watchAnimeDesc.innerText = animeData.synopsis || "No description available.";
             document.title = `${animeData.title} - Anime Max Zone`;
 
-            // Movie Logic (No Seasons/Episodes)
+            let videoDataToPlay = null;
+
+            // Check: Movie or Anime
             if (animeData.type === 'movie' || !animeData.seasons) {
-                if(seasonTabs) seasonTabs.style.display = 'none';
-                if(episodeListContainer) episodeListContainer.style.display = 'none';
-                let movieVideoId = currentEpId || animeData.gdrive_id || animeData.video_url;
-                loadVideo(movieVideoId);
+                videoDataToPlay = animeData; // Movie ke andar hi qualities/audios hain
             } else {
-                if(seasonTabs) seasonTabs.style.display = 'flex';
-                if(episodeListContainer) episodeListContainer.style.display = 'block';
-
-                let activeSeason = Object.keys(animeData.seasons)[0];
-                let activeEpId = currentEpId || animeData.seasons[activeSeason][0].gdrive_id;
-
-                function renderSeasons() {
-                    seasonTabs.innerHTML = '';
-                    Object.keys(animeData.seasons).forEach(seasonName => {
-                        const btn = document.createElement('button');
-                        btn.className = `season-btn ${seasonName === activeSeason ? 'active' : ''}`;
-                        btn.innerText = seasonName;
-                        btn.addEventListener('click', () => {
-                            activeSeason = seasonName;
-                            renderSeasons(); 
-                            renderEpisodes(); 
-                        });
-                        seasonTabs.appendChild(btn);
-                    });
+                // Anime Episode
+                if (seasonName && epKey && animeData.seasons[seasonName] && animeData.seasons[seasonName][epKey]) {
+                    videoDataToPlay = animeData.seasons[seasonName][epKey];
+                } else {
+                    // Fallback: Play first episode of first season
+                    const firstSeason = Object.keys(animeData.seasons)[0];
+                    if (firstSeason) {
+                        const firstEpKey = Object.keys(animeData.seasons[firstSeason])[0];
+                        videoDataToPlay = animeData.seasons[firstSeason][firstEpKey];
+                    }
                 }
+            }
 
-                function renderEpisodes() {
-                    episodeListContainer.innerHTML = '';
-                    const episodes = animeData.seasons[activeSeason];
-                    episodes.forEach(ep => {
-                        const isPlaying = (ep.gdrive_id === activeEpId);
-                        const card = document.createElement('div'); 
-                        card.className = `episode-card ${isPlaying ? 'active' : ''}`;
-                        card.style.cursor = 'pointer';
-                        card.innerHTML = `
-                            <div class="ep-play-icon"><i class="fa-solid ${isPlaying ? 'fa-volume-high' : 'fa-play'}"></i></div>
-                            <div class="ep-info">
-                                <h4>Episode ${ep.ep} ${isPlaying ? '(Playing)' : ''}</h4>
-                                <p>${ep.title}</p>
-                            </div>
-                        `;
-                        card.addEventListener('click', () => {
-                            activeEpId = ep.gdrive_id;
-                            loadVideo(activeEpId); 
-                            renderEpisodes(); 
-                            window.history.pushState({path: `watch.html?id=${animeId}&ep=${activeEpId}`}, '', `watch.html?id=${animeId}&ep=${activeEpId}`);
-                        });
-                        episodeListContainer.appendChild(card);
-                    });
-                }
-                renderSeasons();
-                renderEpisodes();
-                loadVideo(activeEpId);
+            if (videoDataToPlay) {
+                setupPlayer(videoDataToPlay);
+            } else {
+                console.warn("Video data not found.");
             }
         }
     });
 
-    function loadVideo(epId) {
-        let finalUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"; 
+    // ================= PLAYER LOGIC =================
+    
+    // Settings Menu Toggle
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsMenu = document.getElementById('settingsMenu');
+    if(settingsBtn && settingsMenu) {
+        settingsBtn.addEventListener('click', () => {
+            settingsMenu.style.display = settingsMenu.style.display === 'none' ? 'block' : 'none';
+        });
+    }
+
+    function setupPlayer(videoData) {
+        // 1. Audio Setup
+        const audioSection = document.getElementById('audioSection');
+        const audioOptions = document.getElementById('audioOptions');
+        if (videoData.audios && Object.keys(videoData.audios).length > 0) {
+            if(audioSection) audioSection.style.display = 'block';
+            audioOptions.innerHTML = '';
+            Object.keys(videoData.audios).forEach(lang => {
+                const btn = document.createElement('button');
+                btn.innerText = lang;
+                btn.className = 'setting-btn';
+                btn.onclick = () => loadSpecificTrack(videoData, lang, currentQuality);
+                audioOptions.appendChild(btn);
+            });
+        }
+
+        // 2. Quality Setup
+        const qualitySection = document.getElementById('qualitySection');
+        const qualityOptions = document.getElementById('qualityOptions');
+        if (videoData.qualities && Object.keys(videoData.qualities).length > 0) {
+            if(qualitySection) qualitySection.style.display = 'block';
+            qualityOptions.innerHTML = '';
+            Object.keys(videoData.qualities).forEach(q => {
+                const btn = document.createElement('button');
+                btn.innerText = q;
+                btn.className = 'setting-btn';
+                btn.onclick = () => {
+                    currentQuality = q;
+                    loadSpecificTrack(videoData, currentAudio, q);
+                };
+                qualityOptions.appendChild(btn);
+            });
+        }
+
+        // 3. Subtitle Setup
+        const subtitleSection = document.getElementById('subtitleSection');
+        const subtitleOptions = document.getElementById('subtitleOptions');
+        if (videoData.subtitles && Object.keys(videoData.subtitles).length > 0) {
+            if(subtitleSection) subtitleSection.style.display = 'block';
+            subtitleOptions.innerHTML = '';
+            Object.keys(videoData.subtitles).forEach(sub => {
+                const btn = document.createElement('button');
+                btn.innerText = sub;
+                btn.className = 'setting-btn';
+                btn.onclick = () => {
+                    const track = document.getElementById('subtitleTrack');
+                    if(track) { track.src = videoData.subtitles[sub]; track.style.display = 'block'; }
+                    if(settingsMenu) settingsMenu.style.display = 'none';
+                };
+                subtitleOptions.appendChild(btn);
+            });
+        }
+
+        // Default Load
+        const defaultAudio = Object.keys(videoData.audios || {})[0] || null;
+        const defaultQuality = Object.keys(videoData.qualities || {})[0] || null;
+        loadSpecificTrack(videoData, defaultAudio, defaultQuality);
+    }
+
+    function loadSpecificTrack(videoData, audioLang, qualityName) {
+        currentAudio = audioLang;
+        currentQuality = qualityName;
         
-        if (epId && epId.length > 10) {
-            function extractFileId(url) {
+        let url = "";
+        if (audioLang && videoData.audios && videoData.audios[audioLang]) {
+            url = videoData.audios[audioLang];
+        } else if (qualityName && videoData.qualities && videoData.qualities[qualityName]) {
+            url = videoData.qualities[qualityName];
+        }
+
+        if(url) playVideoUrl(url);
+        if(settingsMenu) settingsMenu.style.display = 'none';
+    }
+
+    // 🔥 GDrive 500MB+ API Extraction Logic 🔥
+    function playVideoUrl(url) {
+        if(!url) return;
+        let finalUrl = url;
+        
+        // Agar Google Drive ka pura link hai (drive.google.com/file/d/...)
+        if (url.includes('drive.google.com')) {
+            function extractFileId(link) {
                 const patterns = [/\/file\/d\/([a-zA-Z0-9_-]+)/, /[?&]id=([a-zA-Z0-9_-]+)/];
                 for (let pattern of patterns) {
-                    const match = url.match(pattern);
+                    const match = link.match(pattern);
                     if (match) return match[1];
                 }
-                return url;
+                return null;
             }
-            let fileId = extractFileId(epId);
-            const API_KEY = "AIzaSyCpfrluxsBhnz48ve9RykIy1IxzbBfk7dA"; // Your Google API Key
-            finalUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${API_KEY}`;
+            let fileId = extractFileId(url);
+            if(fileId) {
+                const API_KEY = "AIzaSyCpfrluxsBhnz48ve9RykIy1IxzbBfk7dA"; 
+                finalUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${API_KEY}`;
+            }
+        } 
+        // Agar sirf File ID hai (http se start nahi hota)
+        else if (!url.startsWith('http')) {
+            const API_KEY = "AIzaSyCpfrluxsBhnz48ve9RykIy1IxzbBfk7dA"; 
+            finalUrl = `https://www.googleapis.com/drive/v3/files/${url}?alt=media&key=${API_KEY}`;
         }
-        
+
         videoLoader.style.display = 'block';
         video.src = finalUrl;
         video.play().catch(e => console.log("Autoplay blocked", e));
     }
 
-    // CONTROLS LOGIC
+    // ================= CUSTOM CONTROLS =================
     const playPauseBtn = document.getElementById('playPauseBtn');
     const seekBar = document.getElementById('seekBar');
     const timeDisplay = document.getElementById('timeDisplay');
