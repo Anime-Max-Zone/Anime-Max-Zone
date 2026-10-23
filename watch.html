@@ -70,7 +70,7 @@
                 <div id="subtitleOptions" class="settings-options"></div>
             </div>
 
-            <!-- 🔥 TAP OVERLAYS (Double Tap Feature) 🔥 -->
+            <!-- TAP OVERLAYS (Double Tap Feature) -->
             <!-- Left Seek Overlay -->
             <div id="seekLeftOverlay" class="tap-overlay left-tap">
                 <div class="tap-feedback"><i class="fa-solid fa-backward"></i> 10s</div>
@@ -119,15 +119,37 @@
             </div>
         </div>
         
-        <!-- Video Info & Episodes Section -->
+        <!-- Video Info, Episodes & Comments Section -->
         <div class="video-info-section" style="padding: 15px; color: #fff;">
             <h2 id="watchAnimeTitle" style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">Now Playing</h2>
             <p id="watchAnimeDesc" style="font-size: 13px; color: #aaa; line-height: 1.5; margin-bottom: 20px;">
                 Loading description...
             </p>
 
+            <!-- ================= COMMENT SECTION ================= -->
+            <div class="comment-section">
+                <h3><i class="fa-regular fa-comments"></i> Comments</h3>
+                
+                <!-- Comment Form -->
+                <form id="commentForm" class="comment-form">
+                    <div class="form-row">
+                        <input type="text" id="commentName" placeholder="Your Name" required>
+                        <input type="email" id="commentEmail" placeholder="Your Gmail" required>
+                    </div>
+                    <textarea id="commentText" rows="3" placeholder="Write your comment here..." required></textarea>
+                    <button type="submit" class="submit-comment-btn"><i class="fa-solid fa-paper-plane"></i> Post Comment</button>
+                </form>
+
+                <!-- Comments List -->
+                <div id="commentsList" class="comments-list">
+                    <!-- Comments load honge yahan -->
+                    <p style="color: #888; font-size: 13px; text-align: center;">Loading comments...</p>
+                </div>
+            </div>
+            <!-- =================================================== -->
+
             <!-- Seasons & Episodes Container -->
-            <div id="seasonsEpisodesWrapper" style="display: none;">
+            <div id="seasonsEpisodesWrapper" style="display: none; margin-top: 20px; border-top: 1px solid #1a1a24; padding-top: 15px;">
                 <div class="season-tabs" id="watchSeasonTabs"></div>
                 <div class="episode-list" id="watchEpisodeList"></div>
             </div>
