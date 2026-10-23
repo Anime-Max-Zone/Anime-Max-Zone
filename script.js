@@ -270,111 +270,194 @@ document.addEventListener('DOMContentLoaded', () => {
 if (document.getElementById('customVideo') && database) {
     const video = document.getElementById('customVideo');
     const videoLoader = document.getElementById('videoLoader');
+    const backBtn = document.getElementById('backBtn');
+    const topRightIcons = document.getElementById('topRightIcons');
     
+    // Top Menus
+    const audioIconBtn = document.getElementById('audioIconBtn');
+    const subtitleIconBtn = document.getElementById('subtitleIconBtn');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const audioMenu = document.getElementById('audioMenu');
+    const subtitleMenu = document.getElementById('subtitleMenu');
+    const qualityMenu = document.getElementById('qualityMenu');
+
+    let currentAnimeData = null;
+    let activeSeason = "";
+    let currentEpKey = "";
+
+    // URL Params
     const urlParams = new URLSearchParams(window.location.search);
     const animeId = urlParams.get('id'); 
-    const seasonName = urlParams.get('season');
-    const epKey = urlParams.get('ep');
-
+    
+    // Load Data
     database.ref('content/' + animeId).once('value').then((snapshot) => {
-        const animeData = snapshot.val();
+        currentAnimeData = snapshot.val();
         
-        if (animeData) {
+        if (currentAnimeData) {
             let videoDataToPlay = null;
-            let pageTitle = animeData.title;
+            let pageTitle = currentAnimeData.title;
 
-            if (animeData.type === 'movie' || !animeData.seasons) {
-                videoDataToPlay = animeData; 
+            if (currentAnimeData.type === 'movie' || !currentAnimeData.seasons) {
+                videoDataToPlay = currentAnimeData; 
+                const wrapper = document.getElementById('seasonsEpisodesWrapper');
+                if(wrapper) wrapper.style.display = 'none';
+                currentEpKey = "movie";
             } else {
-                if (seasonName && epKey && animeData.seasons[seasonName] && animeData.seasons[seasonName][epKey]) {
-                    videoDataToPlay = animeData.seasons[seasonName][epKey];
-                    pageTitle += ` - ${seasonName} Ep ${videoDataToPlay.ep}`;
-                } else {
-                    const firstSeason = Object.keys(animeData.seasons)[0];
-                    if (firstSeason) {
-                        const firstEpKey = Object.keys(animeData.seasons[firstSeason])[0];
-                        videoDataToPlay = animeData.seasons[firstSeason][firstEpKey];
-                        pageTitle += ` - ${firstSeason} Ep ${videoDataToPlay.ep}`;
-                    }
-                }
+                const wrapper = document.getElementById('seasonsEpisodesWrapper');
+                if(wrapper) wrapper.style.display = 'block';
+                
+                const urlSeason = urlParams.get('season');
+                const urlEp = urlParams.get('ep');
+                const seasons = Object.keys(currentAnimeData.seasons);
+                
+                activeSeason = (urlSeason && seasons.includes(urlSeason)) ? urlSeason : seasons[0];
+                const episodesObj = currentAnimeData.seasons[activeSeason];
+                
+                currentEpKey = urlEp || Object.keys(episodesObj)[0];
+                videoDataToPlay = episodesObj[currentEpKey];
+                
+                pageTitle += ` - ${activeSeason} Ep ${videoDataToPlay.ep}`;
+                renderWatchSeasons();
             }
 
             document.title = `${pageTitle} - Anime Max Zone`;
-            
             const titleEl = document.getElementById('watchAnimeTitle');
             if(titleEl) titleEl.innerText = pageTitle;
-
             const descEl = document.getElementById('watchAnimeDesc');
-            if(descEl) descEl.innerText = animeData.synopsis || "No description available.";
+            if(descEl) descEl.innerText = currentAnimeData.synopsis || "No description available.";
 
             if (videoDataToPlay) {
                 setupPlayer(videoDataToPlay);
-            } else {
-                if(videoLoader) videoLoader.style.display = 'none';
-                console.warn("Video data not found.");
             }
         }
     });
 
-    // ================= PLAYER LOGIC =================
-    
-    const settingsBtn = document.getElementById('settingsBtn');
-    const settingsMenu = document.getElementById('settingsMenu');
-    if(settingsBtn && settingsMenu) {
-        settingsBtn.addEventListener('click', () => {
-            settingsMenu.style.display = settingsMenu.style.display === 'none' ? 'block' : 'none';
+    // --- Render Seasons & Episodes ---
+    function renderWatchSeasons() {
+        const seasonTabs = document.getElementById('watchSeasonTabs');
+        if (!seasonTabs) return;
+        seasonTabs.innerHTML = '';
+        
+        Object.keys(currentAnimeData.seasons).forEach(seasonName => {
+            const btn = document.createElement('button');
+            btn.className = `season-btn ${seasonName === activeSeason ? 'active' : ''}`;
+            btn.innerText = seasonName;
+            btn.onclick = () => {
+                activeSeason = seasonName;
+                const firstEpKey = Object.keys(currentAnimeData.seasons[seasonName])[0];
+                currentEpKey = firstEpKey;
+                
+                window.history.pushState({path: `watch.html?id=${animeId}&season=${encodeURIComponent(activeSeason)}&ep=${currentEpKey}`}, '', `watch.html?id=${animeId}&season=${encodeURIComponent(activeSeason)}&ep=${currentEpKey}`);
+                
+                renderWatchSeasons(); 
+                renderWatchEpisodes(); 
+                
+                const newVideoData = currentAnimeData.seasons[activeSeason][currentEpKey];
+                setupPlayer(newVideoData);
+                document.getElementById('watchAnimeTitle').innerText = `${currentAnimeData.title} - ${activeSeason} Ep ${newVideoData.ep}`;
+            };
+            seasonTabs.appendChild(btn);
+        });
+        renderWatchEpisodes();
+    }
+
+    function renderWatchEpisodes() {
+        const epContainer = document.getElementById('watchEpisodeList');
+        if (!epContainer) return;
+        epContainer.innerHTML = '';
+        
+        const episodesObj = currentAnimeData.seasons[activeSeason];
+        
+        Object.keys(episodesObj).forEach(key => {
+            const ep = episodesObj[key];
+            const isPlaying = (key === currentEpKey);
+            
+            const card = document.createElement('div');
+            card.className = `episode-card ${isPlaying ? 'active' : ''}`;
+            card.style.cursor = 'pointer';
+            card.innerHTML = `
+                <div class="ep-play-icon"><i class="fa-solid ${isPlaying ? 'fa-volume-high' : 'fa-play'}"></i></div>
+                <div class="ep-info">
+                    <h4>Episode ${ep.ep} ${isPlaying ? '(Playing)' : ''}</h4>
+                    <p>${ep.title}</p>
+                </div>
+            `;
+            
+            card.addEventListener('click', () => {
+                currentEpKey = key;
+                window.history.pushState({path: `watch.html?id=${animeId}&season=${encodeURIComponent(activeSeason)}&ep=${currentEpKey}`}, '', `watch.html?id=${animeId}&season=${encodeURIComponent(activeSeason)}&ep=${currentEpKey}`);
+                
+                renderWatchEpisodes(); 
+                setupPlayer(ep); 
+                document.getElementById('watchAnimeTitle').innerText = `${currentAnimeData.title} - ${activeSeason} Ep ${ep.ep}`;
+            });
+            epContainer.appendChild(card);
         });
     }
 
+    // --- PLAYER LOGIC ---
+    if(audioIconBtn) audioIconBtn.addEventListener('click', () => {
+        audioMenu.style.display = audioMenu.style.display === 'none' ? 'block' : 'none';
+        if(subtitleMenu) subtitleMenu.style.display = 'none';
+        if(qualityMenu) qualityMenu.style.display = 'none';
+    });
+
+    if(subtitleIconBtn) subtitleIconBtn.addEventListener('click', () => {
+        subtitleMenu.style.display = subtitleMenu.style.display === 'none' ? 'block' : 'none';
+        if(audioMenu) audioMenu.style.display = 'none';
+        if(qualityMenu) qualityMenu.style.display = 'none';
+    });
+
+    if(settingsBtn) settingsBtn.addEventListener('click', () => {
+        qualityMenu.style.display = qualityMenu.style.display === 'none' ? 'block' : 'none';
+        if(audioMenu) audioMenu.style.display = 'none';
+        if(subtitleMenu) subtitleMenu.style.display = 'none';
+    });
+
     function setupPlayer(videoData) {
-        const audioSection = document.getElementById('audioSection');
+        audioMenu.style.display = 'none';
+        subtitleMenu.style.display = 'none';
+        qualityMenu.style.display = 'none';
+
         const audioOptions = document.getElementById('audioOptions');
         if (videoData.audios && Object.keys(videoData.audios).length > 0) {
-            if(audioSection) audioSection.style.display = 'block';
             audioOptions.innerHTML = '';
             Object.keys(videoData.audios).forEach(lang => {
                 const btn = document.createElement('button');
                 btn.innerText = lang;
                 btn.className = 'setting-btn';
-                btn.onclick = () => loadSpecificTrack(videoData, lang, currentQuality);
+                btn.onclick = () => { loadSpecificTrack(videoData, lang, currentQuality); };
                 audioOptions.appendChild(btn);
             });
-        }
+        } else { audioOptions.innerHTML = '<p style="font-size:12px; color:#888;">No Audio</p>'; }
 
-        const qualitySection = document.getElementById('qualitySection');
         const qualityOptions = document.getElementById('qualityOptions');
         if (videoData.qualities && Object.keys(videoData.qualities).length > 0) {
-            if(qualitySection) qualitySection.style.display = 'block';
             qualityOptions.innerHTML = '';
             Object.keys(videoData.qualities).forEach(q => {
                 const btn = document.createElement('button');
                 btn.innerText = q;
                 btn.className = 'setting-btn';
-                btn.onclick = () => {
-                    currentQuality = q;
-                    loadSpecificTrack(videoData, currentAudio, q);
-                };
+                btn.onclick = () => { currentQuality = q; loadSpecificTrack(videoData, currentAudio, q); };
                 qualityOptions.appendChild(btn);
             });
-        }
+        } else { qualityOptions.innerHTML = '<p style="font-size:12px; color:#888;">No Quality</p>'; }
 
-        const subtitleSection = document.getElementById('subtitleSection');
         const subtitleOptions = document.getElementById('subtitleOptions');
         if (videoData.subtitles && Object.keys(videoData.subtitles).length > 0) {
-            if(subtitleSection) subtitleSection.style.display = 'block';
             subtitleOptions.innerHTML = '';
             Object.keys(videoData.subtitles).forEach(sub => {
                 const btn = document.createElement('button');
                 btn.innerText = sub;
                 btn.className = 'setting-btn';
-                btn.onclick = () => {
+                btn.onclick = () => { 
                     const track = document.getElementById('subtitleTrack');
                     if(track) { track.src = videoData.subtitles[sub]; track.style.display = 'block'; }
-                    if(settingsMenu) settingsMenu.style.display = 'none';
+                    subtitleMenu.style.display = 'none'; 
                 };
                 subtitleOptions.appendChild(btn);
             });
-        }
+        } else { subtitleOptions.innerHTML = '<p style="font-size:12px; color:#888;">No Subtitles</p>'; }
 
         const defaultAudio = Object.keys(videoData.audios || {})[0] || null;
         const defaultQuality = Object.keys(videoData.qualities || {})[0] || null;
@@ -395,16 +478,17 @@ if (document.getElementById('customVideo') && database) {
         }
 
         if(url) playVideoUrl(url);
-        if(settingsMenu) settingsMenu.style.display = 'none';
+        audioMenu.style.display = 'none';
+        qualityMenu.style.display = 'none';
     }
 
-    // 🔥 GDrive 500MB+ API Extraction & Fallback Logic 🔥
+    // Seamless Video Playback (With Resume Time)
     function playVideoUrl(url) {
         if(!url) return;
-        let finalUrl = url;
-        let fileId = null;
+        const previousTime = video.currentTime;
+        const wasPlaying = !video.paused;
         
-        // 1. Extract File ID
+        let fileId = null;
         if (url.includes('drive.google.com')) {
             const patterns = [/\/file\/d\/([a-zA-Z0-9_-]+)/, /[?&]id=([a-zA-Z0-9_-]+)/];
             for (let pattern of patterns) {
@@ -415,35 +499,24 @@ if (document.getElementById('customVideo') && database) {
             fileId = url;
         }
 
-        if (fileId) {
-            // 2. Primary Method: API v3 (Best for <100MB)
-            const API_KEY = "AIzaSyCpfrluxsBhnz48ve9RykIy1IxzbBfk7dA"; 
-            finalUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${API_KEY}`;
-            
-            // 3. Fallback Method: Agar API fail ho jaye (Badi files ke liye)
-            video.onerror = function() {
-                console.warn("API v3 failed, trying fallback method (uc?export=download)...");
-                video.onerror = null; // Infinite loop rokne ke liye
-                video.src = `https://drive.google.com/uc?export=download&id=${fileId}`;
-                video.load();
-                video.play().catch(e => {
-                    console.log("Fallback play blocked", e);
-                    if(videoLoader) videoLoader.style.display = 'none';
-                    alert("Video play nahi ho payi. Google Drive link check karein ya file size bahut bada hai.");
-                });
-            };
-        }
+        let finalUrl = fileId ? `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=AIzaSyCpfrluxsBhnz48ve9RykIy1IxzbBfk7dA` : url;
 
         if(videoLoader) videoLoader.style.display = 'block';
         video.src = finalUrl;
-        video.play().catch(e => {
-            console.log("Autoplay blocked", e);
-            // Agar autoplay block ho, toh loader band kar do
-            if(videoLoader) videoLoader.style.display = 'none';
-        });
+        video.load();
+        
+        video.onloadedmetadata = function() {
+            if(previousTime > 0 && previousTime < video.duration) {
+                video.currentTime = previousTime;
+            }
+            if(wasPlaying) {
+                video.play().catch(e => console.log("Autoplay blocked", e));
+            }
+            video.onloadedmetadata = null; 
+        };
     }
 
-    // ================= CUSTOM CONTROLS =================
+    // --- CONTROLS & DOUBLE TAP ---
     const playPauseBtn = document.getElementById('playPauseBtn');
     const seekBar = document.getElementById('seekBar');
     const timeDisplay = document.getElementById('timeDisplay');
@@ -453,86 +526,215 @@ if (document.getElementById('customVideo') && database) {
     const skipForwardBtn = document.getElementById('skipForwardBtn');
     const controlsBar = document.getElementById('controlsBar');
     const playerWrapper = document.getElementById('playerWrapper');
-
-    if(video) {
-        video.addEventListener('waiting', () => { if(videoLoader) videoLoader.style.display = 'block'; });
-        video.addEventListener('playing', () => { if(videoLoader) videoLoader.style.display = 'none'; });
-    }
-
-    if(playPauseBtn) {
-        playPauseBtn.addEventListener('click', () => {
-            if (video.paused) {
-                video.play();
-                playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
-            } else {
-                video.pause();
-                playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
-            }
-        });
-    }
-
-    if(video) {
-        video.addEventListener('timeupdate', () => {
-            if (!isNaN(video.duration)) {
-                seekBar.value = (video.currentTime / video.duration) * 100;
-                let currMin = Math.floor(video.currentTime / 60);
-                let currSec = Math.floor(video.currentTime % 60);
-                let totalMin = Math.floor(video.duration / 60);
-                let totalSec = Math.floor(video.duration % 60);
-                currSec = currSec < 10 ? '0' + currSec : currSec;
-                totalSec = totalSec < 10 ? '0' + totalSec : totalSec;
-                timeDisplay.innerText = `${currMin}:${currSec} / ${totalMin}:${totalSec}`;
-            }
-        });
-    }
-
-    if(seekBar) seekBar.addEventListener('input', () => video.currentTime = video.duration * (seekBar.value / 100));
-    if(skipForwardBtn) skipForwardBtn.addEventListener('click', () => video.currentTime += 10);
-    if(skipBackBtn) skipBackBtn.addEventListener('click', () => video.currentTime -= 10);
     
-    if(muteBtn) {
-        muteBtn.addEventListener('click', () => {
-            video.muted = !video.muted;
-            muteBtn.innerHTML = video.muted ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
-        });
-    }
+    const leftOverlay = document.getElementById('seekLeftOverlay');
+    const centerOverlay = document.getElementById('centerOverlay');
+    const rightOverlay = document.getElementById('seekRightOverlay');
+    const centerFeedbackIcon = document.getElementById('centerFeedbackIcon');
 
-    if(fullscreenBtn) {
-        fullscreenBtn.addEventListener('click', async () => {
-            if (!document.fullscreenElement) {
-                try {
-                    await playerWrapper.requestFullscreen();
-                    if (screen.orientation && screen.orientation.lock) {
-                        await screen.orientation.lock('landscape');
-                    }
-                } catch (err) {}
-            } else {
-                document.exitFullscreen();
-                if (screen.orientation && screen.orientation.unlock) {
-                    screen.orientation.unlock();
-                }
-            }
-        });
-    }
+    video.addEventListener('waiting', () => { if(videoLoader) videoLoader.style.display = 'block'; });
+    video.addEventListener('playing', () => { if(videoLoader) videoLoader.style.display = 'none'; });
+
+    playPauseBtn.addEventListener('click', () => {
+        if (video.paused) {
+            video.play(); playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+        } else {
+            video.pause(); playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+        }
+    });
+
+    video.addEventListener('timeupdate', () => {
+        if (!isNaN(video.duration)) {
+            seekBar.value = (video.currentTime / video.duration) * 100;
+            let currMin = Math.floor(video.currentTime / 60);
+            let currSec = Math.floor(video.currentTime % 60);
+            let totalMin = Math.floor(video.duration / 60);
+            let totalSec = Math.floor(video.duration % 60);
+            currSec = currSec < 10 ? '0' + currSec : currSec;
+            totalSec = totalSec < 10 ? '0' + totalSec : totalSec;
+            timeDisplay.innerText = `${currMin}:${currSec} / ${totalMin}:${totalSec}`;
+        }
+    });
+
+    seekBar.addEventListener('input', () => video.currentTime = video.duration * (seekBar.value / 100));
+    skipForwardBtn.addEventListener('click', () => video.currentTime += 10);
+    skipBackBtn.addEventListener('click', () => video.currentTime -= 10);
+    
+    muteBtn.addEventListener('click', () => {
+        video.muted = !video.muted;
+        muteBtn.innerHTML = video.muted ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
+    });
+
+    fullscreenBtn.addEventListener('click', async () => {
+        if (!document.fullscreenElement) {
+            try {
+                await playerWrapper.requestFullscreen();
+                if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
+            } catch (err) {}
+        } else {
+            document.exitFullscreen();
+            if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
+        }
+    });
 
     let controlTimeout;
     function showControls() {
         if(controlsBar) controlsBar.classList.remove('hidden');
+        if(backBtn) backBtn.classList.remove('hidden');
+        if(topRightIcons) topRightIcons.classList.remove('hidden');
+        
         clearTimeout(controlTimeout);
         if (!video.paused) {
-            controlTimeout = setTimeout(() => { if(controlsBar) controlsBar.classList.add('hidden'); }, 3000);
+            controlTimeout = setTimeout(() => {
+                if(controlsBar) controlsBar.classList.add('hidden');
+                if(backBtn) backBtn.classList.add('hidden');
+                if(topRightIcons) topRightIcons.classList.add('hidden');
+                
+                if(audioMenu) audioMenu.style.display = 'none';
+                if(subtitleMenu) subtitleMenu.style.display = 'none';
+                if(qualityMenu) qualityMenu.style.display = 'none';
+            }, 3000);
         }
     }
     
-    if(playerWrapper) {
-        playerWrapper.addEventListener('mousemove', showControls);
-        playerWrapper.addEventListener('touchstart', showControls);
-        playerWrapper.addEventListener('click', showControls);
+    playerWrapper.addEventListener('mousemove', showControls);
+    
+    video.addEventListener('pause', () => {
+        clearTimeout(controlTimeout);
+        if(controlsBar) controlsBar.classList.remove('hidden');
+        if(backBtn) backBtn.classList.remove('hidden');
+        if(topRightIcons) topRightIcons.classList.remove('hidden');
+    });
+
+    let lastTap = 0;
+    function handleTap(overlay, action) {
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTap;
+        
+        if (tapLength < 350 && tapLength > 0) {
+            if (action === 'left') {
+                video.currentTime = Math.max(0, video.currentTime - 10);
+                overlay.querySelector('.tap-feedback').innerHTML = '<i class="fa-solid fa-backward"></i> 10s';
+            } else if (action === 'right') {
+                video.currentTime = Math.min(video.duration, video.currentTime + 10);
+                overlay.querySelector('.tap-feedback').innerHTML = '10s <i class="fa-solid fa-forward"></i>';
+            } else if (action === 'center') {
+                if (video.paused) {
+                    video.play(); playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>'; centerFeedbackIcon.innerHTML = '<i class="fa-solid fa-play"></i>';
+                } else {
+                    video.pause(); playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>'; centerFeedbackIcon.innerHTML = '<i class="fa-solid fa-pause"></i>';
+                }
+            }
+            overlay.classList.add('active');
+            setTimeout(() => { overlay.classList.remove('active'); }, 500);
+        } else {
+            if (controlsBar.classList.contains('hidden')) {
+                showControls();
+            } else {
+                if (!video.paused) {
+                    controlsBar.classList.add('hidden');
+                    backBtn.classList.add('hidden');
+                    topRightIcons.classList.add('hidden');
+                    audioMenu.style.display = 'none';
+                    subtitleMenu.style.display = 'none';
+                    qualityMenu.style.display = 'none';
+                }
+            }
+        }
+        lastTap = currentTime;
     }
-    if(video) {
-        video.addEventListener('pause', () => {
-            clearTimeout(controlTimeout);
-            if(controlsBar) controlsBar.classList.remove('hidden');
+
+    if(leftOverlay) leftOverlay.addEventListener('click', () => handleTap(leftOverlay, 'left'));
+    if(rightOverlay) rightOverlay.addEventListener('click', () => handleTap(rightOverlay, 'right'));
+    if(centerOverlay) centerOverlay.addEventListener('click', () => handleTap(centerOverlay, 'center'));
+}
+
+// ================= 7. COMMENT SYSTEM LOGIC =================
+if (document.getElementById('customVideo') && database) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const animeId = urlParams.get('id'); 
+
+    const commentForm = document.getElementById('commentForm');
+    const commentsList = document.getElementById('commentsList');
+
+    // Local User ID (For self-delete)
+    let localCommentUserId = localStorage.getItem('commentUserId');
+    if (!localCommentUserId) {
+        localCommentUserId = 'user_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('commentUserId', localCommentUserId);
+    }
+
+    let isAdmin = false;
+    firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+            isAdmin = true;
+            loadComments(); // Re-render to show delete buttons
+        }
+    });
+
+    if (commentForm && animeId) {
+        commentForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('commentName').value.trim();
+            const email = document.getElementById('commentEmail').value.trim();
+            const text = document.getElementById('commentText').value.trim();
+
+            if(!name || !email || !text) return;
+
+            database.ref('comments/' + animeId).push({
+                name: name,
+                email: email,
+                text: text,
+                userId: localCommentUserId,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => { commentForm.reset(); })
+              .catch(err => alert("Comment post nahi ho paya: " + err.message));
         });
+
+        function loadComments() {
+            database.ref('comments/' + animeId).on('value', (snapshot) => {
+                const commentsData = snapshot.val();
+                commentsList.innerHTML = '';
+
+                if (commentsData) {
+                    const sortedComments = Object.keys(commentsData).map(key => ({
+                        key: key,
+                        ...commentsData[key]
+                    })).sort((a, b) => b.timestamp - a.timestamp);
+
+                    sortedComments.forEach(comment => {
+                        const date = new Date(comment.timestamp);
+                        const timeString = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+                        const canDelete = (comment.userId === localCommentUserId) || isAdmin;
+                        const deleteBtn = canDelete ? `<button class="delete-comment-btn" onclick="deleteComment('${animeId}', '${comment.key}')"><i class="fa-solid fa-trash"></i></button>` : '';
+
+                        commentsList.innerHTML += `
+                            <div class="comment-item">
+                                <div class="comment-header">
+                                    <span class="comment-name">${comment.name}</span>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <span class="comment-time">${timeString}</span>
+                                        ${deleteBtn}
+                                    </div>
+                                </div>
+                                <p class="comment-text">${comment.text}</p>
+                            </div>
+                        `;
+                    });
+                } else {
+                    commentsList.innerHTML = '<p style="color: #888; font-size: 13px; text-align: center;">No comments yet. Be the first to comment!</p>';
+                }
+            });
+        }
+        loadComments();
     }
 }
+
+// Global Delete Comment Function
+window.deleteComment = (animeId, commentKey) => {
+    if (confirm("Are you sure you want to delete this comment?")) {
+        database.ref(`comments/${animeId}/${commentKey}`).remove()
+            .catch((err) => alert("Error deleting comment: " + err.message));
+    }
+};
