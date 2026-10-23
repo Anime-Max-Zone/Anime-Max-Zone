@@ -71,15 +71,12 @@
             </div>
 
             <!-- TAP OVERLAYS (Double Tap Feature) -->
-            <!-- Left Seek Overlay -->
             <div id="seekLeftOverlay" class="tap-overlay left-tap">
                 <div class="tap-feedback"><i class="fa-solid fa-backward"></i> 10s</div>
             </div>
-            <!-- Center Play/Pause Overlay -->
             <div id="centerOverlay" class="tap-overlay center-tap">
                 <div class="tap-feedback" id="centerFeedbackIcon"><i class="fa-solid fa-play"></i></div>
             </div>
-            <!-- Right Seek Overlay -->
             <div id="seekRightOverlay" class="tap-overlay right-tap">
                 <div class="tap-feedback"><i class="fa-solid fa-forward"></i> 10s</div>
             </div>
@@ -119,34 +116,17 @@
             </div>
         </div>
         
-        <!-- Video Info, Episodes & Comments Section -->
+        <!-- Video Info & Episodes Section -->
         <div class="video-info-section" style="padding: 15px; color: #fff;">
             <h2 id="watchAnimeTitle" style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">Now Playing</h2>
             <p id="watchAnimeDesc" style="font-size: 13px; color: #aaa; line-height: 1.5; margin-bottom: 20px;">
                 Loading description...
             </p>
 
-            <!-- ================= COMMENT SECTION ================= -->
-            <div class="comment-section">
-                <h3><i class="fa-regular fa-comments"></i> Comments</h3>
-                
-                <!-- Comment Form -->
-                <form id="commentForm" class="comment-form">
-                    <div class="form-row">
-                        <input type="text" id="commentName" placeholder="Your Name" required>
-                        <input type="email" id="commentEmail" placeholder="Your Gmail" required>
-                    </div>
-                    <textarea id="commentText" rows="3" placeholder="Write your comment here..." required></textarea>
-                    <button type="submit" class="submit-comment-btn"><i class="fa-solid fa-paper-plane"></i> Post Comment</button>
-                </form>
-
-                <!-- Comments List -->
-                <div id="commentsList" class="comments-list">
-                    <!-- Comments load honge yahan -->
-                    <p style="color: #888; font-size: 13px; text-align: center;">Loading comments...</p>
-                </div>
-            </div>
-            <!-- =================================================== -->
+            <!-- 🔥 NEW: Comments Trigger Button 🔥 -->
+            <button id="openCommentsBtn" class="comment-trigger-btn">
+                <i class="fa-regular fa-comments"></i> View Comments
+            </button>
 
             <!-- Seasons & Episodes Container -->
             <div id="seasonsEpisodesWrapper" style="display: none; margin-top: 20px; border-top: 1px solid #1a1a24; padding-top: 15px;">
@@ -163,6 +143,40 @@
         <a href="movies.html" class="nav-item"><i class="fa-solid fa-clapperboard"></i><span>Movies</span></a>
         <a href="settings.html" class="nav-item"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
     </nav>
+
+    <!-- ================= COMMENTS BOTTOM SHEET ================= -->
+    <!-- Background Overlay -->
+    <div id="bottomSheetBackdrop" class="bottom-sheet-backdrop"></div>
+
+    <!-- Bottom Sheet UI -->
+    <div id="commentsBottomSheet" class="bottom-sheet">
+        <!-- Drag Handle -->
+        <div class="bottom-sheet-drag-handle"></div>
+        
+        <div class="bottom-sheet-header">
+            <h3><i class="fa-regular fa-comments"></i> Comments</h3>
+            <button id="closeCommentsBtn" class="bottom-sheet-close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div class="bottom-sheet-content">
+            <!-- Comment Form -->
+            <form id="commentForm" class="comment-form">
+                <div class="form-row">
+                    <input type="text" id="commentName" placeholder="Your Name" required>
+                    <input type="email" id="commentEmail" placeholder="Your Gmail" required>
+                </div>
+                <textarea id="commentText" rows="2" placeholder="Write your comment here..." required></textarea>
+                <button type="submit" class="submit-comment-btn"><i class="fa-solid fa-paper-plane"></i> Post Comment</button>
+            </form>
+
+            <!-- Comments List -->
+            <div id="commentsList" class="comments-list">
+                <!-- Comments load honge yahan -->
+                <p style="color: #888; font-size: 13px; text-align: center;">Loading comments...</p>
+            </div>
+        </div>
+    </div>
+    <!-- ========================================================= -->
 
     <script src="script.js" defer></script>
 </body>
