@@ -316,3 +316,43 @@ body {
     color: #555;
     font-size: 14px;
 }
+
+/* ================= ANIME GRID PAGE CSS ================= */
+.anime-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); /* Auto adjust width */
+    gap: 15px;
+    padding: 0 15px 20px 15px;
+}
+
+/* Grid ke andar wala card thoda alag size ka hoga */
+.grid-card {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: white;
+    gap: 5px;
+}
+
+.grid-card img {
+    width: 100%;
+    aspect-ratio: 2 / 3; /* Poster ka standard size (Width: 2, Height: 3) */
+    object-fit: cover;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    transition: transform 0.2s;
+}
+
+.grid-card:active img {
+    transform: scale(0.95);
+}
+
+.grid-card-title {
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Text lamba ho toh '...' lag jaye */
+    text-align: center;
+    color: #ddd;
+}
