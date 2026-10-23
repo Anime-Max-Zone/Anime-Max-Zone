@@ -11,11 +11,10 @@
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- ================= FIREBASE SDK (Zaroori Hai) ================= -->
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    <!-- ============================================================= -->
-
+    
     <!-- Main CSS File -->
     <link rel="stylesheet" href="style.css">
 </head>
@@ -24,68 +23,79 @@
     <!-- Header Section (Sticky) -->
     <header class="app-header">
         <div class="logo-area">
-            <div class="logo-icon">
-                <i class="fa-solid fa-play"></i>
-            </div>
+            <div class="logo-icon"><i class="fa-solid fa-play"></i></div>
             <div class="logo-text">
                 <h1>ANIME <span class="purple-text">MAX</span> ZONE</h1>
                 <p>Watch Your Favourite Anime</p>
             </div>
         </div>
-        <div class="search-area" id="openSearchBtn">
-            <i class="fa-solid fa-magnifying-glass"></i>
-        </div>
+        <div class="search-area" id="openSearchBtn"><i class="fa-solid fa-magnifying-glass"></i></div>
     </header>
 
-    <!-- ================= SEARCH OVERLAY PANEL ================= -->
+    <!-- Search Overlay Panel -->
     <div class="search-overlay" id="searchPanel">
         <div class="search-header">
             <div class="search-input-box">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="searchInput" placeholder="Search anime, movies, cartoons..." autocomplete="off">
+                <input type="text" id="searchInput" placeholder="Search anime..." autocomplete="off">
             </div>
-            <button class="cancel-btn" id="closeSearchBtn">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
+            <button class="cancel-btn" id="closeSearchBtn"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div class="search-results" id="searchResults">
-            <p class="search-hint">Start typing to search...</p>
-        </div>
+        <div class="search-results" id="searchResults"><p class="search-hint">Start typing to search...</p></div>
     </div>
-    <!-- ========================================================= -->
 
     <!-- Main Content: Video Player -->
     <main class="main-content">
         <!-- Video Player Wrapper -->
         <div class="player-wrapper" id="playerWrapper">
-            <!-- Back Button (Top Left) -->
-            <a href="javascript:history.back()" class="player-back-btn"><i class="fa-solid fa-arrow-left"></i></a>
+            
+            <!-- Top Left Back Button -->
+            <a href="javascript:history.back()" class="player-back-btn" id="backBtn"><i class="fa-solid fa-arrow-left"></i></a>
 
-            <!-- HTML5 Video Tag (NO default 'controls' attribute) -->
-            <!-- Added track for subtitles support -->
+            <!-- Top Right Icons (Audio & Subtitle) -->
+            <div class="top-right-controls" id="topRightIcons">
+                <button id="audioIconBtn" class="top-icon-btn" title="Audio Track"><i class="fa-solid fa-headphones"></i></button>
+                <button id="subtitleIconBtn" class="top-icon-btn" title="Subtitles"><i class="fa-solid fa-closed-captioning"></i></button>
+            </div>
+
+            <!-- Audio Menu (Top Right) -->
+            <div id="audioMenu" class="top-settings-menu" style="display: none;">
+                <h4>Audio Track</h4>
+                <div id="audioOptions" class="settings-options"></div>
+            </div>
+
+            <!-- Subtitle Menu (Top Right) -->
+            <div id="subtitleMenu" class="top-settings-menu" style="display: none;">
+                <h4>Subtitles</h4>
+                <div id="subtitleOptions" class="settings-options"></div>
+            </div>
+
+            <!-- 🔥 TAP OVERLAYS (Double Tap Feature) 🔥 -->
+            <!-- Left Seek Overlay -->
+            <div id="seekLeftOverlay" class="tap-overlay left-tap">
+                <div class="tap-feedback"><i class="fa-solid fa-backward"></i> 10s</div>
+            </div>
+            <!-- Center Play/Pause Overlay -->
+            <div id="centerOverlay" class="tap-overlay center-tap">
+                <div class="tap-feedback" id="centerFeedbackIcon"><i class="fa-solid fa-play"></i></div>
+            </div>
+            <!-- Right Seek Overlay -->
+            <div id="seekRightOverlay" class="tap-overlay right-tap">
+                <div class="tap-feedback"><i class="fa-solid fa-forward"></i> 10s</div>
+            </div>
+
+            <!-- HTML5 Video Tag -->
             <video id="customVideo" playsinline crossorigin="anonymous">
                 <track id="subtitleTrack" label="Subtitles" kind="subtitles" srclang="en" default>
             </video>
 
             <!-- Loading Spinner -->
-            <div class="loading-spinner" id="videoLoader">
-                <i class="fa-solid fa-spinner fa-spin"></i>
-            </div>
+            <div class="loading-spinner" id="videoLoader"><i class="fa-solid fa-spinner fa-spin"></i></div>
 
-            <!-- Settings Menu (Audio, Quality, Subtitle) -->
-            <div id="settingsMenu" class="settings-menu">
-                <div id="audioSection" style="display: none; margin-bottom: 10px;">
-                    <h4>Audio</h4>
-                    <div id="audioOptions" class="settings-options"></div>
-                </div>
-                <div id="qualitySection" style="display: none; margin-bottom: 10px;">
-                    <h4>Quality</h4>
-                    <div id="qualityOptions" class="settings-options"></div>
-                </div>
-                <div id="subtitleSection" style="display: none;">
-                    <h4>Subtitles</h4>
-                    <div id="subtitleOptions" class="settings-options"></div>
-                </div>
+            <!-- Quality Menu (Bottom Right) -->
+            <div id="qualityMenu" class="settings-menu" style="display: none;">
+                <h4>Quality</h4>
+                <div id="qualityOptions" class="settings-options"></div>
             </div>
 
             <!-- Custom Controller Overlay -->
@@ -109,50 +119,29 @@
             </div>
         </div>
         
-        <!-- Video Title, Description, Seasons & Episodes -->
+        <!-- Video Info & Episodes Section -->
         <div class="video-info-section" style="padding: 15px; color: #fff;">
-            
-            <!-- Title aur Description -->
             <h2 id="watchAnimeTitle" style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">Now Playing</h2>
             <p id="watchAnimeDesc" style="font-size: 13px; color: #aaa; line-height: 1.5; margin-bottom: 20px;">
                 Loading description...
             </p>
 
-            <!-- Horizontal Season Buttons -->
-            <div class="season-tabs" id="seasonTabs">
-                <!-- Season buttons JS se load honge -->
+            <!-- Seasons & Episodes Container -->
+            <div id="seasonsEpisodesWrapper" style="display: none;">
+                <div class="season-tabs" id="watchSeasonTabs"></div>
+                <div class="episode-list" id="watchEpisodeList"></div>
             </div>
-
-            <!-- Episodes List -->
-            <div class="episode-list" id="watchEpisodeList">
-                <!-- Episodes JS se load honge -->
-            </div>
-
         </div>
-
     </main>
 
     <!-- Animated Bottom Navigation -->
     <nav class="bottom-nav">
-        <a href="index.html" class="nav-item">
-            <i class="fa-solid fa-house"></i>
-            <span>Home</span>
-        </a>
-        <a href="anime.html" class="nav-item">
-            <i class="fa-solid fa-face-smile"></i>
-            <span>Anime</span>
-        </a>
-        <a href="movies.html" class="nav-item">
-            <i class="fa-solid fa-clapperboard"></i>
-            <span>Movies</span>
-        </a>
-        <a href="settings.html" class="nav-item">
-            <i class="fa-solid fa-gear"></i>
-            <span>Settings</span>
-        </a>
+        <a href="index.html" class="nav-item"><i class="fa-solid fa-house"></i><span>Home</span></a>
+        <a href="anime.html" class="nav-item"><i class="fa-solid fa-face-smile"></i><span>Anime</span></a>
+        <a href="movies.html" class="nav-item"><i class="fa-solid fa-clapperboard"></i><span>Movies</span></a>
+        <a href="settings.html" class="nav-item"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
     </nav>
 
-    <!-- Main JavaScript File (defer for safe loading) -->
     <script src="script.js" defer></script>
 </body>
 </html>
