@@ -5,63 +5,124 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Anime Details - Anime Max Zone</title>
     
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Main CSS File -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="details-page-body">
 
-    <!-- Top Navbar (Back Button ke sath) -->
-    <header class="details-header">
-        <a href="javascript:history.back()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></a>
-        <h2>Details</h2>
-        <div class="placeholder-icon"></div> <!-- Flexbox balance ke liye -->
-    </header>
-
-    <!-- Hero Section (Banner & Poster) -->
-    <section class="hero-section">
-        <!-- Blurred Background -->
-        <div class="hero-bg" id="detailBanner"></div>
-        <div class="hero-overlay"></div>
-        
-        <!-- Main Content -->
-        <div class="hero-content">
-            <img src="" alt="Poster" id="detailPoster" class="detail-poster">
-            <div class="hero-info">
-                <h1 id="detailTitle">Loading...</h1>
-                <div class="meta-tags">
-                    <span class="rating"><i class="fa-solid fa-star"></i> <span id="detailRating">9.0</span></span>
-                    <span class="year" id="detailYear">2024</span>
-                    <span class="quality">HD</span>
-                </div>
-                <div class="genres" id="detailGenres">
-                    <!-- Genres yahan aayenge -->
-                </div>
+    <!-- Header Section (Sticky) -->
+    <header class="app-header">
+        <div class="logo-area">
+            <div class="logo-icon">
+                <i class="fa-solid fa-play"></i>
+            </div>
+            <div class="logo-text">
+                <h1>ANIME <span class="purple-text">MAX</span> ZONE</h1>
+                <p>Watch Your Favourite Anime</p>
             </div>
         </div>
-    </section>
-
-    <!-- Synopsis / Story Section -->
-    <section class="synopsis-section">
-        <h3>Synopsis</h3>
-        <p id="detailSynopsis">Loading description...</p>
-    </section>
-
-    <!-- Episodes List Section -->
-    <section class="episodes-section">
-        <div class="episode-header">
-            <h3>Episodes</h3>
-            <span id="episodeCount">0 Episodes</span>
+        <div class="search-area" id="openSearchBtn">
+            <i class="fa-solid fa-magnifying-glass"></i>
         </div>
+    </header>
+
+    <!-- ================= SEARCH OVERLAY PANEL ================= -->
+    <div class="search-overlay" id="searchPanel">
+        <div class="search-header">
+            <div class="search-input-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="searchInput" placeholder="Search anime, movies, cartoons..." autocomplete="off">
+            </div>
+            <button class="cancel-btn" id="closeSearchBtn">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="search-results" id="searchResults">
+            <p class="search-hint">Start typing to search...</p>
+        </div>
+    </div>
+    <!-- ========================================================= -->
+
+    <!-- Main Content -->
+    <main class="main-content">
         
-        <!-- Episodes yahan JS se load honge -->
-        <div class="episode-list" id="episodeList">
-            <!-- Skeleton Loading -->
-            <div class="episode-skeleton"></div>
-            <div class="episode-skeleton"></div>
-            <div class="episode-skeleton"></div>
-        </div>
-    </section>
+        <!-- Hero Section (Banner & Poster) -->
+        <section class="hero-section">
+            <!-- Blurred Background -->
+            <div class="hero-bg" id="detailBanner"></div>
+            <div class="hero-overlay"></div>
+            
+            <!-- Floating Back Button -->
+            <a href="javascript:history.back()" class="floating-back-btn">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+
+            <!-- Main Content -->
+            <div class="hero-content">
+                <img src="" alt="Poster" id="detailPoster" class="detail-poster">
+                <div class="hero-info">
+                    <h1 id="detailTitle">Loading...</h1>
+                    <div class="meta-tags">
+                        <span class="rating"><i class="fa-solid fa-star"></i> <span id="detailRating">9.0</span></span>
+                        <span class="year" id="detailYear">2024</span>
+                        <span class="quality">HD</span>
+                    </div>
+                    <div class="genres" id="detailGenres">
+                        <!-- Genres yahan aayenge -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Synopsis / Story Section -->
+        <section class="synopsis-section">
+            <h3>Synopsis</h3>
+            <p id="detailSynopsis">Loading description...</p>
+        </section>
+
+        <!-- Episodes List Section -->
+        <section class="episodes-section">
+            <div class="episode-header">
+                <h3>Episodes</h3>
+                <span id="episodeCount">0 Episodes</span>
+            </div>
+            
+            <!-- Episodes yahan JS se load honge -->
+            <div class="episode-list" id="episodeList">
+                <!-- Skeleton Loading -->
+                <div class="episode-skeleton"></div>
+                <div class="episode-skeleton"></div>
+                <div class="episode-skeleton"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Animated Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </a>
+        <a href="anime.html" class="nav-item">
+            <i class="fa-solid fa-face-smile"></i>
+            <span>Anime</span>
+        </a>
+        <a href="movies.html" class="nav-item">
+            <i class="fa-solid fa-clapperboard"></i>
+            <span>Movies</span>
+        </a>
+        <a href="settings.html" class="nav-item">
+            <i class="fa-solid fa-gear"></i>
+            <span>Settings</span>
+        </a>
+    </nav>
 
     <!-- Main JavaScript File -->
     <script src="script.js"></script>
