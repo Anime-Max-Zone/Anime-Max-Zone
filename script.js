@@ -493,7 +493,6 @@ if (document.getElementById('customVideo') && database) {
     function playVideoUrl(url) {
         if(!url) return;
         const previousTime = video.currentTime;
-        const wasPlaying = !video.paused;
         
         let fileId = null;
         if (url.includes('drive.google.com')) {
@@ -509,10 +508,6 @@ if (document.getElementById('customVideo') && database) {
         let finalUrl = fileId ? `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=AIzaSyCpfrluxsBhnz48ve9RykIy1IxzbBfk7dA` : url;
 
         if(videoLoader) videoLoader.style.display = 'block';
-        
-        // 🔥 AUTO-PLAY FIX: Video ko mute karke play karna zaroori hai 🔥
-        video.muted = true; 
-        if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
 
         video.src = finalUrl;
         video.load();
@@ -522,11 +517,24 @@ if (document.getElementById('customVideo') && database) {
                 video.currentTime = previousTime;
             }
             
-            // Force Autoplay
-            video.play().catch(e => {
-                console.log("Autoplay blocked by browser", e);
-                if(playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
-            });
+            // ✅ FIX: Pehle bina mute kiye try karega
+            let playPromise = video.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.then(_ => {
+                    // Video unmuted play ho gaya
+                    if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+                }).catch(e => {
+                    console.log("Autoplay with sound blocked by browser, muting...", e);
+                    // Agar browser ne block kiya, tabhi mute karega
+                    video.muted = true;
+                    if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+                    video.play().catch(err => {
+                        console.log("Muted autoplay also failed", err);
+                        if(playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+                    });
+                });
+            }
             
             video.onloadedmetadata = null; 
         };
@@ -637,9 +645,6 @@ if (document.getElementById('customVideo') && database) {
         clearTimeout(controlTimeout);
         showControls();
     });
-
-    // ❌ FLICKER FIX: Maine yahan se mousemove aur touchstart hata diya hai ❌
-    // Kyunki unki wajah se controls blink kar rahe the. Ab sirf Tap (click) kaam karega.
 
     // --- Single Tap / Double Tap Logic ---
     let lastTap = 0;
