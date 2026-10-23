@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Anime Details - Anime Max Zone</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="details-page-body">
+
+    <!-- Top Navbar (Back Button ke sath) -->
+    <header class="details-header">
+        <a href="javascript:history.back()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></a>
+        <h2>Details</h2>
+        <div class="placeholder-icon"></div> <!-- Flexbox balance ke liye -->
+    </header>
+
+    <!-- Hero Section (Banner & Poster) -->
+    <section class="hero-section">
+        <!-- Blurred Background -->
+        <div class="hero-bg" id="detailBanner"></div>
+        <div class="hero-overlay"></div>
+        
+        <!-- Main Content -->
+        <div class="hero-content">
+            <img src="" alt="Poster" id="detailPoster" class="detail-poster">
+            <div class="hero-info">
+                <h1 id="detailTitle">Loading...</h1>
+                <div class="meta-tags">
+                    <span class="rating"><i class="fa-solid fa-star"></i> <span id="detailRating">9.0</span></span>
+                    <span class="year" id="detailYear">2024</span>
+                    <span class="quality">HD</span>
+                </div>
+                <div class="genres" id="detailGenres">
+                    <!-- Genres yahan aayenge -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Synopsis / Story Section -->
+    <section class="synopsis-section">
+        <h3>Synopsis</h3>
+        <p id="detailSynopsis">Loading description...</p>
+    </section>
+
+    <!-- Episodes List Section -->
+    <section class="episodes-section">
+        <div class="episode-header">
+            <h3>Episodes</h3>
+            <span id="episodeCount">0 Episodes</span>
+        </div>
+        
+        <!-- Episodes yahan JS se load honge -->
+        <div class="episode-list" id="episodeList">
+            <!-- Skeleton Loading -->
+            <div class="episode-skeleton"></div>
+            <div class="episode-skeleton"></div>
+            <div class="episode-skeleton"></div>
+        </div>
+    </section>
+
+    <!-- Main JavaScript File -->
+    <script src="script.js"></script>
+</body>
+</html>
