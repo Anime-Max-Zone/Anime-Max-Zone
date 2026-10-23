@@ -12,7 +12,9 @@ const firebaseConfig = {
 
 let database;
 try {
-    firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
     database = firebase.database();
     console.log("Firebase Connected!");
 } catch (error) {
@@ -375,8 +377,9 @@ if (document.getElementById('customVideo') && database) {
             const card = document.createElement('div');
             card.className = `episode-card ${isPlaying ? 'active' : ''}`;
             card.style.cursor = 'pointer';
+            // 🔥 SYNC FIX: Icon video ke paused state par depend karega
             card.innerHTML = `
-                <div class="ep-play-icon"><i class="fa-solid ${isPlaying ? 'fa-pause' : 'fa-play'}"></i></div>
+                <div class="ep-play-icon"><i class="fa-solid ${isPlaying ? (video.paused ? 'fa-play' : 'fa-pause') : 'fa-play'}"></i></div>
                 <div class="ep-info">
                     <h4>Episode ${ep.ep} ${isPlaying ? '(Playing)' : ''}</h4>
                     <p>${ep.title}</p>
@@ -384,12 +387,16 @@ if (document.getElementById('customVideo') && database) {
             `;
             
             card.addEventListener('click', () => {
-                currentEpKey = key;
-                window.history.pushState({path: `watch.html?id=${animeId}&season=${encodeURIComponent(activeSeason)}&ep=${currentEpKey}`}, '', `watch.html?id=${animeId}&season=${encodeURIComponent(activeSeason)}&ep=${currentEpKey}`);
-                
-                renderWatchEpisodes(); 
-                setupPlayer(ep); 
-                document.getElementById('watchAnimeTitle').innerText = `${currentAnimeData.title} - ${activeSeason} Ep ${ep.ep}`;
+                if (isPlaying) {
+                    togglePlayPause();
+                } else {
+                    currentEpKey = key;
+                    window.history.pushState({path: `watch.html?id=${animeId}&season=${encodeURIComponent(activeSeason)}&ep=${currentEpKey}`}, '', `watch.html?id=${animeId}&season=${encodeURIComponent(activeSeason)}&ep=${currentEpKey}`);
+                    
+                    renderWatchEpisodes(); 
+                    setupPlayer(ep); 
+                    document.getElementById('watchAnimeTitle').innerText = `${currentAnimeData.title} - ${activeSeason} Ep ${ep.ep}`;
+                }
             });
             epContainer.appendChild(card);
         });
@@ -517,27 +524,39 @@ if (document.getElementById('customVideo') && database) {
                 video.currentTime = previousTime;
             }
             
-            // ✅ FIX: Pehle bina mute kiye try karega
+            video.muted = false; 
             let playPromise = video.play();
             
             if (playPromise !== undefined) {
                 playPromise.then(_ => {
-                    // Video unmuted play ho gaya
                     if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
                 }).catch(e => {
                     console.log("Autoplay with sound blocked by browser, muting...", e);
-                    // Agar browser ne block kiya, tabhi mute karega
                     video.muted = true;
                     if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
-                    video.play().catch(err => {
-                        console.log("Muted autoplay also failed", err);
-                        if(playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
-                    });
+                    video.play();
+                    showUnmuteHint();
                 });
             }
             
             video.onloadedmetadata = null; 
         };
+    }
+
+    // Hint Box dikhane ka function (Auto Mute Fix)
+    function showUnmuteHint() {
+        let hint = document.getElementById('unmuteHint');
+        if(!hint && playerWrapper) {
+            hint = document.createElement('div');
+            hint.id = 'unmuteHint';
+            hint.style.cssText = "position: absolute; top: 20%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 8px 15px; border-radius: 20px; font-size: 12px; z-index: 999; pointer-events: none; transition: opacity 0.5s;";
+            hint.innerHTML = '<i class="fa-solid fa-volume-xmark"></i> Tap speaker to Unmute';
+            playerWrapper.appendChild(hint);
+        }
+        if(hint) {
+            hint.style.opacity = '1';
+            setTimeout(() => { hint.style.opacity = '0'; }, 3000);
+        }
     }
 
     // --- CONTROLS & DOUBLE TAP ---
@@ -558,6 +577,25 @@ if (document.getElementById('customVideo') && database) {
     video.addEventListener('waiting', () => { if(videoLoader) videoLoader.style.display = 'block'; });
     video.addEventListener('playing', () => { if(videoLoader) videoLoader.style.display = 'none'; });
 
+    // 🔥 Play/Pause/Volume Icons Sync 🔥
+    video.addEventListener('play', () => {
+        if(playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+        renderWatchEpisodes(); 
+    });
+
+    video.addEventListener('pause', () => {
+        if(playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+        renderWatchEpisodes(); 
+    });
+
+    video.addEventListener('volumechange', () => {
+        if(video.muted || video.volume === 0) {
+            if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+        } else {
+            if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+        }
+    });
+
     playPauseBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         togglePlayPause();
@@ -566,9 +604,9 @@ if (document.getElementById('customVideo') && database) {
 
     function togglePlayPause() {
         if (video.paused) {
-            video.play(); playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+            video.play(); 
         } else {
-            video.pause(); playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+            video.pause(); 
         }
     }
 
@@ -596,7 +634,6 @@ if (document.getElementById('customVideo') && database) {
     muteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         video.muted = !video.muted;
-        muteBtn.innerHTML = video.muted ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
         resetControlTimeout();
     });
 
@@ -636,11 +673,10 @@ if (document.getElementById('customVideo') && database) {
     function resetControlTimeout() {
         clearTimeout(controlTimeout);
         if (!video.paused) {
-            controlTimeout = setTimeout(hideControls, 3000); // 3 Second
+            controlTimeout = setTimeout(hideControls, 3000); 
         }
     }
 
-    // Jab video pause ho toh controls hide mat karein
     video.addEventListener('pause', () => {
         clearTimeout(controlTimeout);
         showControls();
@@ -653,7 +689,6 @@ if (document.getElementById('customVideo') && database) {
         const currentTime = new Date().getTime();
         const tapLength = currentTime - lastTap;
         
-        // Double Tap detect hua
         if (tapLength < 300 && tapLength > 0) {
             if (action === 'left') {
                 video.currentTime = Math.max(0, video.currentTime - 10);
@@ -665,12 +700,10 @@ if (document.getElementById('customVideo') && database) {
                 togglePlayPause();
                 centerFeedbackIcon.innerHTML = video.paused ? '<i class="fa-solid fa-play"></i>' : '<i class="fa-solid fa-pause"></i>';
             }
-            // Animation Show
             overlay.classList.add('active');
             setTimeout(() => { overlay.classList.remove('active'); }, 500);
             
         } else {
-            // Single Tap (Controller show/hide)
             if (controlsBar.classList.contains('hidden')) {
                 showControls();
             } else {
@@ -684,7 +717,6 @@ if (document.getElementById('customVideo') && database) {
     if(rightOverlay) rightOverlay.addEventListener('click', () => handleTap(rightOverlay, 'right'));
     if(centerOverlay) centerOverlay.addEventListener('click', () => handleTap(centerOverlay, 'center'));
 
-    // Initial Show
     showControls();
 }
 
@@ -701,6 +733,7 @@ if (document.getElementById('customVideo') && database) {
     const bottomSheet = document.getElementById('commentsBottomSheet');
     const backdrop = document.getElementById('bottomSheetBackdrop');
 
+    // Bottom Sheet Open/Close Logic
     if(openCommentsBtn && bottomSheet) {
         openCommentsBtn.addEventListener('click', () => {
             bottomSheet.classList.add('active');
@@ -725,21 +758,40 @@ if (document.getElementById('customVideo') && database) {
     }
 
     let isAdmin = false;
-    firebase.auth().onAuthStateChanged((user) => {
-        if (user) {
-            isAdmin = true;
-            loadComments(); 
-        }
-    });
+    if (typeof firebase.auth === 'function') {
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                isAdmin = true;
+                if (animeId) loadComments(); // Re-render to show admin delete buttons
+            }
+        });
+    }
 
-    if (commentForm && animeId) {
+    // 🔥 FIX: Form Submit Logic (Page reload rokne ke liye)
+    if (commentForm) {
         commentForm.addEventListener('submit', (e) => {
-            e.preventDefault();
+            e.preventDefault(); // Page reload hamesha rokna hai
+            
+            if (!animeId) {
+                alert("Error: Content ID missing from URL. Cannot post comment.");
+                return;
+            }
+
             const name = document.getElementById('commentName').value.trim();
             const email = document.getElementById('commentEmail').value.trim();
             const text = document.getElementById('commentText').value.trim();
 
-            if(!name || !email || !text) return;
+            if(!name || !email || !text) {
+                alert("Please fill all the fields.");
+                return;
+            }
+
+            // Button ko disable karo spam rokne ke liye
+            const submitBtn = commentForm.querySelector('button[type="submit"]');
+            if(submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Posting...';
+            }
 
             database.ref('comments/' + animeId).push({
                 name: name,
@@ -747,47 +799,66 @@ if (document.getElementById('customVideo') && database) {
                 text: text,
                 userId: localCommentUserId,
                 timestamp: firebase.database.ServerValue.TIMESTAMP
-            }).then(() => { commentForm.reset(); })
-              .catch(err => alert("Comment post nahi ho paya: " + err.message));
-        });
-
-        function loadComments() {
-            database.ref('comments/' + animeId).on('value', (snapshot) => {
-                const commentsData = snapshot.val();
-                commentsList.innerHTML = '';
-
-                if (commentsData) {
-                    const sortedComments = Object.keys(commentsData).map(key => ({
-                        key: key,
-                        ...commentsData[key]
-                    })).sort((a, b) => b.timestamp - a.timestamp);
-
-                    sortedComments.forEach(comment => {
-                        const date = new Date(comment.timestamp);
-                        const timeString = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-
-                        const canDelete = (comment.userId === localCommentUserId) || isAdmin;
-                        const deleteBtn = canDelete ? `<button class="delete-comment-btn" onclick="deleteComment('${animeId}', '${comment.key}')"><i class="fa-solid fa-trash"></i></button>` : '';
-
-                        commentsList.innerHTML += `
-                            <div class="comment-item">
-                                <div class="comment-header">
-                                    <span class="comment-name">${comment.name}</span>
-                                    <div style="display: flex; align-items: center; gap: 10px;">
-                                        <span class="comment-time">${timeString}</span>
-                                        ${deleteBtn}
-                                    </div>
-                                </div>
-                                <p class="comment-text">${comment.text}</p>
-                            </div>
-                        `;
-                    });
-                } else {
-                    commentsList.innerHTML = '<p style="color: #888; font-size: 13px; text-align: center;">No comments yet. Be the first to comment!</p>';
+            }).then(() => { 
+                commentForm.reset(); 
+                if(submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Post Comment';
+                }
+            }).catch(err => {
+                alert("Comment post nahi ho paya: " + err.message);
+                if(submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Post Comment';
                 }
             });
-        }
+        });
+    }
+
+    function loadComments() {
+        if (!animeId || !commentsList) return;
+        
+        database.ref('comments/' + animeId).on('value', (snapshot) => {
+            const commentsData = snapshot.val();
+            commentsList.innerHTML = '';
+
+            if (commentsData) {
+                const sortedComments = Object.keys(commentsData).map(key => ({
+                    key: key,
+                    ...commentsData[key]
+                })).sort((a, b) => b.timestamp - a.timestamp);
+
+                sortedComments.forEach(comment => {
+                    const date = new Date(comment.timestamp);
+                    const timeString = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+                    const canDelete = (comment.userId === localCommentUserId) || isAdmin;
+                    const deleteBtn = canDelete ? `<button class="delete-comment-btn" onclick="deleteComment('${animeId}', '${comment.key}')"><i class="fa-solid fa-trash"></i></button>` : '';
+
+                    commentsList.innerHTML += `
+                        <div class="comment-item">
+                            <div class="comment-header">
+                                <span class="comment-name">${comment.name}</span>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span class="comment-time">${timeString}</span>
+                                    ${deleteBtn}
+                                </div>
+                            </div>
+                            <p class="comment-text">${comment.text}</p>
+                        </div>
+                    `;
+                });
+            } else {
+                commentsList.innerHTML = '<p style="color: #888; font-size: 13px; text-align: center;">No comments yet. Be the first to comment!</p>';
+            }
+        });
+    }
+    
+    // Load comments immediately if ID exists
+    if (animeId) {
         loadComments();
+    } else if (commentsList) {
+        commentsList.innerHTML = '<p style="color: #ef4444; font-size: 13px; text-align: center;">Error: Anime ID not found in URL.</p>';
     }
 }
 
