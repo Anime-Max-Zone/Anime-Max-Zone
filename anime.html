@@ -11,6 +11,10 @@
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    
     <!-- Main CSS File -->
     <link rel="stylesheet" href="style.css">
 </head>
@@ -37,7 +41,7 @@
         <div class="search-header">
             <div class="search-input-box">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="searchInput" placeholder="Search anime, movies, cartoons..." autocomplete="off">
+                <input type="text" id="searchInput" placeholder="Search anime..." autocomplete="off">
             </div>
             <button class="cancel-btn" id="closeSearchBtn">
                 <i class="fa-solid fa-xmark"></i>
@@ -58,9 +62,15 @@
             </div>
         </div>
 
-        <!-- Grid Container jahan cards JS se load honge -->
+        <!-- Grid Container -->
         <div class="anime-grid" id="animeGrid">
-            <!-- Cards yahan automatic aayenge JS se -->
+            <!-- Shimmer Skeleton Loading (Jab tak data fetch ho raha hai) -->
+            <div class="skeleton-grid-card"></div>
+            <div class="skeleton-grid-card"></div>
+            <div class="skeleton-grid-card"></div>
+            <div class="skeleton-grid-card"></div>
+            <div class="skeleton-grid-card"></div>
+            <div class="skeleton-grid-card"></div>
         </div>
     </main>
 
@@ -70,17 +80,14 @@
             <i class="fa-solid fa-house"></i>
             <span>Home</span>
         </a>
-        <!-- Anime Tab Active -->
         <a href="anime.html" class="nav-item active">
             <i class="fa-solid fa-face-smile"></i>
             <span>Anime</span>
         </a>
-        <!-- Movies Tab -->
         <a href="movies.html" class="nav-item">
             <i class="fa-solid fa-clapperboard"></i>
             <span>Movies</span>
         </a>
-        <!-- Settings Tab -->
         <a href="settings.html" class="nav-item">
             <i class="fa-solid fa-gear"></i>
             <span>Settings</span>
