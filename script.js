@@ -512,7 +512,6 @@ if (document.getElementById('customVideo') && database) {
         currentQuality = qualityName;
         
         let url = "";
-        // 🔥 Priority: Agar user ne audio select kiya hai to audio load hoga, warna quality
         if (audioLang && videoData.audios && videoData.audios[audioLang]) {
             url = videoData.audios[audioLang];
         } else if (qualityName && videoData.qualities && videoData.qualities[qualityName]) {
@@ -907,10 +906,56 @@ if (document.getElementById('customVideo') && database) {
     }
 }
 
-// Global Delete Comment Function
+// ================= 8. CUSTOM CONFIRM MODAL LOGIC =================
+let pendingDeleteAction = null;
+
+// Modal ko open karne ka function
+window.showCustomConfirm = (message, action) => {
+    const modal = document.getElementById('customConfirmModal');
+    const msgEl = document.getElementById('confirmMessage');
+    if (!modal) return; 
+    
+    if(msgEl) msgEl.innerText = message;
+    pendingDeleteAction = action;
+    modal.style.display = 'flex';
+};
+
+// Modal ke buttons ko handle karna
+document.addEventListener('DOMContentLoaded', () => {
+    const yesBtn = document.getElementById('confirmYesBtn');
+    const noBtn = document.getElementById('confirmNoBtn');
+    const modal = document.getElementById('customConfirmModal');
+
+    if (yesBtn && noBtn && modal) {
+        // Yes / Delete button click
+        yesBtn.addEventListener('click', () => {
+            if (pendingDeleteAction) {
+                pendingDeleteAction();
+            }
+            modal.style.display = 'none';
+            pendingDeleteAction = null;
+        });
+
+        // No / Cancel button click
+        noBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+            pendingDeleteAction = null;
+        });
+
+        // Agar user background (dark area) par click kare toh band ho jaye
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+                pendingDeleteAction = null;
+            }
+        });
+    }
+});
+
+// Global Delete Comment Function (Updated to use Custom Modal)
 window.deleteComment = (animeId, commentKey) => {
-    if (confirm("Are you sure you want to delete this comment?")) {
+    showCustomConfirm("Are you sure you want to delete this comment permanently?", () => {
         database.ref(`comments/${animeId}/${commentKey}`).remove()
             .catch((err) => alert("Error deleting comment: " + err.message));
-    }
+    });
 };
