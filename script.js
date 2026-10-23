@@ -17,10 +17,9 @@ const closeSearchBtn = document.getElementById('closeSearchBtn');
 const searchInput = document.getElementById('searchInput');
 const searchResults = document.getElementById('searchResults');
 
+// ================= 3. SEARCH PANEL LOGIC =================
 // Check karein ki elements exist karte hain (Safety check)
 if (openSearchBtn && searchPanel) {
-    
-    // ================= 3. PANEL OPEN / CLOSE LOGIC =================
     
     // Open Panel
     openSearchBtn.addEventListener('click', () => {
@@ -42,7 +41,7 @@ if (openSearchBtn && searchPanel) {
         }, 300);
     });
 
-    // ================= 4. LIVE SUGGESTION LOGIC =================
+    // LIVE SUGGESTION LOGIC (Input event)
     searchInput.addEventListener('input', (e) => {
         const query = e.target.value.toLowerCase().trim();
         
@@ -58,12 +57,12 @@ if (openSearchBtn && searchPanel) {
         );
 
         // Result render karo
-        renderResults(filteredAnime);
+        renderSearchResults(filteredAnime);
     });
 }
 
-// ================= 5. RESULT RENDER FUNCTION =================
-function renderResults(results) {
+// ================= 4. RESULT RENDER FUNCTION (For Search) =================
+function renderSearchResults(results) {
     if (!searchResults) return; // Safety check
 
     searchResults.innerHTML = ''; // Pehle clear karo
@@ -78,7 +77,8 @@ function renderResults(results) {
     results.forEach(anime => {
         // Har result ke liye ek clickable link banaya
         const item = document.createElement('a');
-        item.href = `watch.html?id=${anime.id}`;
+        // Yahan aap anime-details.html?id=... bhi kar sakte hain agar wo page use kar rahe hain
+        item.href = `watch.html?id=${anime.id}`; 
         item.className = 'search-item';
         
         // HTML structure
@@ -93,5 +93,27 @@ function renderResults(results) {
         
         // List me add karo
         searchResults.appendChild(item);
+    });
+}
+
+// ================= 5. ANIME GRID PAGE LOGIC =================
+// Ye code check karega ki kya hum Anime page (anime.html) par hain
+const animeGridContainer = document.getElementById('animeGrid');
+
+if (animeGridContainer) {
+    // Agar grid container mil gaya, toh saare anime render karo
+    animeDatabase.forEach(anime => {
+        // Card banayein
+        const card = document.createElement('a');
+        card.href = `watch.html?id=${anime.id}`; // Click karne par watch page khulega
+        card.className = 'grid-card';
+        
+        card.innerHTML = `
+            <img src="${anime.image}" alt="${anime.title}" onerror="this.src='https://via.placeholder.com/150x225?text=No+Image'">
+            <div class="grid-card-title">${anime.title}</div>
+        `;
+        
+        // Grid me card add karein
+        animeGridContainer.appendChild(card);
     });
 }
