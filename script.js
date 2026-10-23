@@ -24,6 +24,7 @@ try {
 let allContentDatabase = [];
 let currentAudio = null;
 let currentQuality = null;
+let activeSubtitleUrl = null; // 🔥 Subtitle yaad rakhne ke liye
 
 // ================= 2. SPLASH SCREEN & INITIAL LOAD =================
 document.addEventListener('DOMContentLoaded', () => {
@@ -354,6 +355,8 @@ if (document.getElementById('customVideo') && database) {
                 renderWatchSeasons(); 
                 renderWatchEpisodes(); 
                 
+                // Naya episode load hote waqt subtitle reset kar do
+                activeSubtitleUrl = null; 
                 const newVideoData = currentAnimeData.seasons[activeSeason][currentEpKey];
                 setupPlayer(newVideoData);
                 document.getElementById('watchAnimeTitle').innerText = `${currentAnimeData.title} - ${activeSeason} Ep ${newVideoData.ep}`;
@@ -393,6 +396,7 @@ if (document.getElementById('customVideo') && database) {
                     window.history.pushState({path: `watch.html?id=${animeId}&season=${encodeURIComponent(activeSeason)}&ep=${currentEpKey}`}, '', `watch.html?id=${animeId}&season=${encodeURIComponent(activeSeason)}&ep=${currentEpKey}`);
                     
                     renderWatchEpisodes(); 
+                    activeSubtitleUrl = null; // Reset subtitle for new episode
                     setupPlayer(ep); 
                     document.getElementById('watchAnimeTitle').innerText = `${currentAnimeData.title} - ${activeSeason} Ep ${ep.ep}`;
                 }
@@ -431,42 +435,51 @@ if (document.getElementById('customVideo') && database) {
         subtitleMenu.style.display = 'none';
         qualityMenu.style.display = 'none';
 
+        // --- AUDIO RENDER ---
         const audioOptions = document.getElementById('audioOptions');
         if (videoData.audios && Object.keys(videoData.audios).length > 0) {
             audioOptions.innerHTML = '';
             Object.keys(videoData.audios).forEach(lang => {
                 const btn = document.createElement('button');
                 btn.innerText = lang;
-                btn.className = 'setting-btn';
-                // 🔥 FIX: Audio change karte waqt Quality reset karo
+                btn.className = `setting-btn ${currentAudio === lang ? 'active' : ''}`;
                 btn.onclick = (e) => { 
                     e.stopPropagation(); 
-                    currentQuality = null; 
                     currentAudio = lang;
-                    loadSpecificTrack(videoData, lang, null); 
+                    
+                    // UI update
+                    Array.from(audioOptions.children).forEach(c => c.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    loadSpecificTrack(videoData, lang, currentQuality); 
                 };
                 audioOptions.appendChild(btn);
             });
         } else { audioOptions.innerHTML = '<p style="font-size:12px; color:#888;">No Audio</p>'; }
 
+        // --- QUALITY RENDER ---
         const qualityOptions = document.getElementById('qualityOptions');
         if (videoData.qualities && Object.keys(videoData.qualities).length > 0) {
             qualityOptions.innerHTML = '';
             Object.keys(videoData.qualities).forEach(q => {
                 const btn = document.createElement('button');
                 btn.innerText = q;
-                btn.className = 'setting-btn';
-                // 🔥 FIX: Quality change karte waqt Audio reset karo
+                btn.className = `setting-btn ${currentQuality === q ? 'active' : ''}`;
                 btn.onclick = (e) => { 
                     e.stopPropagation(); 
-                    currentAudio = null;
                     currentQuality = q; 
-                    loadSpecificTrack(videoData, null, q); 
+                    
+                    // UI update
+                    Array.from(qualityOptions.children).forEach(c => c.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    loadSpecificTrack(videoData, currentAudio, q); 
                 };
                 qualityOptions.appendChild(btn);
             });
         } else { qualityOptions.innerHTML = '<p style="font-size:12px; color:#888;">No Quality</p>'; }
 
+        // --- SUBTITLE RENDER ---
         const subtitleOptions = document.getElementById('subtitleOptions');
         if (videoData.subtitles && Object.keys(videoData.subtitles).length > 0) {
             subtitleOptions.innerHTML = '';
@@ -476,11 +489,12 @@ if (document.getElementById('customVideo') && database) {
                 btn.className = 'setting-btn';
                 btn.onclick = (e) => { 
                     e.stopPropagation();
+                    activeSubtitleUrl = videoData.subtitles[sub]; // 🔥 URL Save karo
                     const track = document.getElementById('subtitleTrack');
                     if(track) { 
-                        track.src = videoData.subtitles[sub]; 
+                        track.src = activeSubtitleUrl; 
                         track.style.display = 'block'; 
-                        track.mode = 'showing'; // 🔥 FIX: Subtitle show karne ke liye mode set kiya
+                        track.mode = 'showing'; 
                     }
                     subtitleMenu.style.display = 'none'; 
                 };
@@ -488,8 +502,8 @@ if (document.getElementById('customVideo') && database) {
             });
         } else { subtitleOptions.innerHTML = '<p style="font-size:12px; color:#888;">No Subtitles</p>'; }
 
-        const defaultAudio = Object.keys(videoData.audios || {})[0] || null;
-        const defaultQuality = Object.keys(videoData.qualities || {})[0] || null;
+        const defaultAudio = currentAudio || Object.keys(videoData.audios || {})[0] || null;
+        const defaultQuality = currentQuality || Object.keys(videoData.qualities || {})[0] || null;
         loadSpecificTrack(videoData, defaultAudio, defaultQuality);
     }
 
@@ -498,11 +512,11 @@ if (document.getElementById('customVideo') && database) {
         currentQuality = qualityName;
         
         let url = "";
-        // 🔥 FIX: Priority logic (Quality ko pehle check karo agar user ne explicitly select kiya hai)
-        if (qualityName && videoData.qualities && videoData.qualities[qualityName]) {
-            url = videoData.qualities[qualityName];
-        } else if (audioLang && videoData.audios && videoData.audios[audioLang]) {
+        // 🔥 Priority: Agar user ne audio select kiya hai to audio load hoga, warna quality
+        if (audioLang && videoData.audios && videoData.audios[audioLang]) {
             url = videoData.audios[audioLang];
+        } else if (qualityName && videoData.qualities && videoData.qualities[qualityName]) {
+            url = videoData.qualities[qualityName];
         } else if (videoData.gdrive_id) { 
             url = videoData.gdrive_id;
         }
@@ -515,7 +529,11 @@ if (document.getElementById('customVideo') && database) {
     // 🔥 Auto-Play & Seamless Switch Logic 🔥
     function playVideoUrl(url) {
         if(!url) return;
+        
+        // 1. Current State Save karo
         const previousTime = video.currentTime;
+        const wasMuted = video.muted;
+        const currentVolume = video.volume;
         
         let fileId = null;
         if (url.includes('drive.google.com')) {
@@ -536,17 +554,32 @@ if (document.getElementById('customVideo') && database) {
         video.load();
         
         video.onloadedmetadata = function() {
+            // 2. State Restore karo
             if(previousTime > 0 && previousTime < video.duration) {
                 video.currentTime = previousTime;
             }
+            video.muted = wasMuted;
+            video.volume = currentVolume;
+
+            // 3. Subtitle ko wapas attach karo (agar pehle select kiya tha)
+            const track = document.getElementById('subtitleTrack');
+            if (track) {
+                if (activeSubtitleUrl) {
+                    track.src = activeSubtitleUrl;
+                    track.style.display = 'block';
+                    track.mode = 'showing';
+                } else {
+                    track.style.display = 'none';
+                    track.mode = 'disabled';
+                }
+            }
             
-            // ✅ MUTE FIX: Pehle unmuted play karo, agar block ho toh mute karo
-            video.muted = false; 
+            // 4. Play karo
             let playPromise = video.play();
             
             if (playPromise !== undefined) {
                 playPromise.then(_ => {
-                    if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+                    if(muteBtn) muteBtn.innerHTML = wasMuted ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
                 }).catch(e => {
                     console.log("Autoplay with sound blocked by browser, muting...", e);
                     video.muted = true;
