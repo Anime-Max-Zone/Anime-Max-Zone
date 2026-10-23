@@ -686,6 +686,30 @@ input:checked + .slider:before {
     line-height: 1.6;
 }
 
+/* ================= WATCH MOVIE NOW BUTTON ================= */
+.watch-now-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #a855f7 0%, #6a11cb 100%);
+    color: #ffffff;
+    text-decoration: none;
+    padding: 15px 20px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 20px 0;
+    box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.watch-now-btn:active {
+    transform: scale(0.97);
+    box-shadow: 0 2px 10px rgba(168, 85, 247, 0.6);
+}
+
 /* Episodes Section (Details Page) */
 .episodes-section {
     padding: 0 15px 20px 15px;
@@ -933,6 +957,56 @@ input:checked + .slider:before {
     margin-left: 5px;
 }
 
+/* ================= PLAYER SETTINGS MENU (Audio/Quality/Subtitle) ================= */
+.settings-menu {
+    position: absolute;
+    bottom: 60px;
+    right: 15px;
+    background: rgba(13, 13, 18, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #2a2a35;
+    z-index: 20;
+    min-width: 200px;
+    display: none; /* Hidden by default, JS will toggle this */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+}
+
+.settings-menu h4 {
+    color: #888;
+    font-size: 11px;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.settings-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 15px;
+}
+
+.setting-btn {
+    background: #1a1a24;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: 0.2s;
+    font-family: 'Poppins', sans-serif;
+}
+
+.setting-btn:hover, .setting-btn.active {
+    background: #a855f7;
+    border-color: #a855f7;
+    color: #fff;
+}
+
 /* ================= SEASONS & EPISODES INSIDE WATCH PAGE ================= */
 .season-tabs {
     display: flex;
@@ -982,7 +1056,7 @@ input:checked + .slider:before {
     color: white;
 }
 
-/* ================= SPLASH SCREEN (ADDED) ================= */
+/* ================= SPLASH SCREEN ================= */
 #splash-screen {
     position: fixed;
     top: 0; left: 0;
@@ -1031,7 +1105,7 @@ input:checked + .slider:before {
     to { transform: rotate(360deg); }
 }
 
-/* ================= SHIMMER SKELETON LOADING (ADDED) ================= */
+/* ================= SHIMMER SKELETON LOADING ================= */
 .skeleton-card {
     flex: 0 0 auto;
     width: 130px;
