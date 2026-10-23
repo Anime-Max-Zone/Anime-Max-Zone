@@ -207,7 +207,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Details Update
             document.title = `${data.title} - Anime Max Zone`;
             document.getElementById('detailBanner').style.backgroundImage = `url(${data.banner || data.image})`;
             document.getElementById('detailPoster').src = data.image;
@@ -223,14 +222,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const episodesSection = document.querySelector('.episodes-section');
             const episodeList = document.getElementById('episodeList');
 
-            // Agar Movie hai toh watch page ka direct button ya hide episodes
             if (data.type === 'movie' || !data.seasons) {
                 if (episodesSection) episodesSection.style.display = 'none';
                 
-                // Watch Now Button (Fixed Class for Premium Look)
                 const watchBtn = document.createElement('a');
                 watchBtn.href = `watch.html?id=${animeId}`;
-                watchBtn.className = 'watch-now-btn'; // CSS me iski styling hai
+                watchBtn.className = 'watch-now-btn'; 
                 watchBtn.innerHTML = `<i class="fa-solid fa-play"></i> Watch Movie Now`;
                 document.querySelector('.synopsis-section').appendChild(watchBtn);
 
@@ -239,7 +236,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 let totalEps = 0;
                 episodeList.innerHTML = '';
 
-                // Loop through all seasons
                 Object.keys(data.seasons).forEach(seasonName => {
                     const episodesObj = data.seasons[seasonName];
                     const epArray = Object.keys(episodesObj).map(k => ({ firebaseKey: k, ...episodesObj[k] }));
@@ -275,7 +271,6 @@ if (document.getElementById('customVideo') && database) {
     const video = document.getElementById('customVideo');
     const videoLoader = document.getElementById('videoLoader');
     
-    // Get URL Params
     const urlParams = new URLSearchParams(window.location.search);
     const animeId = urlParams.get('id'); 
     const seasonName = urlParams.get('season');
@@ -288,16 +283,13 @@ if (document.getElementById('customVideo') && database) {
             let videoDataToPlay = null;
             let pageTitle = animeData.title;
 
-            // Check: Movie or Anime
             if (animeData.type === 'movie' || !animeData.seasons) {
-                videoDataToPlay = animeData; // Movie ke andar hi qualities/audios hain
+                videoDataToPlay = animeData; 
             } else {
-                // Anime Episode
                 if (seasonName && epKey && animeData.seasons[seasonName] && animeData.seasons[seasonName][epKey]) {
                     videoDataToPlay = animeData.seasons[seasonName][epKey];
                     pageTitle += ` - ${seasonName} Ep ${videoDataToPlay.ep}`;
                 } else {
-                    // Fallback: Play first episode of first season
                     const firstSeason = Object.keys(animeData.seasons)[0];
                     if (firstSeason) {
                         const firstEpKey = Object.keys(animeData.seasons[firstSeason])[0];
@@ -307,7 +299,6 @@ if (document.getElementById('customVideo') && database) {
                 }
             }
 
-            // 🔥 Update Page Title and Description 🔥
             document.title = `${pageTitle} - Anime Max Zone`;
             
             const titleEl = document.getElementById('watchAnimeTitle');
@@ -327,7 +318,6 @@ if (document.getElementById('customVideo') && database) {
 
     // ================= PLAYER LOGIC =================
     
-    // Settings Menu Toggle
     const settingsBtn = document.getElementById('settingsBtn');
     const settingsMenu = document.getElementById('settingsMenu');
     if(settingsBtn && settingsMenu) {
@@ -337,7 +327,6 @@ if (document.getElementById('customVideo') && database) {
     }
 
     function setupPlayer(videoData) {
-        // 1. Audio Setup
         const audioSection = document.getElementById('audioSection');
         const audioOptions = document.getElementById('audioOptions');
         if (videoData.audios && Object.keys(videoData.audios).length > 0) {
@@ -352,7 +341,6 @@ if (document.getElementById('customVideo') && database) {
             });
         }
 
-        // 2. Quality Setup
         const qualitySection = document.getElementById('qualitySection');
         const qualityOptions = document.getElementById('qualityOptions');
         if (videoData.qualities && Object.keys(videoData.qualities).length > 0) {
@@ -370,7 +358,6 @@ if (document.getElementById('customVideo') && database) {
             });
         }
 
-        // 3. Subtitle Setup
         const subtitleSection = document.getElementById('subtitleSection');
         const subtitleOptions = document.getElementById('subtitleOptions');
         if (videoData.subtitles && Object.keys(videoData.subtitles).length > 0) {
@@ -389,7 +376,6 @@ if (document.getElementById('customVideo') && database) {
             });
         }
 
-        // Default Load
         const defaultAudio = Object.keys(videoData.audios || {})[0] || null;
         const defaultQuality = Object.keys(videoData.qualities || {})[0] || null;
         loadSpecificTrack(videoData, defaultAudio, defaultQuality);
@@ -404,7 +390,7 @@ if (document.getElementById('customVideo') && database) {
             url = videoData.audios[audioLang];
         } else if (qualityName && videoData.qualities && videoData.qualities[qualityName]) {
             url = videoData.qualities[qualityName];
-        } else if (videoData.gdrive_id) { // Fallback for old format
+        } else if (videoData.gdrive_id) { 
             url = videoData.gdrive_id;
         }
 
@@ -412,35 +398,47 @@ if (document.getElementById('customVideo') && database) {
         if(settingsMenu) settingsMenu.style.display = 'none';
     }
 
-    // 🔥 GDrive 500MB+ API Extraction Logic 🔥
+    // 🔥 GDrive 500MB+ API Extraction & Fallback Logic 🔥
     function playVideoUrl(url) {
         if(!url) return;
         let finalUrl = url;
+        let fileId = null;
         
+        // 1. Extract File ID
         if (url.includes('drive.google.com')) {
-            function extractFileId(link) {
-                const patterns = [/\/file\/d\/([a-zA-Z0-9_-]+)/, /[?&]id=([a-zA-Z0-9_-]+)/];
-                for (let pattern of patterns) {
-                    const match = link.match(pattern);
-                    if (match) return match[1];
-                }
-                return null;
+            const patterns = [/\/file\/d\/([a-zA-Z0-9_-]+)/, /[?&]id=([a-zA-Z0-9_-]+)/];
+            for (let pattern of patterns) {
+                const match = url.match(pattern);
+                if (match) { fileId = match[1]; break; }
             }
-            let fileId = extractFileId(url);
-            if(fileId) {
-                const API_KEY = "AIzaSyCpfrluxsBhnz48ve9RykIy1IxzbBfk7dA"; 
-                finalUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${API_KEY}`;
-            }
-        } 
-        else if (!url.startsWith('http')) {
+        } else if (!url.startsWith('http')) {
+            fileId = url;
+        }
+
+        if (fileId) {
+            // 2. Primary Method: API v3 (Best for <100MB)
             const API_KEY = "AIzaSyCpfrluxsBhnz48ve9RykIy1IxzbBfk7dA"; 
-            finalUrl = `https://www.googleapis.com/drive/v3/files/${url}?alt=media&key=${API_KEY}`;
+            finalUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${API_KEY}`;
+            
+            // 3. Fallback Method: Agar API fail ho jaye (Badi files ke liye)
+            video.onerror = function() {
+                console.warn("API v3 failed, trying fallback method (uc?export=download)...");
+                video.onerror = null; // Infinite loop rokne ke liye
+                video.src = `https://drive.google.com/uc?export=download&id=${fileId}`;
+                video.load();
+                video.play().catch(e => {
+                    console.log("Fallback play blocked", e);
+                    if(videoLoader) videoLoader.style.display = 'none';
+                    alert("Video play nahi ho payi. Google Drive link check karein ya file size bahut bada hai.");
+                });
+            };
         }
 
         if(videoLoader) videoLoader.style.display = 'block';
         video.src = finalUrl;
         video.play().catch(e => {
             console.log("Autoplay blocked", e);
+            // Agar autoplay block ho, toh loader band kar do
             if(videoLoader) videoLoader.style.display = 'none';
         });
     }
@@ -459,12 +457,6 @@ if (document.getElementById('customVideo') && database) {
     if(video) {
         video.addEventListener('waiting', () => { if(videoLoader) videoLoader.style.display = 'block'; });
         video.addEventListener('playing', () => { if(videoLoader) videoLoader.style.display = 'none'; });
-        
-        // 🔥 ERROR HANDLER (Agar GDrive link public nahi hai toh spinner rukega)
-        video.addEventListener('error', () => {
-            if(videoLoader) videoLoader.style.display = 'none';
-            alert("Video play nahi ho payi. Kripya check karein ki Google Drive link 'Anyone with the link' par set hai ya nahi, aur API Key sahi hai.");
-        });
     }
 
     if(playPauseBtn) {
