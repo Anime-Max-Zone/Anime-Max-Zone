@@ -377,7 +377,6 @@ if (document.getElementById('customVideo') && database) {
             const card = document.createElement('div');
             card.className = `episode-card ${isPlaying ? 'active' : ''}`;
             card.style.cursor = 'pointer';
-            // 🔥 SYNC FIX: Icon video ke paused state par depend karega
             card.innerHTML = `
                 <div class="ep-play-icon"><i class="fa-solid ${isPlaying ? (video.paused ? 'fa-play' : 'fa-pause') : 'fa-play'}"></i></div>
                 <div class="ep-info">
@@ -439,7 +438,13 @@ if (document.getElementById('customVideo') && database) {
                 const btn = document.createElement('button');
                 btn.innerText = lang;
                 btn.className = 'setting-btn';
-                btn.onclick = (e) => { e.stopPropagation(); loadSpecificTrack(videoData, lang, currentQuality); };
+                // 🔥 FIX: Audio change karte waqt Quality reset karo
+                btn.onclick = (e) => { 
+                    e.stopPropagation(); 
+                    currentQuality = null; 
+                    currentAudio = lang;
+                    loadSpecificTrack(videoData, lang, null); 
+                };
                 audioOptions.appendChild(btn);
             });
         } else { audioOptions.innerHTML = '<p style="font-size:12px; color:#888;">No Audio</p>'; }
@@ -451,7 +456,13 @@ if (document.getElementById('customVideo') && database) {
                 const btn = document.createElement('button');
                 btn.innerText = q;
                 btn.className = 'setting-btn';
-                btn.onclick = (e) => { e.stopPropagation(); currentQuality = q; loadSpecificTrack(videoData, currentAudio, q); };
+                // 🔥 FIX: Quality change karte waqt Audio reset karo
+                btn.onclick = (e) => { 
+                    e.stopPropagation(); 
+                    currentAudio = null;
+                    currentQuality = q; 
+                    loadSpecificTrack(videoData, null, q); 
+                };
                 qualityOptions.appendChild(btn);
             });
         } else { qualityOptions.innerHTML = '<p style="font-size:12px; color:#888;">No Quality</p>'; }
@@ -466,7 +477,11 @@ if (document.getElementById('customVideo') && database) {
                 btn.onclick = (e) => { 
                     e.stopPropagation();
                     const track = document.getElementById('subtitleTrack');
-                    if(track) { track.src = videoData.subtitles[sub]; track.style.display = 'block'; }
+                    if(track) { 
+                        track.src = videoData.subtitles[sub]; 
+                        track.style.display = 'block'; 
+                        track.mode = 'showing'; // 🔥 FIX: Subtitle show karne ke liye mode set kiya
+                    }
                     subtitleMenu.style.display = 'none'; 
                 };
                 subtitleOptions.appendChild(btn);
@@ -483,10 +498,11 @@ if (document.getElementById('customVideo') && database) {
         currentQuality = qualityName;
         
         let url = "";
-        if (audioLang && videoData.audios && videoData.audios[audioLang]) {
-            url = videoData.audios[audioLang];
-        } else if (qualityName && videoData.qualities && videoData.qualities[qualityName]) {
+        // 🔥 FIX: Priority logic (Quality ko pehle check karo agar user ne explicitly select kiya hai)
+        if (qualityName && videoData.qualities && videoData.qualities[qualityName]) {
             url = videoData.qualities[qualityName];
+        } else if (audioLang && videoData.audios && videoData.audios[audioLang]) {
+            url = videoData.audios[audioLang];
         } else if (videoData.gdrive_id) { 
             url = videoData.gdrive_id;
         }
@@ -524,6 +540,7 @@ if (document.getElementById('customVideo') && database) {
                 video.currentTime = previousTime;
             }
             
+            // ✅ MUTE FIX: Pehle unmuted play karo, agar block ho toh mute karo
             video.muted = false; 
             let playPromise = video.play();
             
@@ -543,7 +560,7 @@ if (document.getElementById('customVideo') && database) {
         };
     }
 
-    // Hint Box dikhane ka function (Auto Mute Fix)
+    // Hint Box dikhane ka function
     function showUnmuteHint() {
         let hint = document.getElementById('unmuteHint');
         if(!hint && playerWrapper) {
@@ -577,7 +594,6 @@ if (document.getElementById('customVideo') && database) {
     video.addEventListener('waiting', () => { if(videoLoader) videoLoader.style.display = 'block'; });
     video.addEventListener('playing', () => { if(videoLoader) videoLoader.style.display = 'none'; });
 
-    // 🔥 Play/Pause/Volume Icons Sync 🔥
     video.addEventListener('play', () => {
         if(playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
         renderWatchEpisodes(); 
@@ -733,7 +749,6 @@ if (document.getElementById('customVideo') && database) {
     const bottomSheet = document.getElementById('commentsBottomSheet');
     const backdrop = document.getElementById('bottomSheetBackdrop');
 
-    // Bottom Sheet Open/Close Logic
     if(openCommentsBtn && bottomSheet) {
         openCommentsBtn.addEventListener('click', () => {
             bottomSheet.classList.add('active');
@@ -762,15 +777,14 @@ if (document.getElementById('customVideo') && database) {
         firebase.auth().onAuthStateChanged((user) => {
             if (user) {
                 isAdmin = true;
-                if (animeId) loadComments(); // Re-render to show admin delete buttons
+                if (animeId) loadComments(); 
             }
         });
     }
 
-    // 🔥 FIX: Form Submit Logic (Page reload rokne ke liye)
     if (commentForm) {
         commentForm.addEventListener('submit', (e) => {
-            e.preventDefault(); // Page reload hamesha rokna hai
+            e.preventDefault(); 
             
             if (!animeId) {
                 alert("Error: Content ID missing from URL. Cannot post comment.");
@@ -786,7 +800,6 @@ if (document.getElementById('customVideo') && database) {
                 return;
             }
 
-            // Button ko disable karo spam rokne ke liye
             const submitBtn = commentForm.querySelector('button[type="submit"]');
             if(submitBtn) {
                 submitBtn.disabled = true;
@@ -854,7 +867,6 @@ if (document.getElementById('customVideo') && database) {
         });
     }
     
-    // Load comments immediately if ID exists
     if (animeId) {
         loadComments();
     } else if (commentsList) {
