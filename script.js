@@ -76,7 +76,6 @@ function renderSearchResults(results) {
 
     results.forEach(item => {
         const link = document.createElement('a');
-        // UPDATE: Link ab Details page par jayega
         link.href = `anime-details.html?id=${item.id}`; 
         link.className = 'search-item';
         
@@ -100,7 +99,6 @@ const animeGridContainer = document.getElementById('animeGrid');
 if (animeGridContainer) {
     animeDatabase.forEach(anime => {
         const card = document.createElement('a');
-        // UPDATE: Link ab Details page par jayega
         card.href = `anime-details.html?id=${anime.id}`; 
         card.className = 'grid-card';
         
@@ -120,7 +118,6 @@ const movieGridContainer = document.getElementById('movieGrid');
 if (movieGridContainer) {
     movieDatabase.forEach(movie => {
         const card = document.createElement('a');
-        // UPDATE: Link ab Details page par jayega
         card.href = `anime-details.html?id=${movie.id}`; 
         card.className = 'grid-card';
         
@@ -231,9 +228,10 @@ if (document.getElementById('customVideo')) {
     const titleTag = document.querySelector('.video-info-section h2');
     if(titleTag) titleTag.innerText = videoTitle;
 
-    // GDrive Auto-Detect (Test ke liye BigBuckBunny video)
+    // GDrive Auto-Detect (Test ke liye BigBuckBunny video fallback)
     let finalVideoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
     
+    // Agar ID real hai aur TEST_VIDEO_ID nahi hai, toh GDrive API use karo
     if (videoId && !videoId.includes("TEST_VIDEO_ID")) {
         function extractFileId(url) {
             const patterns = [/\/file\/d\/([a-zA-Z0-9_-]+)/, /[?&]id=([a-zA-Z0-9_-]+)/];
