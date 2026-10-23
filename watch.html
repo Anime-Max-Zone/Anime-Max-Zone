@@ -5,17 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title id="pageTitle">Anime Max Zone</title>
     
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     
+    <!-- Main CSS File -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="watch-page-body">
 
+    <!-- Header Section (Sticky) -->
     <header class="app-header">
         <div class="logo-area">
             <div class="logo-icon"><i class="fa-solid fa-play"></i></div>
@@ -27,6 +32,7 @@
         <div class="search-area" id="openSearchBtn"><i class="fa-solid fa-magnifying-glass"></i></div>
     </header>
 
+    <!-- Search Overlay Panel -->
     <div class="search-overlay" id="searchPanel">
         <div class="search-header">
             <div class="search-input-box">
@@ -38,6 +44,7 @@
         <div class="search-results" id="searchResults"><p class="search-hint">Start typing to search...</p></div>
     </div>
 
+    <!-- Main Content: Video Player -->
     <main class="main-content">
         <!-- Video Player Wrapper -->
         <div class="player-wrapper" id="playerWrapper">
