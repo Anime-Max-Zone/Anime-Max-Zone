@@ -365,7 +365,7 @@ body {
     font-size: 14px;
 }
 
-/* ================= ANIME GRID PAGE CSS ================= */
+/* ================= ANIME & MOVIES GRID PAGE CSS ================= */
 .anime-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); 
