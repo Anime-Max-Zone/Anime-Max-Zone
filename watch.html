@@ -86,7 +86,6 @@
             </div>
 
             <!-- HTML5 Video Tag -->
-            <!-- Note: 'muted' attribute yahan jaan-boojh kar nahi dala gaya hai -->
             <video id="customVideo" playsinline crossorigin="anonymous">
                 <track id="subtitleTrack" label="Subtitles" kind="subtitles" srclang="en" default>
             </video>
@@ -161,7 +160,8 @@
         </div>
 
         <div class="bottom-sheet-content">
-            <form id="commentForm" class="comment-form">
+            <!-- 🔥 FIX: Added onsubmit="return false;" so the page NEVER reloads 🔥 -->
+            <form id="commentForm" class="comment-form" onsubmit="return false;">
                 <div class="form-row">
                     <input type="text" id="commentName" placeholder="Your Name" required>
                     <input type="email" id="commentEmail" placeholder="Your Gmail" required>
