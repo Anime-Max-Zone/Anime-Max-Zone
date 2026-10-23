@@ -649,13 +649,40 @@ if (document.getElementById('customVideo') && database) {
     if(centerOverlay) centerOverlay.addEventListener('click', () => handleTap(centerOverlay, 'center'));
 }
 
-// ================= 7. COMMENT SYSTEM LOGIC =================
+// ================= 7. COMMENT SYSTEM & BOTTOM SHEET LOGIC =================
 if (document.getElementById('customVideo') && database) {
     const urlParams = new URLSearchParams(window.location.search);
     const animeId = urlParams.get('id'); 
 
     const commentForm = document.getElementById('commentForm');
     const commentsList = document.getElementById('commentsList');
+
+    // 🔥 BOTTOM SHEET ELEMENTS 🔥
+    const openCommentsBtn = document.getElementById('openCommentsBtn');
+    const closeCommentsBtn = document.getElementById('closeCommentsBtn');
+    const bottomSheet = document.getElementById('commentsBottomSheet');
+    const backdrop = document.getElementById('bottomSheetBackdrop');
+
+    // Bottom Sheet Open/Close Logic
+    if(openCommentsBtn && bottomSheet) {
+        // Open Sheet
+        openCommentsBtn.addEventListener('click', () => {
+            bottomSheet.classList.add('active');
+            backdrop.classList.add('active');
+        });
+
+        // Close via X button
+        closeCommentsBtn.addEventListener('click', () => {
+            bottomSheet.classList.remove('active');
+            backdrop.classList.remove('active');
+        });
+
+        // Close via clicking outside (Backdrop)
+        backdrop.addEventListener('click', () => {
+            bottomSheet.classList.remove('active');
+            backdrop.classList.remove('active');
+        });
+    }
 
     // Local User ID (For self-delete)
     let localCommentUserId = localStorage.getItem('commentUserId');
