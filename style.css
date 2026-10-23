@@ -550,7 +550,7 @@ input:checked + .slider:before {
 
 /* ================= ANIME DETAILS PAGE CSS ================= */
 .details-page-body {
-    padding-bottom: 80px; /* Bottom Nav ke liye space */
+    padding-bottom: 80px; 
 }
 
 .hero-section {
@@ -686,7 +686,7 @@ input:checked + .slider:before {
     line-height: 1.6;
 }
 
-/* Episodes Section */
+/* Episodes Section (Details Page) */
 .episodes-section {
     padding: 0 15px 20px 15px;
 }
@@ -917,4 +917,56 @@ input:checked + .slider:before {
     font-weight: 400;
     color: #ddd;
     margin-left: 5px;
+}
+
+/* ================= SEASONS & EPISODES INSIDE WATCH PAGE ================= */
+/* Season Tabs Horizontal Scroll */
+.season-tabs {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    scrollbar-width: none;
+}
+
+.season-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.season-btn {
+    background: #1a1a24;
+    color: #aaa;
+    border: 1px solid #2a2a35;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Poppins', sans-serif;
+}
+
+.season-btn.active {
+    background: #a855f7;
+    color: white;
+    border-color: #a855f7;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
+}
+
+/* Watch Page Episode List */
+.watch-episode-list {
+    margin-bottom: 20px;
+}
+
+/* Currently Playing Episode Highlight */
+.episode-card.active {
+    border-color: #a855f7;
+    background: rgba(168, 85, 247, 0.1);
+}
+
+.episode-card.active .ep-play-icon {
+    background: #a855f7;
+    color: white;
 }
