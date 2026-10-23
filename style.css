@@ -403,3 +403,151 @@ body {
     text-align: center;
     color: #ddd;
 }
+
+/* ================= SETTINGS PAGE CSS ================= */
+.settings-container {
+    padding: 0 15px 20px 15px;
+}
+
+.settings-group {
+    margin-bottom: 25px;
+}
+
+.group-title {
+    font-size: 12px;
+    color: #a855f7; /* Neon Purple */
+    font-weight: 600;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding-left: 5px;
+}
+
+.settings-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #0d0d12;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    border: 1px solid #1a1a24;
+    text-decoration: none;
+    color: white;
+}
+
+.settings-item.clickable:active {
+    background-color: #1a1a24;
+}
+
+.item-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.item-icon {
+    font-size: 18px;
+    color: #888;
+    width: 20px;
+    text-align: center;
+}
+
+.item-left span {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.item-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.item-value {
+    font-size: 12px;
+    color: #888;
+}
+
+.chevron {
+    font-size: 12px;
+    color: #555;
+}
+
+/* --- Toggle Switch Design --- */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #2a2a35;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+/* Jab toggle ON ho */
+input:checked + .slider {
+    background-color: #a855f7; /* Purple */
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+/* --- Clear Cache / Danger Button --- */
+.danger-btn {
+    width: 100%;
+    background-color: rgba(255, 77, 77, 0.1);
+    color: #ff4d4d;
+    border: 1px solid rgba(255, 77, 77, 0.3);
+    padding: 15px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    transition: background 0.2s;
+}
+
+.danger-btn:active {
+    background-color: rgba(255, 77, 77, 0.2);
+}
+
+.app-version {
+    text-align: center;
+    font-size: 12px;
+    color: #555;
+    margin-top: 25px;
+}
