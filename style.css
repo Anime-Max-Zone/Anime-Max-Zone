@@ -838,11 +838,25 @@ input:checked + .slider:before {
     background: #000;
 }
 
-.player-back-btn {
+/* Top Controls Wrapper (Back & Top Right Icons) */
+.top-controls {
     position: absolute;
-    top: 10px;
-    left: 10px;
-    z-index: 10;
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    z-index: 30; 
+    transition: opacity 0.3s ease;
+}
+
+.top-controls.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.player-back-btn {
     color: white;
     font-size: 16px;
     width: 36px;
@@ -854,9 +868,33 @@ input:checked + .slider:before {
     align-items: center;
     text-decoration: none;
     backdrop-filter: blur(5px);
-    transition: opacity 0.3s;
 }
 
+.top-right-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.top-icon-btn {
+    color: white;
+    font-size: 16px;
+    width: 36px;
+    height: 36px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    backdrop-filter: blur(5px);
+}
+
+.top-icon-btn:active {
+    background: rgba(168, 85, 247, 0.8);
+}
+
+/* Loading Spinner */
 .loading-spinner {
     position: absolute;
     top: 50%;
@@ -868,6 +906,7 @@ input:checked + .slider:before {
     display: none; 
 }
 
+/* Custom Controls (Bottom) */
 .custom-controls {
     position: absolute;
     bottom: 0;
@@ -878,7 +917,7 @@ input:checked + .slider:before {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    z-index: 10;
+    z-index: 30; 
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
@@ -888,6 +927,7 @@ input:checked + .slider:before {
     pointer-events: none;
 }
 
+/* 🔥 SEEK BAR PURPLE COLOR 🔥 */
 .progress-container {
     width: 100%;
     display: flex;
@@ -903,13 +943,14 @@ input:checked + .slider:before {
     border-radius: 2px;
     cursor: pointer;
     outline: none;
+    accent-color: #a855f7; 
 }
 
 #seekBar::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     background: #a855f7;
     border-radius: 50%;
     cursor: pointer;
@@ -965,7 +1006,7 @@ input:checked + .slider:before {
     padding: 15px;
     border-radius: 10px;
     border: 1px solid #2a2a35;
-    z-index: 20;
+    z-index: 40;
     min-width: 180px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.8);
 }
@@ -1016,44 +1057,7 @@ input:checked + .slider:before {
     color: #fff;
 }
 
-/* ================= TOP RIGHT CONTROLS (Audio/Subtitle Icons) ================= */
-.top-right-controls {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    display: flex;
-    gap: 10px;
-    z-index: 20;
-    transition: opacity 0.3s;
-}
-
-.top-icon-btn {
-    color: white;
-    font-size: 16px;
-    width: 36px;
-    height: 36px;
-    background: rgba(0, 0, 0, 0.6);
-    border-radius: 50%;
-    border: none;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    backdrop-filter: blur(5px);
-    transition: 0.3s;
-}
-
-.top-icon-btn:active {
-    background: rgba(168, 85, 247, 0.8);
-}
-
-.player-back-btn.hidden,
-.top-right-controls.hidden {
-    opacity: 0;
-    pointer-events: none;
-}
-
-/* ================= DOUBLE TAP OVERLAYS (Seek & Play/Pause) ================= */
+/* ================= TAP OVERLAYS (Double Tap) ================= */
 .tap-overlay {
     position: absolute;
     top: 0;
