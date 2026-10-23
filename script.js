@@ -376,7 +376,7 @@ if (document.getElementById('customVideo') && database) {
             card.className = `episode-card ${isPlaying ? 'active' : ''}`;
             card.style.cursor = 'pointer';
             card.innerHTML = `
-                <div class="ep-play-icon"><i class="fa-solid ${isPlaying ? 'fa-volume-high' : 'fa-play'}"></i></div>
+                <div class="ep-play-icon"><i class="fa-solid ${isPlaying ? 'fa-pause' : 'fa-play'}"></i></div>
                 <div class="ep-info">
                     <h4>Episode ${ep.ep} ${isPlaying ? '(Playing)' : ''}</h4>
                     <p>${ep.title}</p>
