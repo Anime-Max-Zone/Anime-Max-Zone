@@ -68,7 +68,9 @@ function loadHomePageData() {
 
     if (latestContainer && onAirContainer && newArrivalsContainer) {
         setTimeout(() => {
-            latestContainer.innerHTML = ''; onAirContainer.innerHTML = ''; newArrivalsContainer.innerHTML = '';
+            latestContainer.innerHTML = ''; 
+            onAirContainer.innerHTML = ''; 
+            newArrivalsContainer.innerHTML = '';
 
             const latestAnime = allContentDatabase.slice(0, 3);
             const onAirAnime = allContentDatabase.slice(3, 6);
@@ -224,13 +226,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // Agar Movie hai toh watch page ka direct button ya hide episodes
             if (data.type === 'movie' || !data.seasons) {
                 if (episodesSection) episodesSection.style.display = 'none';
-                // Ek "Watch Now" button add kar sakte hain yahan
+                
+                // Watch Now Button (Fixed Class for Premium Look)
                 const watchBtn = document.createElement('a');
                 watchBtn.href = `watch.html?id=${animeId}`;
-                watchBtn.className = 'admin-btn'; // Reusing button style
-                watchBtn.style.display = 'block';
-                watchBtn.style.textAlign = 'center';
-                watchBtn.style.marginTop = '20px';
+                watchBtn.className = 'watch-now-btn'; // CSS me iski styling hai
                 watchBtn.innerHTML = `<i class="fa-solid fa-play"></i> Watch Movie Now`;
                 document.querySelector('.synopsis-section').appendChild(watchBtn);
 
@@ -245,14 +245,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     const epArray = Object.keys(episodesObj).map(k => ({ firebaseKey: k, ...episodesObj[k] }));
                     totalEps += epArray.length;
 
-                    // Season Header (optional)
                     if (Object.keys(data.seasons).length > 1) {
                         episodeList.innerHTML += `<h4 style="color:#a855f7; margin: 10px 0 5px 0; font-size: 14px;">${seasonName}</h4>`;
                     }
 
                     epArray.forEach(episode => {
                         const epCard = document.createElement('a');
-                        // Link now passes: id, season and episode key
                         epCard.href = `watch.html?id=${animeId}&season=${encodeURIComponent(seasonName)}&ep=${episode.firebaseKey}`; 
                         epCard.className = 'episode-card';
                         epCard.innerHTML = `
@@ -395,6 +393,8 @@ if (document.getElementById('customVideo') && database) {
             url = videoData.audios[audioLang];
         } else if (qualityName && videoData.qualities && videoData.qualities[qualityName]) {
             url = videoData.qualities[qualityName];
+        } else if (videoData.gdrive_id) { // Fallback for old format
+            url = videoData.gdrive_id;
         }
 
         if(url) playVideoUrl(url);
@@ -406,7 +406,6 @@ if (document.getElementById('customVideo') && database) {
         if(!url) return;
         let finalUrl = url;
         
-        // Agar Google Drive ka pura link hai (drive.google.com/file/d/...)
         if (url.includes('drive.google.com')) {
             function extractFileId(link) {
                 const patterns = [/\/file\/d\/([a-zA-Z0-9_-]+)/, /[?&]id=([a-zA-Z0-9_-]+)/];
@@ -422,7 +421,6 @@ if (document.getElementById('customVideo') && database) {
                 finalUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${API_KEY}`;
             }
         } 
-        // Agar sirf File ID hai (http se start nahi hota)
         else if (!url.startsWith('http')) {
             const API_KEY = "AIzaSyCpfrluxsBhnz48ve9RykIy1IxzbBfk7dA"; 
             finalUrl = `https://www.googleapis.com/drive/v3/files/${url}?alt=media&key=${API_KEY}`;
