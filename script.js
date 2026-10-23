@@ -270,8 +270,8 @@ document.addEventListener('DOMContentLoaded', () => {
 if (document.getElementById('customVideo') && database) {
     const video = document.getElementById('customVideo');
     const videoLoader = document.getElementById('videoLoader');
-    const topControls = document.getElementById('topControls'); // Back & Icons wrapper
-    const controlsBar = document.getElementById('controlsBar'); // Bottom Controls
+    const topControls = document.getElementById('topControls'); 
+    const controlsBar = document.getElementById('controlsBar'); 
     
     // Top Menus
     const audioIconBtn = document.getElementById('audioIconBtn');
