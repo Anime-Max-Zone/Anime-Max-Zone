@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Settings - Anime Max Zone</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Main CSS File -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header Section (Sticky) -->
+    <header class="app-header">
+        <div class="logo-area">
+            <div class="logo-icon">
+                <i class="fa-solid fa-play"></i>
+            </div>
+            <div class="logo-text">
+                <h1>ANIME <span class="purple-text">MAX</span> ZONE</h1>
+                <p>Watch Your Favourite Anime</p>
+            </div>
+        </div>
+        <div class="search-area" id="openSearchBtn">
+            <i class="fa-solid fa-magnifying-glass"></i>
+        </div>
+    </header>
+
+    <!-- ================= SEARCH OVERLAY PANEL ================= -->
+    <div class="search-overlay" id="searchPanel">
+        <div class="search-header">
+            <div class="search-input-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="searchInput" placeholder="Search anime, movies, cartoons..." autocomplete="off">
+            </div>
+            <button class="cancel-btn" id="closeSearchBtn">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="search-results" id="searchResults">
+            <p class="search-hint">Start typing to search...</p>
+        </div>
+    </div>
+    <!-- ========================================================= -->
+
+    <!-- Main Content: Settings -->
+    <main class="main-content">
+        <div class="section-title" style="margin-top: 10px;">
+            <div class="title-left">
+                <span class="vertical-bar"></span>
+                <h2>Settings</h2>
+            </div>
+        </div>
+
+        <div class="settings-container">
+            
+            <!-- Group 1: App Preferences -->
+            <div class="settings-group">
+                <p class="group-title">App Preferences</p>
+                
+                <div class="settings-item">
+                    <div class="item-left">
+                        <i class="fa-solid fa-moon item-icon"></i>
+                        <span>Dark Mode</span>
+                    </div>
+                    <!-- Toggle Switch -->
+                    <label class="toggle-switch">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="settings-item">
+                    <div class="item-left">
+                        <i class="fa-solid fa-bell item-icon"></i>
+                        <span>Notifications</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="settings-item">
+                    <div class="item-left">
+                        <i class="fa-solid fa-play-circle item-icon"></i>
+                        <span>Auto-Play Next Episode</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Group 2: Content & Playback -->
+            <div class="settings-group">
+                <p class="group-title">Content & Playback</p>
+                
+                <div class="settings-item">
+                    <div class="item-left">
+                        <i class="fa-solid fa-video item-icon"></i>
+                        <span>Video Quality</span>
+                    </div>
+                    <div class="item-right">
+                        <span class="item-value">Auto</span>
+                        <i class="fa-solid fa-chevron-right chevron"></i>
+                    </div>
+                </div>
+
+                <div class="settings-item">
+                    <div class="item-left">
+                        <i class="fa-solid fa-language item-icon"></i>
+                        <span>Subtitle Language</span>
+                    </div>
+                    <div class="item-right">
+                        <span class="item-value">English</span>
+                        <i class="fa-solid fa-chevron-right chevron"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Group 3: Support & About -->
+            <div class="settings-group">
+                <p class="group-title">Support & About</p>
+                
+                <a href="#" class="settings-item clickable">
+                    <div class="item-left">
+                        <i class="fa-solid fa-circle-info item-icon"></i>
+                        <span>About Us</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right chevron"></i>
+                </a>
+
+                <a href="#" class="settings-item clickable">
+                    <div class="item-left">
+                        <i class="fa-solid fa-shield-halved item-icon"></i>
+                        <span>Privacy Policy</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right chevron"></i>
+                </a>
+
+                <a href="#" class="settings-item clickable">
+                    <div class="item-left">
+                        <i class="fa-solid fa-envelope item-icon"></i>
+                        <span>Contact Support</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right chevron"></i>
+                </a>
+            </div>
+
+            <!-- Logout / Clear Data Button -->
+            <button class="danger-btn" onclick="alert('Data Cleared Successfully!')">
+                <i class="fa-solid fa-trash-can"></i> Clear App Cache
+            </button>
+
+            <p class="app-version">Anime Max Zone v1.0.0</p>
+
+        </div>
+    </main>
+
+    <!-- Animated Bottom Navigation (Settings Tab Active) -->
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </a>
+        <a href="anime.html" class="nav-item">
+            <i class="fa-solid fa-face-smile"></i>
+            <span>Anime</span>
+        </a>
+        <a href="movies.html" class="nav-item">
+            <i class="fa-solid fa-clapperboard"></i>
+            <span>Movies</span>
+        </a>
+        <!-- Settings Tab Active -->
+        <a href="settings.html" class="nav-item active">
+            <i class="fa-solid fa-border-all"></i>
+            <span>Settings</span>
+        </a>
+    </nav>
+
+    <script src="script.js"></script>
+</body>
+</html>
