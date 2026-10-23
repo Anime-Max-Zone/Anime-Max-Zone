@@ -270,8 +270,8 @@ document.addEventListener('DOMContentLoaded', () => {
 if (document.getElementById('customVideo') && database) {
     const video = document.getElementById('customVideo');
     const videoLoader = document.getElementById('videoLoader');
-    const backBtn = document.getElementById('backBtn');
-    const topRightIcons = document.getElementById('topRightIcons');
+    const topControls = document.getElementById('topControls'); // Back & Icons wrapper
+    const controlsBar = document.getElementById('controlsBar'); // Bottom Controls
     
     // Top Menus
     const audioIconBtn = document.getElementById('audioIconBtn');
@@ -396,22 +396,28 @@ if (document.getElementById('customVideo') && database) {
     }
 
     // --- PLAYER LOGIC ---
-    if(audioIconBtn) audioIconBtn.addEventListener('click', () => {
+    if(audioIconBtn) audioIconBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
         audioMenu.style.display = audioMenu.style.display === 'none' ? 'block' : 'none';
         if(subtitleMenu) subtitleMenu.style.display = 'none';
         if(qualityMenu) qualityMenu.style.display = 'none';
+        resetControlTimeout();
     });
 
-    if(subtitleIconBtn) subtitleIconBtn.addEventListener('click', () => {
+    if(subtitleIconBtn) subtitleIconBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
         subtitleMenu.style.display = subtitleMenu.style.display === 'none' ? 'block' : 'none';
         if(audioMenu) audioMenu.style.display = 'none';
         if(qualityMenu) qualityMenu.style.display = 'none';
+        resetControlTimeout();
     });
 
-    if(settingsBtn) settingsBtn.addEventListener('click', () => {
+    if(settingsBtn) settingsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
         qualityMenu.style.display = qualityMenu.style.display === 'none' ? 'block' : 'none';
         if(audioMenu) audioMenu.style.display = 'none';
         if(subtitleMenu) subtitleMenu.style.display = 'none';
+        resetControlTimeout();
     });
 
     function setupPlayer(videoData) {
@@ -426,7 +432,7 @@ if (document.getElementById('customVideo') && database) {
                 const btn = document.createElement('button');
                 btn.innerText = lang;
                 btn.className = 'setting-btn';
-                btn.onclick = () => { loadSpecificTrack(videoData, lang, currentQuality); };
+                btn.onclick = (e) => { e.stopPropagation(); loadSpecificTrack(videoData, lang, currentQuality); };
                 audioOptions.appendChild(btn);
             });
         } else { audioOptions.innerHTML = '<p style="font-size:12px; color:#888;">No Audio</p>'; }
@@ -438,7 +444,7 @@ if (document.getElementById('customVideo') && database) {
                 const btn = document.createElement('button');
                 btn.innerText = q;
                 btn.className = 'setting-btn';
-                btn.onclick = () => { currentQuality = q; loadSpecificTrack(videoData, currentAudio, q); };
+                btn.onclick = (e) => { e.stopPropagation(); currentQuality = q; loadSpecificTrack(videoData, currentAudio, q); };
                 qualityOptions.appendChild(btn);
             });
         } else { qualityOptions.innerHTML = '<p style="font-size:12px; color:#888;">No Quality</p>'; }
@@ -450,7 +456,8 @@ if (document.getElementById('customVideo') && database) {
                 const btn = document.createElement('button');
                 btn.innerText = sub;
                 btn.className = 'setting-btn';
-                btn.onclick = () => { 
+                btn.onclick = (e) => { 
+                    e.stopPropagation();
                     const track = document.getElementById('subtitleTrack');
                     if(track) { track.src = videoData.subtitles[sub]; track.style.display = 'block'; }
                     subtitleMenu.style.display = 'none'; 
@@ -524,7 +531,6 @@ if (document.getElementById('customVideo') && database) {
     const fullscreenBtn = document.getElementById('fullscreenBtn');
     const skipBackBtn = document.getElementById('skipBackBtn');
     const skipForwardBtn = document.getElementById('skipForwardBtn');
-    const controlsBar = document.getElementById('controlsBar');
     const playerWrapper = document.getElementById('playerWrapper');
     
     const leftOverlay = document.getElementById('seekLeftOverlay');
@@ -535,13 +541,19 @@ if (document.getElementById('customVideo') && database) {
     video.addEventListener('waiting', () => { if(videoLoader) videoLoader.style.display = 'block'; });
     video.addEventListener('playing', () => { if(videoLoader) videoLoader.style.display = 'none'; });
 
-    playPauseBtn.addEventListener('click', () => {
+    playPauseBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        togglePlayPause();
+        resetControlTimeout();
+    });
+
+    function togglePlayPause() {
         if (video.paused) {
             video.play(); playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
         } else {
             video.pause(); playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
         }
-    });
+    }
 
     video.addEventListener('timeupdate', () => {
         if (!isNaN(video.duration)) {
@@ -556,16 +568,23 @@ if (document.getElementById('customVideo') && database) {
         }
     });
 
-    seekBar.addEventListener('input', () => video.currentTime = video.duration * (seekBar.value / 100));
-    skipForwardBtn.addEventListener('click', () => video.currentTime += 10);
-    skipBackBtn.addEventListener('click', () => video.currentTime -= 10);
+    seekBar.addEventListener('input', (e) => {
+        e.stopPropagation();
+        video.currentTime = video.duration * (seekBar.value / 100);
+    });
     
-    muteBtn.addEventListener('click', () => {
+    skipForwardBtn.addEventListener('click', (e) => { e.stopPropagation(); video.currentTime += 10; resetControlTimeout(); });
+    skipBackBtn.addEventListener('click', (e) => { e.stopPropagation(); video.currentTime -= 10; resetControlTimeout(); });
+    
+    muteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
         video.muted = !video.muted;
         muteBtn.innerHTML = video.muted ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
+        resetControlTimeout();
     });
 
-    fullscreenBtn.addEventListener('click', async () => {
+    fullscreenBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
         if (!document.fullscreenElement) {
             try {
                 await playerWrapper.requestFullscreen();
@@ -575,43 +594,54 @@ if (document.getElementById('customVideo') && database) {
             document.exitFullscreen();
             if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
         }
+        resetControlTimeout();
     });
 
+    // 🔥 Auto Hide Controls Logic (3 Seconds) 🔥
     let controlTimeout;
+
     function showControls() {
-        if(controlsBar) controlsBar.classList.remove('hidden');
-        if(backBtn) backBtn.classList.remove('hidden');
-        if(topRightIcons) topRightIcons.classList.remove('hidden');
-        
-        clearTimeout(controlTimeout);
+        controlsBar.classList.remove('hidden');
+        topControls.classList.remove('hidden');
+        resetControlTimeout();
+    }
+
+    function hideControls() {
         if (!video.paused) {
-            controlTimeout = setTimeout(() => {
-                if(controlsBar) controlsBar.classList.add('hidden');
-                if(backBtn) backBtn.classList.add('hidden');
-                if(topRightIcons) topRightIcons.classList.add('hidden');
-                
-                if(audioMenu) audioMenu.style.display = 'none';
-                if(subtitleMenu) subtitleMenu.style.display = 'none';
-                if(qualityMenu) qualityMenu.style.display = 'none';
-            }, 3000);
+            controlsBar.classList.add('hidden');
+            topControls.classList.add('hidden');
+            if(audioMenu) audioMenu.style.display = 'none';
+            if(subtitleMenu) subtitleMenu.style.display = 'none';
+            if(qualityMenu) qualityMenu.style.display = 'none';
         }
     }
-    
-    playerWrapper.addEventListener('mousemove', showControls);
-    
+
+    function resetControlTimeout() {
+        clearTimeout(controlTimeout);
+        if (!video.paused) {
+            controlTimeout = setTimeout(hideControls, 3000); // 3 Second
+        }
+    }
+
+    // Jab video pause ho toh controls hide mat karein
     video.addEventListener('pause', () => {
         clearTimeout(controlTimeout);
-        if(controlsBar) controlsBar.classList.remove('hidden');
-        if(backBtn) backBtn.classList.remove('hidden');
-        if(topRightIcons) topRightIcons.classList.remove('hidden');
+        showControls();
     });
 
+    // Jab mouse move ya touch ho toh controls show karein
+    playerWrapper.addEventListener('mousemove', showControls);
+    playerWrapper.addEventListener('touchstart', showControls);
+
+    // --- Single Tap / Double Tap Logic ---
     let lastTap = 0;
+    
     function handleTap(overlay, action) {
         const currentTime = new Date().getTime();
         const tapLength = currentTime - lastTap;
         
-        if (tapLength < 350 && tapLength > 0) {
+        // Double Tap detect hua
+        if (tapLength < 300 && tapLength > 0) {
             if (action === 'left') {
                 video.currentTime = Math.max(0, video.currentTime - 10);
                 overlay.querySelector('.tap-feedback').innerHTML = '<i class="fa-solid fa-backward"></i> 10s';
@@ -619,26 +649,19 @@ if (document.getElementById('customVideo') && database) {
                 video.currentTime = Math.min(video.duration, video.currentTime + 10);
                 overlay.querySelector('.tap-feedback').innerHTML = '10s <i class="fa-solid fa-forward"></i>';
             } else if (action === 'center') {
-                if (video.paused) {
-                    video.play(); playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>'; centerFeedbackIcon.innerHTML = '<i class="fa-solid fa-play"></i>';
-                } else {
-                    video.pause(); playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>'; centerFeedbackIcon.innerHTML = '<i class="fa-solid fa-pause"></i>';
-                }
+                togglePlayPause();
+                centerFeedbackIcon.innerHTML = video.paused ? '<i class="fa-solid fa-play"></i>' : '<i class="fa-solid fa-pause"></i>';
             }
+            // Animation Show
             overlay.classList.add('active');
             setTimeout(() => { overlay.classList.remove('active'); }, 500);
+            
         } else {
+            // Single Tap (Controller show/hide)
             if (controlsBar.classList.contains('hidden')) {
                 showControls();
             } else {
-                if (!video.paused) {
-                    controlsBar.classList.add('hidden');
-                    backBtn.classList.add('hidden');
-                    topRightIcons.classList.add('hidden');
-                    audioMenu.style.display = 'none';
-                    subtitleMenu.style.display = 'none';
-                    qualityMenu.style.display = 'none';
-                }
+                if (!video.paused) hideControls();
             }
         }
         lastTap = currentTime;
@@ -647,6 +670,9 @@ if (document.getElementById('customVideo') && database) {
     if(leftOverlay) leftOverlay.addEventListener('click', () => handleTap(leftOverlay, 'left'));
     if(rightOverlay) rightOverlay.addEventListener('click', () => handleTap(rightOverlay, 'right'));
     if(centerOverlay) centerOverlay.addEventListener('click', () => handleTap(centerOverlay, 'center'));
+
+    // Initial Show
+    showControls();
 }
 
 // ================= 7. COMMENT SYSTEM & BOTTOM SHEET LOGIC =================
@@ -657,7 +683,7 @@ if (document.getElementById('customVideo') && database) {
     const commentForm = document.getElementById('commentForm');
     const commentsList = document.getElementById('commentsList');
 
-    // 🔥 BOTTOM SHEET ELEMENTS 🔥
+    // Bottom Sheet Elements
     const openCommentsBtn = document.getElementById('openCommentsBtn');
     const closeCommentsBtn = document.getElementById('closeCommentsBtn');
     const bottomSheet = document.getElementById('commentsBottomSheet');
@@ -665,19 +691,16 @@ if (document.getElementById('customVideo') && database) {
 
     // Bottom Sheet Open/Close Logic
     if(openCommentsBtn && bottomSheet) {
-        // Open Sheet
         openCommentsBtn.addEventListener('click', () => {
             bottomSheet.classList.add('active');
             backdrop.classList.add('active');
         });
 
-        // Close via X button
         closeCommentsBtn.addEventListener('click', () => {
             bottomSheet.classList.remove('active');
             backdrop.classList.remove('active');
         });
 
-        // Close via clicking outside (Backdrop)
         backdrop.addEventListener('click', () => {
             bottomSheet.classList.remove('active');
             backdrop.classList.remove('active');
