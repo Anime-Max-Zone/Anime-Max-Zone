@@ -285,9 +285,8 @@ if (document.getElementById('customVideo') && database) {
         const animeData = snapshot.val();
         
         if (animeData) {
-            document.title = `${animeData.title} - Anime Max Zone`;
-
             let videoDataToPlay = null;
+            let pageTitle = animeData.title;
 
             // Check: Movie or Anime
             if (animeData.type === 'movie' || !animeData.seasons) {
@@ -296,19 +295,31 @@ if (document.getElementById('customVideo') && database) {
                 // Anime Episode
                 if (seasonName && epKey && animeData.seasons[seasonName] && animeData.seasons[seasonName][epKey]) {
                     videoDataToPlay = animeData.seasons[seasonName][epKey];
+                    pageTitle += ` - ${seasonName} Ep ${videoDataToPlay.ep}`;
                 } else {
                     // Fallback: Play first episode of first season
                     const firstSeason = Object.keys(animeData.seasons)[0];
                     if (firstSeason) {
                         const firstEpKey = Object.keys(animeData.seasons[firstSeason])[0];
                         videoDataToPlay = animeData.seasons[firstSeason][firstEpKey];
+                        pageTitle += ` - ${firstSeason} Ep ${videoDataToPlay.ep}`;
                     }
                 }
             }
 
+            // 🔥 Update Page Title and Description 🔥
+            document.title = `${pageTitle} - Anime Max Zone`;
+            
+            const titleEl = document.getElementById('watchAnimeTitle');
+            if(titleEl) titleEl.innerText = pageTitle;
+
+            const descEl = document.getElementById('watchAnimeDesc');
+            if(descEl) descEl.innerText = animeData.synopsis || "No description available.";
+
             if (videoDataToPlay) {
                 setupPlayer(videoDataToPlay);
             } else {
+                if(videoLoader) videoLoader.style.display = 'none';
                 console.warn("Video data not found.");
             }
         }
@@ -426,9 +437,12 @@ if (document.getElementById('customVideo') && database) {
             finalUrl = `https://www.googleapis.com/drive/v3/files/${url}?alt=media&key=${API_KEY}`;
         }
 
-        videoLoader.style.display = 'block';
+        if(videoLoader) videoLoader.style.display = 'block';
         video.src = finalUrl;
-        video.play().catch(e => console.log("Autoplay blocked", e));
+        video.play().catch(e => {
+            console.log("Autoplay blocked", e);
+            if(videoLoader) videoLoader.style.display = 'none';
+        });
     }
 
     // ================= CUSTOM CONTROLS =================
@@ -442,70 +456,91 @@ if (document.getElementById('customVideo') && database) {
     const controlsBar = document.getElementById('controlsBar');
     const playerWrapper = document.getElementById('playerWrapper');
 
-    video.addEventListener('waiting', () => videoLoader.style.display = 'block');
-    video.addEventListener('playing', () => videoLoader.style.display = 'none');
+    if(video) {
+        video.addEventListener('waiting', () => { if(videoLoader) videoLoader.style.display = 'block'; });
+        video.addEventListener('playing', () => { if(videoLoader) videoLoader.style.display = 'none'; });
+        
+        // 🔥 ERROR HANDLER (Agar GDrive link public nahi hai toh spinner rukega)
+        video.addEventListener('error', () => {
+            if(videoLoader) videoLoader.style.display = 'none';
+            alert("Video play nahi ho payi. Kripya check karein ki Google Drive link 'Anyone with the link' par set hai ya nahi, aur API Key sahi hai.");
+        });
+    }
 
-    playPauseBtn.addEventListener('click', () => {
-        if (video.paused) {
-            video.play();
-            playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
-        } else {
-            video.pause();
-            playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
-        }
-    });
-
-    video.addEventListener('timeupdate', () => {
-        if (!isNaN(video.duration)) {
-            seekBar.value = (video.currentTime / video.duration) * 100;
-            let currMin = Math.floor(video.currentTime / 60);
-            let currSec = Math.floor(video.currentTime % 60);
-            let totalMin = Math.floor(video.duration / 60);
-            let totalSec = Math.floor(video.duration % 60);
-            currSec = currSec < 10 ? '0' + currSec : currSec;
-            totalSec = totalSec < 10 ? '0' + totalSec : totalSec;
-            timeDisplay.innerText = `${currMin}:${currSec} / ${totalMin}:${totalSec}`;
-        }
-    });
-
-    seekBar.addEventListener('input', () => video.currentTime = video.duration * (seekBar.value / 100));
-    skipForwardBtn.addEventListener('click', () => video.currentTime += 10);
-    skipBackBtn.addEventListener('click', () => video.currentTime -= 10);
-    
-    muteBtn.addEventListener('click', () => {
-        video.muted = !video.muted;
-        muteBtn.innerHTML = video.muted ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
-    });
-
-    fullscreenBtn.addEventListener('click', async () => {
-        if (!document.fullscreenElement) {
-            try {
-                await playerWrapper.requestFullscreen();
-                if (screen.orientation && screen.orientation.lock) {
-                    await screen.orientation.lock('landscape');
-                }
-            } catch (err) {}
-        } else {
-            document.exitFullscreen();
-            if (screen.orientation && screen.orientation.unlock) {
-                screen.orientation.unlock();
+    if(playPauseBtn) {
+        playPauseBtn.addEventListener('click', () => {
+            if (video.paused) {
+                video.play();
+                playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+            } else {
+                video.pause();
+                playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
             }
-        }
-    });
+        });
+    }
+
+    if(video) {
+        video.addEventListener('timeupdate', () => {
+            if (!isNaN(video.duration)) {
+                seekBar.value = (video.currentTime / video.duration) * 100;
+                let currMin = Math.floor(video.currentTime / 60);
+                let currSec = Math.floor(video.currentTime % 60);
+                let totalMin = Math.floor(video.duration / 60);
+                let totalSec = Math.floor(video.duration % 60);
+                currSec = currSec < 10 ? '0' + currSec : currSec;
+                totalSec = totalSec < 10 ? '0' + totalSec : totalSec;
+                timeDisplay.innerText = `${currMin}:${currSec} / ${totalMin}:${totalSec}`;
+            }
+        });
+    }
+
+    if(seekBar) seekBar.addEventListener('input', () => video.currentTime = video.duration * (seekBar.value / 100));
+    if(skipForwardBtn) skipForwardBtn.addEventListener('click', () => video.currentTime += 10);
+    if(skipBackBtn) skipBackBtn.addEventListener('click', () => video.currentTime -= 10);
+    
+    if(muteBtn) {
+        muteBtn.addEventListener('click', () => {
+            video.muted = !video.muted;
+            muteBtn.innerHTML = video.muted ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
+        });
+    }
+
+    if(fullscreenBtn) {
+        fullscreenBtn.addEventListener('click', async () => {
+            if (!document.fullscreenElement) {
+                try {
+                    await playerWrapper.requestFullscreen();
+                    if (screen.orientation && screen.orientation.lock) {
+                        await screen.orientation.lock('landscape');
+                    }
+                } catch (err) {}
+            } else {
+                document.exitFullscreen();
+                if (screen.orientation && screen.orientation.unlock) {
+                    screen.orientation.unlock();
+                }
+            }
+        });
+    }
 
     let controlTimeout;
     function showControls() {
-        controlsBar.classList.remove('hidden');
+        if(controlsBar) controlsBar.classList.remove('hidden');
         clearTimeout(controlTimeout);
         if (!video.paused) {
-            controlTimeout = setTimeout(() => controlsBar.classList.add('hidden'), 3000);
+            controlTimeout = setTimeout(() => { if(controlsBar) controlsBar.classList.add('hidden'); }, 3000);
         }
     }
-    playerWrapper.addEventListener('mousemove', showControls);
-    playerWrapper.addEventListener('touchstart', showControls);
-    playerWrapper.addEventListener('click', showControls);
-    video.addEventListener('pause', () => {
-        clearTimeout(controlTimeout);
-        controlsBar.classList.remove('hidden');
-    });
+    
+    if(playerWrapper) {
+        playerWrapper.addEventListener('mousemove', showControls);
+        playerWrapper.addEventListener('touchstart', showControls);
+        playerWrapper.addEventListener('click', showControls);
+    }
+    if(video) {
+        video.addEventListener('pause', () => {
+            clearTimeout(controlTimeout);
+            if(controlsBar) controlsBar.classList.remove('hidden');
+        });
+    }
 }
