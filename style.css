@@ -894,16 +894,40 @@ input:checked + .slider:before {
     background: rgba(168, 85, 247, 0.8);
 }
 
-/* Loading Spinner */
+/* ================= MODERN LOADING SPINNER ================= */
 .loading-spinner {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 35px;
-    color: #a855f7;
-    z-index: 5;
+    width: 45px;
+    height: 45px;
+    z-index: 10;
+    display: none; /* JS isko block karega */
+}
+
+/* Purane FontAwesome icon ko chhupa do */
+.loading-spinner i {
     display: none; 
+}
+
+/* Naya Premium Ring Spinner */
+.loading-spinner::after {
+    content: "";
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 3px solid rgba(168, 85, 247, 0.2); /* Faint Purple Background */
+    border-top-color: #a855f7; /* Solid Purple Rotating Line */
+    animation: smoothSpin 0.8s linear infinite;
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.4); /* Purple Glow */
+    box-sizing: border-box;
+}
+
+@keyframes smoothSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 /* Custom Controls (Bottom) */
@@ -1002,8 +1026,8 @@ input:checked + .slider:before {
 .side-menu {
     position: absolute;
     top: 0;
-    right: -260px; /* Start hidden on the right */
-    width: 180px; /* Size chhota kiya */
+    right: -200px; /* Start hidden on the right */
+    width: 180px; /* Normal mobile screen ke liye size */
     height: 100%;
     background: rgba(15, 15, 20, 0.95);
     backdrop-filter: blur(15px);
@@ -1020,6 +1044,18 @@ input:checked + .slider:before {
     right: 0;
 }
 
+/* 🔥 FULLSCREEN MENU SIZE FIX 🔥 */
+.player-wrapper:fullscreen .side-menu,
+.player-wrapper:-webkit-full-screen .side-menu {
+    width: 300px; /* Fullscreen me menu bada hoga */
+    right: -320px;
+}
+
+.player-wrapper:fullscreen .side-menu.active,
+.player-wrapper:-webkit-full-screen .side-menu.active {
+    right: 0;
+}
+
 .side-menu-header {
     display: flex;
     justify-content: space-between;
@@ -1033,6 +1069,13 @@ input:checked + .slider:before {
     font-size: 14px;
     margin: 0;
     font-weight: 600;
+    transition: 0.3s ease;
+}
+
+/* Fullscreen header font size */
+.player-wrapper:fullscreen .side-menu-header h4,
+.player-wrapper:-webkit-full-screen .side-menu-header h4 {
+    font-size: 18px;
 }
 
 .close-menu-btn {
@@ -1042,6 +1085,13 @@ input:checked + .slider:before {
     font-size: 16px;
     cursor: pointer;
     padding: 5px;
+    transition: 0.3s ease;
+}
+
+/* Fullscreen close button size */
+.player-wrapper:fullscreen .close-menu-btn,
+.player-wrapper:-webkit-full-screen .close-menu-btn {
+    font-size: 20px;
 }
 
 .side-menu-options {
@@ -1057,16 +1107,24 @@ input:checked + .slider:before {
     background: transparent;
     border: none;
     color: #ccc;
-    padding: 10px 15px; /* Padding kam ki */
-    font-size: 13px; /* Font chhota kiya */
+    padding: 10px 15px;
+    font-size: 13px;
     display: flex;
     align-items: center;
     gap: 10px;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background 0.2s, font-size 0.3s, padding 0.3s;
     text-align: left;
     width: 100%;
     font-family: 'Poppins', sans-serif;
+}
+
+/* Fullscreen button sizes */
+.player-wrapper:fullscreen .setting-btn,
+.player-wrapper:-webkit-full-screen .setting-btn {
+    padding: 15px 20px;
+    font-size: 16px;
+    gap: 15px;
 }
 
 .setting-btn:hover {
@@ -1077,12 +1135,19 @@ input:checked + .slider:before {
 .setting-btn::before {
     content: '';
     display: inline-block;
-    width: 14px; /* Circle chhota kiya */
+    width: 14px;
     height: 14px;
     border: 2px solid #666;
     border-radius: 50%;
     transition: all 0.2s;
     flex-shrink: 0;
+}
+
+/* Fullscreen circle size */
+.player-wrapper:fullscreen .setting-btn::before,
+.player-wrapper:-webkit-full-screen .setting-btn::before {
+    width: 18px;
+    height: 18px;
 }
 
 /* Active State (Blue Circle like screenshot) */
@@ -1095,6 +1160,12 @@ input:checked + .slider:before {
     border-color: #3b82f6; /* Blue */
     background: #3b82f6;
     box-shadow: inset 0 0 0 2px #0f0f14; /* Ring effect */
+}
+
+/* Fullscreen active circle ring */
+.player-wrapper:fullscreen .setting-btn.active::before,
+.player-wrapper:-webkit-full-screen .setting-btn.active::before {
+    box-shadow: inset 0 0 0 3px #0f0f14;
 }
 
 /* ================= TAP OVERLAYS (Double Tap) ================= */
