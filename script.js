@@ -295,10 +295,15 @@ if (document.getElementById('customVideo') && database) {
     const urlParams = new URLSearchParams(window.location.search);
     const animeId = urlParams.get('id'); 
 
+    function isAnyMenuOpen() {
+        return [audioMenu, subtitleMenu, qualityMenu].some(m => m && m.classList.contains('active'));
+    }
+
     window.closeAllMenus = () => {
         if(audioMenu) audioMenu.classList.remove('active');
         if(subtitleMenu) subtitleMenu.classList.remove('active');
         if(qualityMenu) qualityMenu.classList.remove('active');
+        resetControlTimeout(); // menu band hone ke baad auto-hide timer dobara shuru
     };
 
     if(audioIconBtn) audioIconBtn.addEventListener('click', (e) => {
@@ -1059,7 +1064,7 @@ if (document.getElementById('customVideo') && database) {
     let controlTimeout;
 
     function showControls() { controlsBar.classList.remove('hidden'); topControls.classList.remove('hidden'); resetControlTimeout(); }
-    function hideControls() { if (!video.paused) { controlsBar.classList.add('hidden'); topControls.classList.add('hidden'); closeAllMenus(); } }
+    function hideControls() { if (!video.paused && !isAnyMenuOpen()) { controlsBar.classList.add('hidden'); topControls.classList.add('hidden'); } }
     function resetControlTimeout() { clearTimeout(controlTimeout); if (!video.paused) { controlTimeout = setTimeout(hideControls, 3000); } }
 
     video.addEventListener('pause', () => { clearTimeout(controlTimeout); showControls(); });
@@ -1085,7 +1090,8 @@ if (document.getElementById('customVideo') && database) {
             overlay.classList.add('active');
             setTimeout(() => { overlay.classList.remove('active'); }, 500);
         } else {
-            if (controlsBar.classList.contains('hidden')) showControls(); else { if (!video.paused) hideControls(); }
+            if (isAnyMenuOpen()) closeAllMenus();
+            else if (controlsBar.classList.contains('hidden')) showControls(); else { if (!video.paused) hideControls(); }
         }
         lastTap = currentTime;
     }
