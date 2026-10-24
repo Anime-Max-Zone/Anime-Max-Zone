@@ -435,6 +435,22 @@ if (document.getElementById('customVideo') && database) {
         });
     }
 
+    // ================= AUDIO TICK HELPER =================
+    function setAudioActive(container, activeBtn) {
+        if (!container) return;
+        Array.from(container.children).forEach(c => {
+            c.classList.remove('active');
+            const t = c.querySelector('.audio-tick');
+            if (t) t.remove();
+        });
+        if (!activeBtn) return;
+        activeBtn.classList.add('active');
+        const tick = document.createElement('i');
+        tick.className = 'fa-solid fa-check audio-tick';
+        tick.style.cssText = 'margin-left:auto; color:#a855f7; font-size:12px;';
+        activeBtn.appendChild(tick);
+    }
+
     // ================= SUBTITLE HELPERS =================
     let customSubBlobUrl = null;
 
@@ -577,6 +593,7 @@ if (document.getElementById('customVideo') && database) {
         const audioOptions = document.getElementById('audioOptions');
         if (videoData.audios && Object.keys(videoData.audios).length > 0) {
             audioOptions.innerHTML = '';
+            if (!videoData.audios[currentAudio]) currentAudio = Object.keys(videoData.audios)[0];
             Object.keys(videoData.audios).forEach(lang => {
                 const btn = document.createElement('button');
                 btn.innerText = lang;
@@ -584,13 +601,13 @@ if (document.getElementById('customVideo') && database) {
                 btn.onclick = (e) => { 
                     e.stopPropagation(); 
                     currentAudio = lang;
-                    Array.from(audioOptions.children).forEach(c => c.classList.remove('active'));
-                    btn.classList.add('active');
+                    setAudioActive(audioOptions, btn);
                     loadSpecificTrack(videoData, lang, null); 
                     setTimeout(closeAllMenus, 300);
                 };
                 audioOptions.appendChild(btn);
             });
+            setAudioActive(audioOptions, audioOptions.querySelector('.setting-btn.active'));
         } else { audioOptions.innerHTML = '<p style="font-size:14px; color:#888; padding:15px;">No Audio</p>'; }
     }
 
@@ -682,18 +699,20 @@ if (document.getElementById('customVideo') && database) {
                     btn.onclick = (e) => {
                         e.stopPropagation();
                         hls.audioTrack = index; 
-                        Array.from(audioOptions.children).forEach(c => c.classList.remove('active'));
-                        btn.classList.add('active');
+                        setAudioActive(audioOptions, btn);
                         setTimeout(closeAllMenus, 300);
                     };
                     audioOptions.appendChild(btn);
                 });
+                setAudioActive(audioOptions, audioOptions.querySelector('.setting-btn.active'));
             } 
             // Fallback: Hidden Audio (Firebase se alag links)
             else if (videoData.audios && Object.keys(videoData.audios).length > 0) {
                 isHiddenAudioActive = true;
                 video.muted = true; // Video ko mute rakho taaki double sound na aaye
-                let firstAudioUrl = Object.values(videoData.audios)[0]; 
+                const activeLang = videoData.audios[currentAudio] ? currentAudio : Object.keys(videoData.audios)[0];
+                currentAudio = activeLang;
+                let firstAudioUrl = videoData.audios[activeLang];
                 
                 audioHls = new Hls({ enableWorker: true, lowLatencyMode: true });
                 audioHls.loadSource(firstAudioUrl);
@@ -719,12 +738,12 @@ if (document.getElementById('customVideo') && database) {
                             if(!video.paused) hiddenAudioPlayer.play();
                         });
 
-                        Array.from(audioOptions.children).forEach(c => c.classList.remove('active'));
-                        btn.classList.add('active');
+                        setAudioActive(audioOptions, btn);
                         setTimeout(closeAllMenus, 300);
                     };
                     audioOptions.appendChild(btn);
                 });
+                setAudioActive(audioOptions, audioOptions.querySelector('.setting-btn.active'));
             } else {
                 audioOptions.innerHTML = '<p style="font-size:14px; color:#888; padding:15px;">No Audio Tracks</p>';
             }
@@ -774,12 +793,19 @@ if (document.getElementById('customVideo') && database) {
                 btn.onclick = (e) => {
                     e.stopPropagation();
                     hls.audioTrack = index;
-                    Array.from(audioOptions.children).forEach(c => c.classList.remove('active'));
-                    btn.classList.add('active');
+                    setAudioActive(audioOptions, btn);
                     setTimeout(closeAllMenus, 300);
                 };
                 audioOptions.appendChild(btn);
             });
+            setAudioActive(audioOptions, audioOptions.querySelector('.setting-btn.active'));
+        });
+
+        hls.on(Hls.Events.AUDIO_TRACK_SWITCHED, function(event, data) {
+            if (isHiddenAudioActive || !hls || !hls.audioTracks || hls.audioTracks.length === 0) return;
+            const audioOptions = document.getElementById('audioOptions');
+            const btn = audioOptions && audioOptions.children[data.id];
+            if (btn && btn.tagName === 'BUTTON') setAudioActive(audioOptions, btn);
         });
 
         // 🔥 SUBTITLE FIX: m3u8 ke andar ke subtitle tracks bhi menu me dikhao 🔥
