@@ -25,9 +25,9 @@ let allContentDatabase = [];
 let currentAudio = null;
 let currentQuality = null;
 let activeSubtitleUrl = null;
-let hls = null; // 🔥 Video HLS Instance
-let audioHls = null; // 🔥 Audio HLS Instance
-let isMutedByUser = false; // 🔥 Track mute state
+let hls = null; 
+let audioHls = null; 
+let isMutedByUser = false; 
 
 // ================= 2. SPLASH SCREEN & INITIAL LOAD =================
 document.addEventListener('DOMContentLoaded', () => {
@@ -275,12 +275,11 @@ document.addEventListener('DOMContentLoaded', () => {
 // ================= 6. WATCH PAGE (PLAYER) =================
 if (document.getElementById('customVideo') && database) {
     const video = document.getElementById('customVideo');
-    const hiddenAudioPlayer = document.getElementById('hiddenAudioPlayer'); // 🔥 Hidden Audio Element
+    const hiddenAudioPlayer = document.getElementById('hiddenAudioPlayer'); 
     const videoLoader = document.getElementById('videoLoader');
     const topControls = document.getElementById('topControls'); 
     const controlsBar = document.getElementById('controlsBar'); 
     
-    // Top Menus
     const audioIconBtn = document.getElementById('audioIconBtn');
     const subtitleIconBtn = document.getElementById('subtitleIconBtn');
     const settingsBtn = document.getElementById('settingsBtn');
@@ -292,11 +291,9 @@ if (document.getElementById('customVideo') && database) {
     let activeSeason = "";
     let currentEpKey = "";
 
-    // URL Params
     const urlParams = new URLSearchParams(window.location.search);
     const animeId = urlParams.get('id'); 
 
-    // 🔥 MENU LOGIC
     window.closeAllMenus = () => {
         if(audioMenu) audioMenu.classList.remove('active');
         if(subtitleMenu) subtitleMenu.classList.remove('active');
@@ -327,7 +324,6 @@ if (document.getElementById('customVideo') && database) {
         resetControlTimeout();
     });
 
-    // Load Data
     database.ref('content/' + animeId).once('value').then((snapshot) => {
         currentAnimeData = snapshot.val();
         
@@ -370,7 +366,6 @@ if (document.getElementById('customVideo') && database) {
         }
     });
 
-    // --- Render Seasons & Episodes ---
     function renderWatchSeasons() {
         const seasonTabs = document.getElementById('watchSeasonTabs');
         if (!seasonTabs) return;
@@ -442,16 +437,13 @@ if (document.getElementById('customVideo') && database) {
     function setupPlayer(videoData) {
         closeAllMenus(); 
 
-        // Purana HLS / Audio HLS destroy karo
         if (hls) { hls.destroy(); hls = null; }
         if (audioHls) { audioHls.destroy(); audioHls = null; }
         hiddenAudioPlayer.removeAttribute('src');
         hiddenAudioPlayer.load();
         
-        // Video ko mute rakho taaki double sound na aaye
-        video.muted = true; 
+        video.muted = false; 
 
-        // 🔥 CHECK FOR HLS LINK (.m3u8) 🔥
         let videoUrl = "";
         if (videoData.gdrive_id && videoData.gdrive_id.includes('.m3u8')) {
             videoUrl = videoData.gdrive_id;
@@ -469,9 +461,7 @@ if (document.getElementById('customVideo') && database) {
             return; 
         }
 
-        // ==========================================
-        // PURANA MP4 LOGIC (FALLBACK)
-        // ==========================================
+        // MP4 Fallback
         const audioOptions = document.getElementById('audioOptions');
         if (videoData.audios && Object.keys(videoData.audios).length > 0) {
             audioOptions.innerHTML = '';
@@ -490,86 +480,15 @@ if (document.getElementById('customVideo') && database) {
                 audioOptions.appendChild(btn);
             });
         } else { audioOptions.innerHTML = '<p style="font-size:14px; color:#888; padding:15px;">No Audio</p>'; }
-
-        const qualityOptions = document.getElementById('qualityOptions');
-        if (videoData.qualities && Object.keys(videoData.qualities).length > 0) {
-            qualityOptions.innerHTML = '';
-            Object.keys(videoData.qualities).forEach(q => {
-                const btn = document.createElement('button');
-                btn.innerText = q;
-                btn.className = `setting-btn ${currentQuality === q ? 'active' : ''}`;
-                btn.onclick = (e) => { 
-                    e.stopPropagation(); 
-                    currentQuality = q; 
-                    Array.from(qualityOptions.children).forEach(c => c.classList.remove('active'));
-                    btn.classList.add('active');
-                    loadSpecificTrack(videoData, null, q); 
-                    setTimeout(closeAllMenus, 300);
-                };
-                qualityOptions.appendChild(btn);
-            });
-        } else { qualityOptions.innerHTML = '<p style="font-size:14px; color:#888; padding:15px;">No Quality</p>'; }
-
-        // Subtitle (MP4 Fallback)
-        const subtitleOptions = document.getElementById('subtitleOptions');
-        subtitleOptions.innerHTML = '';
-        
-        const offBtn = document.createElement('button');
-        offBtn.innerText = 'Off';
-        offBtn.className = `setting-btn ${!activeSubtitleUrl ? 'active' : ''}`;
-        offBtn.onclick = (e) => {
-            e.stopPropagation();
-            activeSubtitleUrl = null;
-            const track = document.getElementById('subtitleTrack');
-            if(track) { track.mode = 'disabled'; track.style.display = 'none'; }
-            Array.from(subtitleOptions.children).forEach(c => c.classList.remove('active'));
-            offBtn.classList.add('active');
-            setTimeout(closeAllMenus, 300);
-        };
-        subtitleOptions.appendChild(offBtn);
-
-        if (videoData.subtitles && Object.keys(videoData.subtitles).length > 0) {
-            Object.keys(videoData.subtitles).forEach(sub => {
-                const btn = document.createElement('button');
-                btn.innerText = sub;
-                btn.className = `setting-btn ${activeSubtitleUrl === videoData.subtitles[sub] ? 'active' : ''}`;
-                btn.onclick = (e) => { 
-                    e.stopPropagation();
-                    activeSubtitleUrl = videoData.subtitles[sub]; 
-                    const track = document.getElementById('subtitleTrack');
-                    if(track) { 
-                        track.src = activeSubtitleUrl; 
-                        track.style.display = 'block'; 
-                        track.mode = 'showing'; 
-                    }
-                    Array.from(subtitleOptions.children).forEach(c => c.classList.remove('active'));
-                    btn.classList.add('active');
-                    setTimeout(closeAllMenus, 300);
-                };
-                subtitleOptions.appendChild(btn);
-            });
-        } else { 
-            if(subtitleOptions.children.length === 1) {
-                subtitleOptions.innerHTML += '<p style="font-size:14px; color:#888; padding:15px;">No Subtitles</p>'; 
-            }
-        }
-
-        const defaultAudio = currentAudio || Object.keys(videoData.audios || {})[0] || null;
-        const defaultQuality = currentQuality || Object.keys(videoData.qualities || {})[0] || null;
-        loadSpecificTrack(videoData, defaultAudio, defaultQuality);
     }
 
-    // 🔥 NETFLIX JAISA HLS PLAYER (m3u8) WITH HIDDEN AUDIO 🔥
     function setupHlsPlayer(videoData, videoUrl) {
-        
         hls = new Hls({ enableWorker: true, lowLatencyMode: true, backBufferLength: 90 });
         hls.loadSource(videoUrl);
         hls.attachMedia(video);
 
-        // Audio Link Setup
         let audioUrl = "";
         if (videoData.audios && Object.values(videoData.audios).length > 0) {
-            // Default to first audio link
             audioUrl = Object.values(videoData.audios)[0]; 
         }
 
@@ -577,9 +496,12 @@ if (document.getElementById('customVideo') && database) {
             audioHls = new Hls({ enableWorker: true, lowLatencyMode: true });
             audioHls.loadSource(audioUrl);
             audioHls.attachMedia(hiddenAudioPlayer);
+            
+            // Agar hidden audio use ho raha hai, toh main video ko mute karo
+            video.muted = true; 
         }
 
-        // Video + Audio Sync
+        // Sync Events
         video.addEventListener('play', () => { if(hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.play(); });
         video.addEventListener('pause', () => { if(hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.pause(); });
         video.addEventListener('seeked', () => { if(hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.currentTime = video.currentTime; });
@@ -601,7 +523,6 @@ if (document.getElementById('customVideo') && database) {
                         Array.from(qualityOptions.children).forEach(c => c.classList.remove('active'));
                         btn.classList.add('active');
                         
-                        // Naya video load karo (Audio wahi rahega)
                         const newVideoUrl = videoData.qualities[q];
                         if(hls) { hls.destroy(); }
                         hls = new Hls({ enableWorker: true });
@@ -614,11 +535,29 @@ if (document.getElementById('customVideo') && database) {
                 });
             }
 
-            // 2. AUDIO TRACKS (From Firebase - Hidden Audio Logic)
+            // 2. AUDIO TRACKS
             const audioOptions = document.getElementById('audioOptions');
             audioOptions.innerHTML = '';
+            let hasHlsAudio = false;
+
+            if (hls.audioTracks && hls.audioTracks.length > 0) {
+                hasHlsAudio = true;
+                hls.audioTracks.forEach((track, index) => {
+                    const btn = document.createElement('button');
+                    btn.innerText = track.name || track.lang || `Audio ${index + 1}`;
+                    btn.className = `setting-btn ${hls.audioTrack === index ? 'active' : ''}`;
+                    btn.onclick = (e) => {
+                        e.stopPropagation();
+                        hls.audioTrack = index; 
+                        Array.from(audioOptions.children).forEach(c => c.classList.remove('active'));
+                        btn.classList.add('active');
+                        setTimeout(closeAllMenus, 300);
+                    };
+                    audioOptions.appendChild(btn);
+                });
+            } 
             
-            if (videoData.audios && Object.keys(videoData.audios).length > 0) {
+            if (!hasHlsAudio && videoData.audios && Object.keys(videoData.audios).length > 0) {
                 Object.keys(videoData.audios).forEach(lang => {
                     const btn = document.createElement('button');
                     btn.innerText = lang;
@@ -627,7 +566,6 @@ if (document.getElementById('customVideo') && database) {
                         e.stopPropagation();
                         currentAudio = lang;
                         
-                        // Nayi audio stream load karo
                         const newAudioUrl = videoData.audios[lang];
                         if (audioHls) audioHls.destroy();
                         
@@ -646,14 +584,13 @@ if (document.getElementById('customVideo') && database) {
                     };
                     audioOptions.appendChild(btn);
                 });
-            } else {
+            } else if (!hasHlsAudio) {
                 audioOptions.innerHTML = '<p style="font-size:14px; color:#888; padding:15px;">No Audio Tracks</p>';
             }
 
-            // 3. SUBTITLE RENDER
+            // 3. SUBTITLES
             const subtitleOptions = document.getElementById('subtitleOptions');
             subtitleOptions.innerHTML = '';
-            
             const offBtn = document.createElement('button');
             offBtn.innerText = 'Off';
             offBtn.className = `setting-btn ${!activeSubtitleUrl ? 'active' : ''}`;
@@ -690,7 +627,6 @@ if (document.getElementById('customVideo') && database) {
                 });
             }
 
-            // Play Video
             video.play().then(() => {
                 if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
             }).catch(e => {
@@ -705,21 +641,14 @@ if (document.getElementById('customVideo') && database) {
         hls.on(Hls.Events.ERROR, function (event, data) {
             if (data.fatal) {
                 switch (data.type) {
-                    case Hls.ErrorTypes.NETWORK_ERROR:
-                        hls.startLoad();
-                        break;
-                    case Hls.ErrorTypes.MEDIA_ERROR:
-                        hls.recoverMediaError();
-                        break;
-                    default:
-                        hls.destroy();
-                        break;
+                    case Hls.ErrorTypes.NETWORK_ERROR: hls.startLoad(); break;
+                    case Hls.ErrorTypes.MEDIA_ERROR: hls.recoverMediaError(); break;
+                    default: hls.destroy(); break;
                 }
             }
         });
     }
 
-    // Purana MP4 Loader
     function loadSpecificTrack(videoData, audioLang, qualityName) {
         if (audioLang !== null) currentAudio = audioLang;
         if (qualityName !== null) currentQuality = qualityName;
@@ -737,7 +666,6 @@ if (document.getElementById('customVideo') && database) {
         closeAllMenus(); 
     }
 
-    // Purana MP4 Play Logic (State Restore)
     function playVideoUrl(url) {
         if(!url) return;
         
@@ -820,7 +748,6 @@ if (document.getElementById('customVideo') && database) {
         }
     }
 
-    // --- CONTROLS & DOUBLE TAP ---
     const playPauseBtn = document.getElementById('playPauseBtn');
     const seekBar = document.getElementById('seekBar');
     const timeDisplay = document.getElementById('timeDisplay');
@@ -848,10 +775,9 @@ if (document.getElementById('customVideo') && database) {
         renderWatchEpisodes(); 
     });
 
-    // 🔥 Mute Button logic update for Hidden Audio
     muteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (hiddenAudioPlayer.src && audioHls) {
+        if (hiddenAudioPlayer && hiddenAudioPlayer.src && audioHls) {
             hiddenAudioPlayer.muted = !hiddenAudioPlayer.muted;
             isMutedByUser = hiddenAudioPlayer.muted;
         } else {
@@ -867,18 +793,10 @@ if (document.getElementById('customVideo') && database) {
         resetControlTimeout();
     });
 
-    playPauseBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        togglePlayPause();
-        resetControlTimeout();
-    });
+    playPauseBtn.addEventListener('click', (e) => { e.stopPropagation(); togglePlayPause(); resetControlTimeout(); });
 
     function togglePlayPause() {
-        if (video.paused) {
-            video.play(); 
-        } else {
-            video.pause(); 
-        }
+        if (video.paused) video.play(); else video.pause();
     }
 
     video.addEventListener('timeupdate', () => {
@@ -897,79 +815,50 @@ if (document.getElementById('customVideo') && database) {
     seekBar.addEventListener('input', (e) => {
         e.stopPropagation();
         video.currentTime = video.duration * (seekBar.value / 100);
-        if(hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.currentTime = video.currentTime;
+        if(hiddenAudioPlayer && hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.currentTime = video.currentTime;
     });
     
     skipForwardBtn.addEventListener('click', (e) => { 
-        e.stopPropagation(); 
-        video.currentTime += 10; 
-        if(hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.currentTime = video.currentTime;
+        e.stopPropagation(); video.currentTime += 10; 
+        if(hiddenAudioPlayer && hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.currentTime = video.currentTime;
         resetControlTimeout(); 
     });
     
     skipBackBtn.addEventListener('click', (e) => { 
-        e.stopPropagation(); 
-        video.currentTime -= 10; 
-        if(hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.currentTime = video.currentTime;
+        e.stopPropagation(); video.currentTime -= 10; 
+        if(hiddenAudioPlayer && hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.currentTime = video.currentTime;
         resetControlTimeout(); 
     });
 
     fullscreenBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
         if (!document.fullscreenElement) {
-            try {
-                await playerWrapper.requestFullscreen();
-                if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
-            } catch (err) {}
-        } else {
-            document.exitFullscreen();
-            if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
-        }
+            try { await playerWrapper.requestFullscreen(); if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); } catch (err) {}
+        } else { document.exitFullscreen(); if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); }
         resetControlTimeout();
     });
 
     let controlTimeout;
 
-    function showControls() {
-        controlsBar.classList.remove('hidden');
-        topControls.classList.remove('hidden');
-        resetControlTimeout();
-    }
+    function showControls() { controlsBar.classList.remove('hidden'); topControls.classList.remove('hidden'); resetControlTimeout(); }
+    function hideControls() { if (!video.paused) { controlsBar.classList.add('hidden'); topControls.classList.add('hidden'); closeAllMenus(); } }
+    function resetControlTimeout() { clearTimeout(controlTimeout); if (!video.paused) { controlTimeout = setTimeout(hideControls, 3000); } }
 
-    function hideControls() {
-        if (!video.paused) {
-            controlsBar.classList.add('hidden');
-            topControls.classList.add('hidden');
-            closeAllMenus(); 
-        }
-    }
-
-    function resetControlTimeout() {
-        clearTimeout(controlTimeout);
-        if (!video.paused) {
-            controlTimeout = setTimeout(hideControls, 3000); 
-        }
-    }
-
-    video.addEventListener('pause', () => {
-        clearTimeout(controlTimeout);
-        showControls();
-    });
+    video.addEventListener('pause', () => { clearTimeout(controlTimeout); showControls(); });
 
     let lastTap = 0;
     
     function handleTap(overlay, action) {
         const currentTime = new Date().getTime();
         const tapLength = currentTime - lastTap;
-        
         if (tapLength < 300 && tapLength > 0) {
             if (action === 'left') {
                 video.currentTime = Math.max(0, video.currentTime - 10);
-                if(hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.currentTime = video.currentTime;
+                if(hiddenAudioPlayer && hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.currentTime = video.currentTime;
                 overlay.querySelector('.tap-feedback').innerHTML = '<i class="fa-solid fa-backward"></i> 10s';
             } else if (action === 'right') {
                 video.currentTime = Math.min(video.duration, video.currentTime + 10);
-                if(hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.currentTime = video.currentTime;
+                if(hiddenAudioPlayer && hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.currentTime = video.currentTime;
                 overlay.querySelector('.tap-feedback').innerHTML = '10s <i class="fa-solid fa-forward"></i>';
             } else if (action === 'center') {
                 togglePlayPause();
@@ -977,13 +866,8 @@ if (document.getElementById('customVideo') && database) {
             }
             overlay.classList.add('active');
             setTimeout(() => { overlay.classList.remove('active'); }, 500);
-            
         } else {
-            if (controlsBar.classList.contains('hidden')) {
-                showControls();
-            } else {
-                if (!video.paused) hideControls();
-            }
+            if (controlsBar.classList.contains('hidden')) showControls(); else { if (!video.paused) hideControls(); }
         }
         lastTap = currentTime;
     }
@@ -995,34 +879,21 @@ if (document.getElementById('customVideo') && database) {
     showControls();
 }
 
-// ================= 7. COMMENT SYSTEM & BOTTOM SHEET LOGIC =================
+// ================= 7. COMMENT SYSTEM =================
 if (document.getElementById('customVideo') && database) {
     const urlParams = new URLSearchParams(window.location.search);
     const animeId = urlParams.get('id'); 
-
     const commentForm = document.getElementById('commentForm');
     const commentsList = document.getElementById('commentsList');
-
     const openCommentsBtn = document.getElementById('openCommentsBtn');
     const closeCommentsBtn = document.getElementById('closeCommentsBtn');
     const bottomSheet = document.getElementById('commentsBottomSheet');
     const backdrop = document.getElementById('bottomSheetBackdrop');
 
     if(openCommentsBtn && bottomSheet) {
-        openCommentsBtn.addEventListener('click', () => {
-            bottomSheet.classList.add('active');
-            backdrop.classList.add('active');
-        });
-
-        closeCommentsBtn.addEventListener('click', () => {
-            bottomSheet.classList.remove('active');
-            backdrop.classList.remove('active');
-        });
-
-        backdrop.addEventListener('click', () => {
-            bottomSheet.classList.remove('active');
-            backdrop.classList.remove('active');
-        });
+        openCommentsBtn.addEventListener('click', () => { bottomSheet.classList.add('active'); backdrop.classList.add('active'); });
+        closeCommentsBtn.addEventListener('click', () => { bottomSheet.classList.remove('active'); backdrop.classList.remove('active'); });
+        backdrop.addEventListener('click', () => { bottomSheet.classList.remove('active'); backdrop.classList.remove('active'); });
     }
 
     let localCommentUserId = localStorage.getItem('commentUserId');
@@ -1033,80 +904,45 @@ if (document.getElementById('customVideo') && database) {
 
     let isAdmin = false;
     if (typeof firebase.auth === 'function') {
-        firebase.auth().onAuthStateChanged((user) => {
-            if (user) {
-                isAdmin = true;
-                if (animeId) loadComments(); 
-            }
-        });
+        firebase.auth().onAuthStateChanged((user) => { if (user) { isAdmin = true; if (animeId) loadComments(); } });
     }
 
     if (commentForm) {
         commentForm.addEventListener('submit', (e) => {
             e.preventDefault(); 
-            
-            if (!animeId) {
-                alert("Error: Content ID missing from URL. Cannot post comment.");
-                return;
-            }
-
+            if (!animeId) return;
             const name = document.getElementById('commentName').value.trim();
             const email = document.getElementById('commentEmail').value.trim();
             const text = document.getElementById('commentText').value.trim();
-
-            if(!name || !email || !text) {
-                alert("Please fill all the fields.");
-                return;
-            }
+            if(!name || !email || !text) return;
 
             const submitBtn = commentForm.querySelector('button[type="submit"]');
-            if(submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Posting...';
-            }
+            if(submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Posting...'; }
 
             database.ref('comments/' + animeId).push({
-                name: name,
-                email: email,
-                text: text,
-                userId: localCommentUserId,
+                name: name, email: email, text: text, userId: localCommentUserId,
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => { 
                 commentForm.reset(); 
-                if(submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Post Comment';
-                }
+                if(submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Post Comment'; }
             }).catch(err => {
-                alert("Comment post nahi ho paya: " + err.message);
-                if(submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Post Comment';
-                }
+                if(submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Post Comment'; }
             });
         });
     }
 
     function loadComments() {
         if (!animeId || !commentsList) return;
-        
         database.ref('comments/' + animeId).on('value', (snapshot) => {
             const commentsData = snapshot.val();
             commentsList.innerHTML = '';
-
             if (commentsData) {
-                const sortedComments = Object.keys(commentsData).map(key => ({
-                    key: key,
-                    ...commentsData[key]
-                })).sort((a, b) => b.timestamp - a.timestamp);
-
+                const sortedComments = Object.keys(commentsData).map(key => ({ key: key, ...commentsData[key] })).sort((a, b) => b.timestamp - a.timestamp);
                 sortedComments.forEach(comment => {
                     const date = new Date(comment.timestamp);
                     const timeString = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-
                     const canDelete = (comment.userId === localCommentUserId) || isAdmin;
                     const deleteBtn = canDelete ? `<button class="delete-comment-btn" onclick="deleteComment('${animeId}', '${comment.key}')"><i class="fa-solid fa-trash"></i></button>` : '';
-
                     commentsList.innerHTML += `
                         <div class="comment-item">
                             <div class="comment-header">
@@ -1125,22 +961,15 @@ if (document.getElementById('customVideo') && database) {
             }
         });
     }
-    
-    if (animeId) {
-        loadComments();
-    } else if (commentsList) {
-        commentsList.innerHTML = '<p style="color: #ef4444; font-size: 13px; text-align: center;">Error: Anime ID not found in URL.</p>';
-    }
+    if (animeId) loadComments();
 }
 
 // ================= 8. CUSTOM CONFIRM MODAL LOGIC =================
 let pendingDeleteAction = null;
-
 window.showCustomConfirm = (message, action) => {
     const modal = document.getElementById('customConfirmModal');
     const msgEl = document.getElementById('confirmMessage');
     if (!modal) return; 
-    
     if(msgEl) msgEl.innerText = message;
     pendingDeleteAction = action;
     modal.style.display = 'flex';
@@ -1150,33 +979,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const yesBtn = document.getElementById('confirmYesBtn');
     const noBtn = document.getElementById('confirmNoBtn');
     const modal = document.getElementById('customConfirmModal');
-
     if (yesBtn && noBtn && modal) {
-        yesBtn.addEventListener('click', () => {
-            if (pendingDeleteAction) {
-                pendingDeleteAction();
-            }
-            modal.style.display = 'none';
-            pendingDeleteAction = null;
-        });
-
-        noBtn.addEventListener('click', () => {
-            modal.style.display = 'none';
-            pendingDeleteAction = null;
-        });
-
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.style.display = 'none';
-                pendingDeleteAction = null;
-            }
-        });
+        yesBtn.addEventListener('click', () => { if (pendingDeleteAction) pendingDeleteAction(); modal.style.display = 'none'; pendingDeleteAction = null; });
+        noBtn.addEventListener('click', () => { modal.style.display = 'none'; pendingDeleteAction = null; });
+        modal.addEventListener('click', (e) => { if (e.target === modal) { modal.style.display = 'none'; pendingDeleteAction = null; } });
     }
 });
 
 window.deleteComment = (animeId, commentKey) => {
     showCustomConfirm("Are you sure you want to delete this comment permanently?", () => {
-        database.ref(`comments/${animeId}/${commentKey}`).remove()
-            .catch((err) => alert("Error deleting comment: " + err.message));
+        database.ref(`comments/${animeId}/${commentKey}`).remove();
     });
 };
