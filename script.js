@@ -292,7 +292,39 @@ if (document.getElementById('customVideo') && database) {
     // URL Params
     const urlParams = new URLSearchParams(window.location.search);
     const animeId = urlParams.get('id'); 
-    
+
+    // 🔥 MENU LOGIC (Global function to close all side menus) 🔥
+    window.closeAllMenus = () => {
+        if(audioMenu) audioMenu.classList.remove('active');
+        if(subtitleMenu) subtitleMenu.classList.remove('active');
+        if(qualityMenu) qualityMenu.classList.remove('active');
+    };
+
+    // Open Menus on Button Click
+    if(audioIconBtn) audioIconBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isActive = audioMenu.classList.contains('active');
+        closeAllMenus();
+        if(!isActive) audioMenu.classList.add('active');
+        resetControlTimeout();
+    });
+
+    if(subtitleIconBtn) subtitleIconBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isActive = subtitleMenu.classList.contains('active');
+        closeAllMenus();
+        if(!isActive) subtitleMenu.classList.add('active');
+        resetControlTimeout();
+    });
+
+    if(settingsBtn) settingsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isActive = qualityMenu.classList.contains('active');
+        closeAllMenus();
+        if(!isActive) qualityMenu.classList.add('active');
+        resetControlTimeout();
+    });
+
     // Load Data
     database.ref('content/' + animeId).once('value').then((snapshot) => {
         currentAnimeData = snapshot.val();
@@ -405,42 +437,14 @@ if (document.getElementById('customVideo') && database) {
         });
     }
 
-    // --- PLAYER LOGIC ---
-    if(audioIconBtn) audioIconBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        audioMenu.style.display = audioMenu.style.display === 'none' ? 'block' : 'none';
-        if(subtitleMenu) subtitleMenu.style.display = 'none';
-        if(qualityMenu) qualityMenu.style.display = 'none';
-        resetControlTimeout();
-    });
-
-    if(subtitleIconBtn) subtitleIconBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        subtitleMenu.style.display = subtitleMenu.style.display === 'none' ? 'block' : 'none';
-        if(audioMenu) audioMenu.style.display = 'none';
-        if(qualityMenu) qualityMenu.style.display = 'none';
-        resetControlTimeout();
-    });
-
-    if(settingsBtn) settingsBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        qualityMenu.style.display = qualityMenu.style.display === 'none' ? 'block' : 'none';
-        if(audioMenu) audioMenu.style.display = 'none';
-        if(subtitleMenu) subtitleMenu.style.display = 'none';
-        resetControlTimeout();
-    });
-
     function setupPlayer(videoData) {
-        audioMenu.style.display = 'none';
-        subtitleMenu.style.display = 'none';
-        qualityMenu.style.display = 'none';
+        closeAllMenus(); // Close any open menu initially
 
         // 🔥 CHECK FOR HLS LINK (.m3u8) 🔥
         let mainUrl = "";
         if (videoData.gdrive_id && videoData.gdrive_id.includes('.m3u8')) {
             mainUrl = videoData.gdrive_id;
         } else if (videoData.qualities && Object.values(videoData.qualities).length > 0) {
-            // Agar qualities me se koi .m3u8 link hai
             for (let q in videoData.qualities) {
                 if (videoData.qualities[q].includes('.m3u8')) {
                     mainUrl = videoData.qualities[q];
@@ -451,7 +455,7 @@ if (document.getElementById('customVideo') && database) {
 
         if (mainUrl && mainUrl.includes('.m3u8') && typeof Hls !== 'undefined' && Hls.isSupported()) {
             setupHlsPlayer(videoData, mainUrl);
-            return; // HLS setup karke return ho jao, purana MP4 logic skip karo
+            return; 
         }
 
         // ==========================================
@@ -470,10 +474,11 @@ if (document.getElementById('customVideo') && database) {
                     Array.from(audioOptions.children).forEach(c => c.classList.remove('active'));
                     btn.classList.add('active');
                     loadSpecificTrack(videoData, lang, null); 
+                    setTimeout(closeAllMenus, 300); // Close menu
                 };
                 audioOptions.appendChild(btn);
             });
-        } else { audioOptions.innerHTML = '<p style="font-size:12px; color:#888;">No Audio</p>'; }
+        } else { audioOptions.innerHTML = '<p style="font-size:14px; color:#888; padding:15px;">No Audio</p>'; }
 
         const qualityOptions = document.getElementById('qualityOptions');
         if (videoData.qualities && Object.keys(videoData.qualities).length > 0) {
@@ -488,10 +493,11 @@ if (document.getElementById('customVideo') && database) {
                     Array.from(qualityOptions.children).forEach(c => c.classList.remove('active'));
                     btn.classList.add('active');
                     loadSpecificTrack(videoData, null, q); 
+                    setTimeout(closeAllMenus, 300); // Close menu
                 };
                 qualityOptions.appendChild(btn);
             });
-        } else { qualityOptions.innerHTML = '<p style="font-size:12px; color:#888;">No Quality</p>'; }
+        } else { qualityOptions.innerHTML = '<p style="font-size:14px; color:#888; padding:15px;">No Quality</p>'; }
 
         const subtitleOptions = document.getElementById('subtitleOptions');
         if (videoData.subtitles && Object.keys(videoData.subtitles).length > 0) {
@@ -509,11 +515,13 @@ if (document.getElementById('customVideo') && database) {
                         track.style.display = 'block'; 
                         track.mode = 'showing'; 
                     }
-                    subtitleMenu.style.display = 'none'; 
+                    Array.from(subtitleOptions.children).forEach(c => c.classList.remove('active'));
+                    btn.classList.add('active');
+                    setTimeout(closeAllMenus, 300); // Close menu
                 };
                 subtitleOptions.appendChild(btn);
             });
-        } else { subtitleOptions.innerHTML = '<p style="font-size:12px; color:#888;">No Subtitles</p>'; }
+        } else { subtitleOptions.innerHTML = '<p style="font-size:14px; color:#888; padding:15px;">No Subtitles</p>'; }
 
         const defaultAudio = currentAudio || Object.keys(videoData.audios || {})[0] || null;
         const defaultQuality = currentQuality || Object.keys(videoData.qualities || {})[0] || null;
@@ -523,7 +531,7 @@ if (document.getElementById('customVideo') && database) {
     // 🔥 NETFLIX JAISA HLS PLAYER (m3u8) 🔥
     function setupHlsPlayer(videoData, url) {
         if (hls) {
-            hls.destroy(); // Purana HLS instance destroy karo
+            hls.destroy(); 
         }
 
         if(videoLoader) videoLoader.style.display = 'block';
@@ -539,7 +547,8 @@ if (document.getElementById('customVideo') && database) {
         hls.attachMedia(video);
 
         hls.on(Hls.Events.MANIFEST_PARSED, function() {
-            // 🔥 1. QUALITY TRACKS RENDER KARO (From HLS Levels)
+            
+            // 🔥 1. QUALITY TRACKS RENDER KARO
             const qualityOptions = document.getElementById('qualityOptions');
             qualityOptions.innerHTML = '';
             
@@ -549,27 +558,29 @@ if (document.getElementById('customVideo') && database) {
             autoBtn.className = `setting-btn ${hls.autoLevelEnabled ? 'active' : ''}`;
             autoBtn.onclick = (e) => {
                 e.stopPropagation();
-                hls.currentLevel = -1; // -1 means Auto
+                hls.currentLevel = -1; 
                 Array.from(qualityOptions.children).forEach(c => c.classList.remove('active'));
                 autoBtn.classList.add('active');
+                setTimeout(closeAllMenus, 300);
             };
             qualityOptions.appendChild(autoBtn);
 
-            // Individual Levels (1080p, 720p, etc.)
+            // Individual Levels
             hls.levels.forEach((level, index) => {
                 const btn = document.createElement('button');
                 btn.innerText = level.height ? `${level.height}p` : `Level ${index + 1}`;
-                btn.className = 'setting-btn';
+                btn.className = `setting-btn ${hls.currentLevel === index ? 'active' : ''}`;
                 btn.onclick = (e) => {
                     e.stopPropagation();
-                    hls.currentLevel = index; // Seamless switch
+                    hls.currentLevel = index; 
                     Array.from(qualityOptions.children).forEach(c => c.classList.remove('active'));
                     btn.classList.add('active');
+                    setTimeout(closeAllMenus, 300);
                 };
                 qualityOptions.appendChild(btn);
             });
 
-            // 🔥 2. AUDIO TRACKS RENDER KARO (From HLS AudioTracks)
+            // 🔥 2. AUDIO TRACKS RENDER KARO
             const audioOptions = document.getElementById('audioOptions');
             audioOptions.innerHTML = '';
             
@@ -580,17 +591,18 @@ if (document.getElementById('customVideo') && database) {
                     btn.className = `setting-btn ${hls.audioTrack === index ? 'active' : ''}`;
                     btn.onclick = (e) => {
                         e.stopPropagation();
-                        hls.audioTrack = index; // Seamless switch
+                        hls.audioTrack = index; 
                         Array.from(audioOptions.children).forEach(c => c.classList.remove('active'));
                         btn.classList.add('active');
+                        setTimeout(closeAllMenus, 300);
                     };
                     audioOptions.appendChild(btn);
                 });
             } else {
-                audioOptions.innerHTML = '<p style="font-size:12px; color:#888;">No Audio Tracks</p>';
+                audioOptions.innerHTML = '<p style="font-size:14px; color:#888; padding:15px;">No Audio Tracks</p>';
             }
 
-            // 🔥 3. SUBTITLE RENDER (From Firebase, kyunki HLS me subs kam hote hain)
+            // 🔥 3. SUBTITLE RENDER
             const subtitleOptions = document.getElementById('subtitleOptions');
             if (videoData.subtitles && Object.keys(videoData.subtitles).length > 0) {
                 subtitleOptions.innerHTML = '';
@@ -607,11 +619,13 @@ if (document.getElementById('customVideo') && database) {
                             track.style.display = 'block'; 
                             track.mode = 'showing'; 
                         }
-                        subtitleMenu.style.display = 'none'; 
+                        Array.from(subtitleOptions.children).forEach(c => c.classList.remove('active'));
+                        btn.classList.add('active');
+                        setTimeout(closeAllMenus, 300);
                     };
                     subtitleOptions.appendChild(btn);
                 });
-            } else { subtitleOptions.innerHTML = '<p style="font-size:12px; color:#888;">No Subtitles</p>'; }
+            } else { subtitleOptions.innerHTML = '<p style="font-size:14px; color:#888; padding:15px;">No Subtitles</p>'; }
 
             // Play Video
             video.play().catch(e => {
@@ -643,7 +657,7 @@ if (document.getElementById('customVideo') && database) {
         });
     }
 
-    // Purana MP4 Loader (Agar HLS na ho)
+    // Purana MP4 Loader
     function loadSpecificTrack(videoData, audioLang, qualityName) {
         if (audioLang !== null) currentAudio = audioLang;
         if (qualityName !== null) currentQuality = qualityName;
@@ -658,15 +672,13 @@ if (document.getElementById('customVideo') && database) {
         }
 
         if(url) playVideoUrl(url);
-        audioMenu.style.display = 'none';
-        qualityMenu.style.display = 'none';
+        closeAllMenus(); // Close menu on change
     }
 
     // Purana MP4 Play Logic (State Restore)
     function playVideoUrl(url) {
         if(!url) return;
         
-        // Agar HLS player chal raha hai aur naya link MP4 hai, toh use destroy karo
         if (hls) {
             hls.destroy();
             hls = null;
@@ -851,9 +863,7 @@ if (document.getElementById('customVideo') && database) {
         if (!video.paused) {
             controlsBar.classList.add('hidden');
             topControls.classList.add('hidden');
-            if(audioMenu) audioMenu.style.display = 'none';
-            if(subtitleMenu) subtitleMenu.style.display = 'none';
-            if(qualityMenu) qualityMenu.style.display = 'none';
+            closeAllMenus(); // Hide menus when controls hide
         }
     }
 
