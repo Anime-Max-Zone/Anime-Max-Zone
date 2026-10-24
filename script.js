@@ -355,7 +355,6 @@ if (document.getElementById('customVideo') && database) {
                 renderWatchSeasons(); 
                 renderWatchEpisodes(); 
                 
-                // Naya episode load hote waqt subtitle reset kar do
                 activeSubtitleUrl = null; 
                 const newVideoData = currentAnimeData.seasons[activeSeason][currentEpKey];
                 setupPlayer(newVideoData);
@@ -396,7 +395,7 @@ if (document.getElementById('customVideo') && database) {
                     window.history.pushState({path: `watch.html?id=${animeId}&season=${encodeURIComponent(activeSeason)}&ep=${currentEpKey}`}, '', `watch.html?id=${animeId}&season=${encodeURIComponent(activeSeason)}&ep=${currentEpKey}`);
                     
                     renderWatchEpisodes(); 
-                    activeSubtitleUrl = null; // Reset subtitle for new episode
+                    activeSubtitleUrl = null; 
                     setupPlayer(ep); 
                     document.getElementById('watchAnimeTitle').innerText = `${currentAnimeData.title} - ${activeSeason} Ep ${ep.ep}`;
                 }
@@ -451,7 +450,8 @@ if (document.getElementById('customVideo') && database) {
                     Array.from(audioOptions.children).forEach(c => c.classList.remove('active'));
                     btn.classList.add('active');
                     
-                    loadSpecificTrack(videoData, lang, currentQuality); 
+                    // 🔥 FIX: Force Audio Load, ignore Quality
+                    loadSpecificTrack(videoData, lang, null); 
                 };
                 audioOptions.appendChild(btn);
             });
@@ -473,7 +473,8 @@ if (document.getElementById('customVideo') && database) {
                     Array.from(qualityOptions.children).forEach(c => c.classList.remove('active'));
                     btn.classList.add('active');
                     
-                    loadSpecificTrack(videoData, currentAudio, q); 
+                    // 🔥 FIX: Force Quality Load, ignore Audio
+                    loadSpecificTrack(videoData, null, q); 
                 };
                 qualityOptions.appendChild(btn);
             });
@@ -489,7 +490,7 @@ if (document.getElementById('customVideo') && database) {
                 btn.className = 'setting-btn';
                 btn.onclick = (e) => { 
                     e.stopPropagation();
-                    activeSubtitleUrl = videoData.subtitles[sub]; // 🔥 URL Save karo
+                    activeSubtitleUrl = videoData.subtitles[sub]; 
                     const track = document.getElementById('subtitleTrack');
                     if(track) { 
                         track.src = activeSubtitleUrl; 
@@ -504,18 +505,22 @@ if (document.getElementById('customVideo') && database) {
 
         const defaultAudio = currentAudio || Object.keys(videoData.audios || {})[0] || null;
         const defaultQuality = currentQuality || Object.keys(videoData.qualities || {})[0] || null;
+        
+        // Initial load logic (Priority: Audio > Quality)
         loadSpecificTrack(videoData, defaultAudio, defaultQuality);
     }
 
     function loadSpecificTrack(videoData, audioLang, qualityName) {
-        currentAudio = audioLang;
-        currentQuality = qualityName;
+        // 🔥 Don't reset the other variable if passed as null during explicit click
+        if (audioLang !== null) currentAudio = audioLang;
+        if (qualityName !== null) currentQuality = qualityName;
         
         let url = "";
-        if (audioLang && videoData.audios && videoData.audios[audioLang]) {
-            url = videoData.audios[audioLang];
-        } else if (qualityName && videoData.qualities && videoData.qualities[qualityName]) {
+        // Priority: If quality is explicitly selected, use it. Else use audio.
+        if (qualityName && videoData.qualities && videoData.qualities[qualityName]) {
             url = videoData.qualities[qualityName];
+        } else if (audioLang && videoData.audios && videoData.audios[audioLang]) {
+            url = videoData.audios[audioLang];
         } else if (videoData.gdrive_id) { 
             url = videoData.gdrive_id;
         }
@@ -525,14 +530,15 @@ if (document.getElementById('customVideo') && database) {
         qualityMenu.style.display = 'none';
     }
 
-    // 🔥 Auto-Play & Seamless Switch Logic 🔥
+    // 🔥 TRUE SEAMLESS SWITCHING LOGIC 🔥
     function playVideoUrl(url) {
         if(!url) return;
         
-        // 1. Current State Save karo
+        // 1. State Save karo
         const previousTime = video.currentTime;
         const wasMuted = video.muted;
         const currentVolume = video.volume;
+        const wasPlaying = !video.paused; // 🔥 Play status yaad rakho
         
         let fileId = null;
         if (url.includes('drive.google.com')) {
@@ -560,7 +566,7 @@ if (document.getElementById('customVideo') && database) {
             video.muted = wasMuted;
             video.volume = currentVolume;
 
-            // 3. Subtitle ko wapas attach karo (agar pehle select kiya tha)
+            // 3. Subtitle restore
             const track = document.getElementById('subtitleTrack');
             if (track) {
                 if (activeSubtitleUrl) {
@@ -573,19 +579,20 @@ if (document.getElementById('customVideo') && database) {
                 }
             }
             
-            // 4. Play karo
-            let playPromise = video.play();
-            
-            if (playPromise !== undefined) {
-                playPromise.then(_ => {
-                    if(muteBtn) muteBtn.innerHTML = wasMuted ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
-                }).catch(e => {
-                    console.log("Autoplay with sound blocked by browser, muting...", e);
-                    video.muted = true;
-                    if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
-                    video.play();
-                    showUnmuteHint();
-                });
+            // 4. Play karo (Sirf tab jab pehle play ho raha tha)
+            if (wasPlaying) {
+                let playPromise = video.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(_ => {
+                        if(muteBtn) muteBtn.innerHTML = wasMuted ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
+                    }).catch(e => {
+                        console.log("Autoplay with sound blocked by browser, muting...", e);
+                        video.muted = true;
+                        if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+                        video.play();
+                        showUnmuteHint();
+                    });
+                }
             }
             
             video.onloadedmetadata = null; 
