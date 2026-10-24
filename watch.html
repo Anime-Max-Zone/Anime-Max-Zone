@@ -5,18 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title id="pageTitle">Anime Max Zone</title>
     
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    
+    <!-- HLS.js for Streaming -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     
+    <!-- Main CSS File -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="watch-page-body">
 
+    <!-- Header Section -->
     <header class="app-header">
         <div class="logo-area">
             <div class="logo-icon"><i class="fa-solid fa-play"></i></div>
@@ -28,6 +36,7 @@
         <div class="search-area" id="openSearchBtn"><i class="fa-solid fa-magnifying-glass"></i></div>
     </header>
 
+    <!-- Search Overlay -->
     <div class="search-overlay" id="searchPanel">
         <div class="search-header">
             <div class="search-input-box">
@@ -39,9 +48,11 @@
         <div class="search-results" id="searchResults"><p class="search-hint">Start typing to search...</p></div>
     </div>
 
+    <!-- Main Content -->
     <main class="main-content">
         <div class="player-wrapper" id="playerWrapper">
             
+            <!-- Top Controls -->
             <div id="topControls" class="top-controls">
                 <a href="javascript:history.back()" class="player-back-btn" id="backBtn"><i class="fa-solid fa-arrow-left"></i></a>
                 <div class="top-right-controls" id="topRightIcons">
@@ -50,7 +61,7 @@
                 </div>
             </div>
 
-            <!-- ================= 1. AUDIO MENU ================= -->
+            <!-- Side Menus -->
             <div id="audioMenu" class="side-menu">
                 <div class="side-menu-header">
                     <h4>Audio Track</h4>
@@ -59,7 +70,6 @@
                 <div id="audioOptions" class="side-menu-options"></div>
             </div>
 
-            <!-- ================= 2. SUBTITLE MENU ================= -->
             <div id="subtitleMenu" class="side-menu">
                 <div class="side-menu-header">
                     <h4>Subtitles</h4>
@@ -68,7 +78,6 @@
                 <div id="subtitleOptions" class="side-menu-options"></div>
             </div>
 
-            <!-- ================= 3. QUALITY MENU ================= -->
             <div id="qualityMenu" class="side-menu">
                 <div class="side-menu-header">
                     <h4>Quality</h4>
@@ -77,19 +86,23 @@
                 <div id="qualityOptions" class="side-menu-options"></div>
             </div>
 
+            <!-- Tap Overlays for Double Tap -->
             <div id="seekLeftOverlay" class="tap-overlay left-tap"><div class="tap-feedback"><i class="fa-solid fa-backward"></i> 10s</div></div>
             <div id="centerOverlay" class="tap-overlay center-tap"><div class="tap-feedback" id="centerFeedbackIcon"><i class="fa-solid fa-play"></i></div></div>
             <div id="seekRightOverlay" class="tap-overlay right-tap"><div class="tap-feedback"><i class="fa-solid fa-forward"></i> 10s</div></div>
 
+            <!-- Video & Hidden Audio Tags -->
             <video id="customVideo" playsinline crossorigin="anonymous">
                 <track id="subtitleTrack" label="Subtitles" kind="subtitles" srclang="en" default>
             </video>
-
+            
             <!-- 🔥 Hidden Audio Player (Alag Audio Links ke liye) 🔥 -->
             <audio id="hiddenAudioPlayer" style="display: none;"></audio>
 
+            <!-- Loader -->
             <div class="loading-spinner" id="videoLoader"><i class="fa-solid fa-spinner fa-spin"></i></div>
 
+            <!-- Bottom Controls -->
             <div class="custom-controls" id="controlsBar">
                 <div class="progress-container">
                     <input type="range" id="seekBar" value="0" min="0" max="100" step="0.1">
@@ -110,10 +123,13 @@
             </div>
         </div>
         
+        <!-- Video Info & Episodes Section -->
         <div class="video-info-section" style="padding: 15px; color: #fff;">
             <h2 id="watchAnimeTitle" style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">Now Playing</h2>
             <p id="watchAnimeDesc" style="font-size: 13px; color: #aaa; line-height: 1.5; margin-bottom: 20px;">Loading description...</p>
+            
             <button id="openCommentsBtn" class="comment-trigger-btn"><i class="fa-regular fa-comments"></i> View Comments</button>
+            
             <div id="seasonsEpisodesWrapper" style="display: none; margin-top: 20px; border-top: 1px solid #1a1a24; padding-top: 15px;">
                 <div class="season-tabs" id="watchSeasonTabs"></div>
                 <div class="episode-list" id="watchEpisodeList"></div>
@@ -121,6 +137,7 @@
         </div>
     </main>
 
+    <!-- Animated Bottom Navigation -->
     <nav class="bottom-nav">
         <a href="index.html" class="nav-item"><i class="fa-solid fa-house"></i><span>Home</span></a>
         <a href="anime.html" class="nav-item"><i class="fa-solid fa-face-smile"></i><span>Anime</span></a>
@@ -128,6 +145,7 @@
         <a href="settings.html" class="nav-item"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
     </nav>
 
+    <!-- Comments Bottom Sheet -->
     <div id="bottomSheetBackdrop" class="bottom-sheet-backdrop"></div>
     <div id="commentsBottomSheet" class="bottom-sheet">
         <div class="bottom-sheet-drag-handle"></div>
@@ -150,6 +168,7 @@
         </div>
     </div>
 
+    <!-- Custom Confirm Modal for Delete -->
     <div id="customConfirmModal" class="custom-modal-overlay" style="display: none;">
         <div class="custom-modal-box">
             <div class="custom-modal-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
@@ -162,6 +181,7 @@
         </div>
     </div>
 
+    <!-- Main JS File -->
     <script src="script.js" defer></script>
 </body>
 </html>
