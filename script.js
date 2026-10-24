@@ -1,11 +1,4 @@
-// ============================================================
-// ANIME MAX ZONE — SCRIPT.JS
-// Firebase content, watch player, audio, subtitles, quality,
-// search, grids, episode navigation and comments.
-// ============================================================
-
 // ================= 1. FIREBASE SETUP =================
-
 const firebaseConfig = {
     apiKey: "AIzaSyCpfrluxsBhnz48ve9RykIy1IxzbBfk7dA",
     authDomain: "sm-studio-7.firebaseapp.com",
@@ -17,1597 +10,959 @@ const firebaseConfig = {
     measurementId: "G-4X9Q0761SB"
 };
 
-let database = null;
-
+let database;
 try {
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
-
     database = firebase.database();
-    console.log("Anime Max Zone: Firebase connected.");
+    console.log("Firebase Connected!");
 } catch (error) {
-    console.error("Firebase initialization failed:", error);
+    console.error("Firebase Init Error:", error);
 }
 
 let allContentDatabase = [];
-
 let currentAudio = null;
 let currentQuality = null;
-let activeSubtitleUrl = null;
+let activeSubtitleUrl = null; // 🔥 Subtitle yaad rakhne ke liye
 
-
-// ================= 2. SHARED HELPERS =================
-
-function getElement(id) {
-    return document.getElementById(id);
-}
-
-function safeText(value, fallback = "") {
-    return typeof value === "string" ? value : fallback;
-}
-
-function escapeHTML(value) {
-    return String(value ?? "").replace(/[&<>"']/g, char => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;"
-    })[char]);
-}
-
-function formatTime(seconds) {
-    if (!Number.isFinite(seconds) || seconds < 0) {
-        return "0:00";
+// ================= 2. SPLASH SCREEN & INITIAL LOAD =================
+document.addEventListener('DOMContentLoaded', () => {
+    const splashScreen = document.getElementById('splash-screen');
+    if (splashScreen) {
+        setTimeout(() => splashScreen.classList.add('hidden'), 2000);
     }
 
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = Math.floor(seconds % 60);
-
-    if (hours > 0) {
-        return `${hours}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    if (database) {
+        database.ref('content').once('value')
+            .then((snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    allContentDatabase = Object.keys(data).map(key => ({
+                        firebaseKey: key,
+                        ...data[key]
+                    }));
+                    loadHomePageData();
+                    initSearchAndGrids();
+                } else {
+                    showNoDataFound();
+                }
+            })
+            .catch((error) => {
+                console.error("Firebase Fetch Error:", error);
+                showNoDataFound();
+            });
     }
-
-    return `${minutes}:${String(secs).padStart(2, "0")}`;
-}
-
-function getDriveFileId(url) {
-    if (typeof url !== "string") return null;
-
-    const patterns = [
-        /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/,
-        /drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/,
-        /[?&]id=([a-zA-Z0-9_-]+)/
-    ];
-
-    for (const pattern of patterns) {
-        const match = url.match(pattern);
-        if (match) return match[1];
-    }
-
-    return null;
-}
-
-function normalizeMediaUrl(url) {
-    if (typeof url !== "string" || !url.trim()) return "";
-
-    const value = url.trim();
-
-    // Do not assume every Drive URL can be converted into an API URL.
-    // A normal shared Drive URL may require authentication, API access,
-    // permissions or additional configuration to stream.
-    return value;
-}
+});
 
 function showNoDataFound() {
-    [
-        "latestContainer",
-        "onAirContainer",
-        "newArrivalsContainer",
-        "animeGrid",
-        "movieGrid"
-    ].forEach(id => {
-        const element = getElement(id);
-
-        if (element) {
-            element.innerHTML =
-                '<p style="color:#888;padding:20px;width:100%;text-align:center;">No Content Available.</p>';
-        }
+    const containers = ['latestContainer', 'onAirContainer', 'newArrivalsContainer', 'animeGrid', 'movieGrid'];
+    containers.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = `<p style="color:#888; padding: 20px; width:100%; text-align:center;">No Content Available.</p>`;
     });
 }
 
-
-// ================= 3. INITIAL DATA LOAD =================
-
-document.addEventListener("DOMContentLoaded", () => {
-    const splashScreen = getElement("splash-screen");
-
-    if (splashScreen) {
-        setTimeout(() => splashScreen.classList.add("hidden"), 2000);
-    }
-
-    if (!database) return;
-
-    database.ref("content").once("value")
-        .then(snapshot => {
-            const data = snapshot.val();
-
-            if (!data) {
-                allContentDatabase = [];
-                showNoDataFound();
-                return;
-            }
-
-            allContentDatabase = Object.entries(data).map(([key, value]) => ({
-                firebaseKey: key,
-                ...value
-            }));
-
-            loadHomePageData();
-            initSearchAndGrids();
-        })
-        .catch(error => {
-            console.error("Firebase content fetch failed:", error);
-            showNoDataFound();
-        });
-});
-
-
-// ================= 4. HOME PAGE =================
-
+// ================= 3. HOME PAGE DATA =================
 function loadHomePageData() {
-    const latestContainer = getElement("latestContainer");
-    const onAirContainer = getElement("onAirContainer");
-    const newArrivalsContainer = getElement("newArrivalsContainer");
+    const latestContainer = document.getElementById('latestContainer');
+    const onAirContainer = document.getElementById('onAirContainer');
+    const newArrivalsContainer = document.getElementById('newArrivalsContainer');
 
-    if (!latestContainer || !onAirContainer || !newArrivalsContainer) {
-        return;
+    if (latestContainer && onAirContainer && newArrivalsContainer) {
+        setTimeout(() => {
+            latestContainer.innerHTML = ''; 
+            onAirContainer.innerHTML = ''; 
+            newArrivalsContainer.innerHTML = '';
+
+            const latestAnime = allContentDatabase.slice(0, 3);
+            const onAirAnime = allContentDatabase.slice(3, 6);
+            const newArrivals = allContentDatabase.slice(6, 10);
+
+            function createCard(item) {
+                const card = document.createElement('a');
+                card.href = `anime-details.html?id=${item.firebaseKey}`;
+                card.className = 'anime-card';
+                card.innerHTML = `<img src="${item.image}" alt="${item.title}" onerror="this.src='https://via.placeholder.com/130x190?text=No+Image'">`;
+                return card;
+            }
+
+            if (latestAnime.length) latestAnime.forEach(item => latestContainer.appendChild(createCard(item)));
+            if (onAirAnime.length) onAirAnime.forEach(item => onAirContainer.appendChild(createCard(item)));
+            if (newArrivals.length) newArrivals.forEach(item => newArrivalsContainer.appendChild(createCard(item)));
+        }, 1000); 
     }
-
-    latestContainer.innerHTML = "";
-    onAirContainer.innerHTML = "";
-    newArrivalsContainer.innerHTML = "";
-
-    const latestAnime = allContentDatabase.slice(0, 3);
-    const onAirAnime = allContentDatabase.slice(3, 6);
-    const newArrivals = allContentDatabase.slice(6, 10);
-
-    function createCard(item) {
-        const card = document.createElement("a");
-        card.href = `anime-details.html?id=${encodeURIComponent(item.firebaseKey)}`;
-        card.className = "anime-card";
-
-        const image = document.createElement("img");
-        image.src = item.image || "";
-        image.alt = safeText(item.title, "Anime");
-        image.onerror = () => {
-            image.onerror = null;
-            image.src = "https://placehold.co/130x190?text=No+Image";
-        };
-
-        card.appendChild(image);
-        return card;
-    }
-
-    latestAnime.forEach(item => latestContainer.appendChild(createCard(item)));
-    onAirAnime.forEach(item => onAirContainer.appendChild(createCard(item)));
-    newArrivals.forEach(item => newArrivalsContainer.appendChild(createCard(item)));
 }
 
-
-// ================= 5. SEARCH AND GRIDS =================
-
+// ================= 4. SEARCH & GRIDS =================
 function initSearchAndGrids() {
-    const searchPanel = getElement("searchPanel");
-    const openSearchBtn = getElement("openSearchBtn");
-    const closeSearchBtn = getElement("closeSearchBtn");
-    const searchInput = getElement("searchInput");
-    const searchResults = getElement("searchResults");
+    const searchPanel = document.getElementById('searchPanel');
+    const openSearchBtn = document.getElementById('openSearchBtn');
+    const closeSearchBtn = document.getElementById('closeSearchBtn');
+    const searchInput = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
 
-    if (searchPanel && openSearchBtn && closeSearchBtn && searchInput && searchResults) {
-        openSearchBtn.addEventListener("click", () => {
-            searchPanel.classList.add("active");
-            setTimeout(() => searchInput.focus(), 300);
+    if (openSearchBtn && searchPanel) {
+        openSearchBtn.addEventListener('click', () => {
+            searchPanel.classList.add('active');
+            setTimeout(() => { searchInput.focus(); }, 300);
         });
 
-        closeSearchBtn.addEventListener("click", () => {
-            searchPanel.classList.remove("active");
-            searchInput.value = "";
-            searchResults.innerHTML =
-                '<p class="search-hint">Start typing to search...</p>';
+        closeSearchBtn.addEventListener('click', () => {
+            searchPanel.classList.remove('active');
+            setTimeout(() => {
+                searchInput.value = ''; 
+                searchResults.innerHTML = '<p class="search-hint">Start typing to search...</p>';
+            }, 300);
         });
 
-        searchInput.addEventListener("input", () => {
-            const query = searchInput.value.toLowerCase().trim();
-
-            if (!query) {
-                searchResults.innerHTML =
-                    '<p class="search-hint">Start typing to search...</p>';
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            if (query === '') {
+                searchResults.innerHTML = '<p class="search-hint">Start typing to search...</p>';
                 return;
             }
-
-            const filtered = allContentDatabase.filter(item =>
-                safeText(item.title).toLowerCase().includes(query)
-            );
-
-            searchResults.innerHTML = "";
-
-            if (!filtered.length) {
-                searchResults.innerHTML =
-                    `<p class="search-hint">No results found for "${escapeHTML(searchInput.value)}"</p>`;
-                return;
-            }
-
-            filtered.forEach(item => {
-                const link = document.createElement("a");
-                link.href = `anime-details.html?id=${encodeURIComponent(item.firebaseKey)}`;
-                link.className = "search-item";
-
-                const image = document.createElement("img");
-                image.src = item.image || "";
-                image.alt = safeText(item.title, "Anime");
-                image.onerror = () => {
-                    image.onerror = null;
-                    image.src = "https://placehold.co/55x75?text=No+Image";
-                };
-
-                const info = document.createElement("div");
-                info.className = "search-item-info";
-
-                const title = document.createElement("h3");
-                title.textContent = safeText(item.title, "Untitled");
-
-                const subtitle = document.createElement("p");
-                subtitle.textContent = "Tap to watch";
-
-                const arrow = document.createElement("i");
-                arrow.className = "fa-solid fa-chevron-right";
-
-                info.append(title, subtitle);
-                link.append(image, info, arrow);
-                searchResults.appendChild(link);
-            });
+            const filtered = allContentDatabase.filter(item => item.title && item.title.toLowerCase().includes(query));
+            renderSearchResults(filtered);
         });
     }
 
-    renderContentGrid("animeGrid",
-        allContentDatabase.filter(item => item.type === "anime" || !item.type)
-    );
+    function renderSearchResults(results) {
+        if (!searchResults) return; 
+        searchResults.innerHTML = ''; 
 
-    renderContentGrid("movieGrid",
-        allContentDatabase.filter(item => item.type === "movie")
-    );
-}
+        if (results.length === 0) {
+            searchResults.innerHTML = `<p class="search-hint">No results found for "${searchInput.value}"</p>`;
+            return;
+        }
 
-function renderContentGrid(containerId, items) {
-    const container = getElement(containerId);
-    if (!container) return;
-
-    container.innerHTML = "";
-
-    if (!items.length) {
-        container.innerHTML =
-            '<p style="color:#888;text-align:center;width:100%;">No content found.</p>';
-        return;
+        results.forEach(item => {
+            const link = document.createElement('a');
+            link.href = `anime-details.html?id=${item.firebaseKey}`; 
+            link.className = 'search-item';
+            link.innerHTML = `
+                <img src="${item.image}" alt="${item.title}" onerror="this.src='https://via.placeholder.com/55x75?text=No+Image'">
+                <div class="search-item-info">
+                    <h3>${item.title}</h3>
+                    <p>Tap to watch</p>
+                </div>
+                <i class="fa-solid fa-chevron-right"></i>
+            `;
+            searchResults.appendChild(link);
+        });
     }
 
-    items.forEach(item => {
-        const card = document.createElement("a");
-        card.href = `anime-details.html?id=${encodeURIComponent(item.firebaseKey)}`;
-        card.className = "grid-card";
-
-        const image = document.createElement("img");
-        image.src = item.image || "";
-        image.alt = safeText(item.title, "Anime");
-        image.onerror = () => {
-            image.onerror = null;
-            image.src = "https://placehold.co/150x225?text=No+Image";
-        };
-
-        const title = document.createElement("div");
-        title.className = "grid-card-title";
-        title.textContent = safeText(item.title, "Untitled");
-
-        card.append(image, title);
-        container.appendChild(card);
-    });
-}
-
-
-// ================= 6. ANIME DETAILS PAGE =================
-
-document.addEventListener("DOMContentLoaded", () => {
-    const detailTitle = getElement("detailTitle");
-
-    if (!detailTitle || !database) return;
-
-    const animeId = new URLSearchParams(location.search).get("id");
-
-    if (!animeId) {
-        detailTitle.textContent = "No ID Provided";
-        return;
+    // --- ANIME GRID ---
+    const animeGridContainer = document.getElementById('animeGrid');
+    if (animeGridContainer) {
+        animeGridContainer.innerHTML = ''; 
+        const animeOnly = allContentDatabase.filter(item => item.type === 'anime' || !item.type);
+        if(animeOnly.length === 0) animeGridContainer.innerHTML = "<p style='color:#888; text-align:center; width:100%;'>No Anime found.</p>";
+        
+        animeOnly.forEach(item => {
+            const card = document.createElement('a');
+            card.href = `anime-details.html?id=${item.firebaseKey}`; 
+            card.className = 'grid-card';
+            card.innerHTML = `
+                <img src="${item.image}" alt="${item.title}" onerror="this.src='https://via.placeholder.com/150x225?text=No+Image'">
+                <div class="grid-card-title">${item.title}</div>
+            `;
+            animeGridContainer.appendChild(card);
+        });
     }
 
-    database.ref(`content/${animeId}`).once("value")
-        .then(snapshot => {
+    // --- MOVIES GRID ---
+    const movieGridContainer = document.getElementById('movieGrid');
+    if (movieGridContainer) {
+        movieGridContainer.innerHTML = '';
+        const moviesOnly = allContentDatabase.filter(item => item.type === 'movie');
+        if(moviesOnly.length === 0) movieGridContainer.innerHTML = "<p style='color:#888; text-align:center; width:100%;'>No Movies found.</p>";
+
+        moviesOnly.forEach(item => {
+            const card = document.createElement('a');
+            card.href = `anime-details.html?id=${item.firebaseKey}`; 
+            card.className = 'grid-card';
+            card.innerHTML = `
+                <img src="${item.image}" alt="${item.title}" onerror="this.src='https://via.placeholder.com/150x225?text=No+Image'">
+                <div class="grid-card-title">${item.title}</div>
+            `;
+            movieGridContainer.appendChild(card);
+        });
+    }
+}
+
+// ================= 5. ANIME DETAILS PAGE =================
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('detailTitle') && database) {
+        const animeId = new URLSearchParams(window.location.search).get('id');
+
+        if (!animeId) {
+            document.getElementById('detailTitle').innerText = "No ID Provided";
+            return;
+        }
+
+        database.ref('content/' + animeId).once('value').then((snapshot) => {
             const data = snapshot.val();
-
+            
             if (!data) {
-                detailTitle.textContent = "Content Not Found";
-
-                const synopsis = getElement("detailSynopsis");
-                if (synopsis) synopsis.textContent = "This content does not exist.";
-
+                document.getElementById('detailTitle').innerText = "Content Not Found";
+                document.getElementById('detailSynopsis').innerText = "This content does not exist.";
                 return;
             }
 
-            document.title = `${safeText(data.title, "Anime")} - Anime Max Zone`;
-
-            const banner = getElement("detailBanner");
-            const poster = getElement("detailPoster");
-            const rating = getElement("detailRating");
-            const year = getElement("detailYear");
-            const synopsis = getElement("detailSynopsis");
-            const genres = getElement("detailGenres");
-
-            if (banner) {
-                banner.style.backgroundImage = `url("${data.banner || data.image || ""}")`;
+            document.title = `${data.title} - Anime Max Zone`;
+            document.getElementById('detailBanner').style.backgroundImage = `url(${data.banner || data.image})`;
+            document.getElementById('detailPoster').src = data.image;
+            document.getElementById('detailTitle').innerText = data.title;
+            document.getElementById('detailRating').innerText = data.rating || "0.0";
+            document.getElementById('detailYear').innerText = data.year || "----";
+            document.getElementById('detailSynopsis').innerText = data.synopsis || "No description available.";
+            
+            if (data.genres && Array.isArray(data.genres)) {
+                document.getElementById('detailGenres').innerHTML = data.genres.map(g => `<span class="genre-tag">${g}</span>`).join('');
             }
 
-            if (poster) poster.src = data.image || "";
-            detailTitle.textContent = safeText(data.title, "Untitled");
-            if (rating) rating.textContent = data.rating ?? "0.0";
-            if (year) year.textContent = data.year ?? "----";
+            const episodesSection = document.querySelector('.episodes-section');
+            const episodeList = document.getElementById('episodeList');
 
-            if (synopsis) {
-                synopsis.textContent = safeText(data.synopsis, "No description available.");
-            }
+            if (data.type === 'movie' || !data.seasons) {
+                if (episodesSection) episodesSection.style.display = 'none';
+                
+                const watchBtn = document.createElement('a');
+                watchBtn.href = `watch.html?id=${animeId}`;
+                watchBtn.className = 'watch-now-btn'; 
+                watchBtn.innerHTML = `<i class="fa-solid fa-play"></i> Watch Movie Now`;
+                document.querySelector('.synopsis-section').appendChild(watchBtn);
 
-            if (genres) {
-                genres.innerHTML = "";
+            } else {
+                if (episodesSection) episodesSection.style.display = 'block';
+                let totalEps = 0;
+                episodeList.innerHTML = '';
 
-                (Array.isArray(data.genres) ? data.genres : []).forEach(genre => {
-                    const tag = document.createElement("span");
-                    tag.className = "genre-tag";
-                    tag.textContent = genre;
-                    genres.appendChild(tag);
+                Object.keys(data.seasons).forEach(seasonName => {
+                    const episodesObj = data.seasons[seasonName];
+                    const epArray = Object.keys(episodesObj).map(k => ({ firebaseKey: k, ...episodesObj[k] }));
+                    totalEps += epArray.length;
+
+                    if (Object.keys(data.seasons).length > 1) {
+                        episodeList.innerHTML += `<h4 style="color:#a855f7; margin: 10px 0 5px 0; font-size: 14px;">${seasonName}</h4>`;
+                    }
+
+                    epArray.forEach(episode => {
+                        const epCard = document.createElement('a');
+                        epCard.href = `watch.html?id=${animeId}&season=${encodeURIComponent(seasonName)}&ep=${episode.firebaseKey}`; 
+                        epCard.className = 'episode-card';
+                        epCard.innerHTML = `
+                            <div class="ep-play-icon"><i class="fa-solid fa-play"></i></div>
+                            <div class="ep-info">
+                                <h4>Episode ${episode.ep}</h4>
+                                <p>${episode.title}</p>
+                            </div>
+                            <i class="fa-solid fa-chevron-right ep-arrow"></i>
+                        `;
+                        episodeList.appendChild(epCard);
+                    });
                 });
+                document.getElementById('episodeCount').innerText = `${totalEps} Episodes`;
             }
-
-            const episodesSection = document.querySelector(".episodes-section");
-            const episodeList = getElement("episodeList");
-
-            if (data.type === "movie" || !data.seasons) {
-                if (episodesSection) episodesSection.style.display = "none";
-
-                const synopsisSection = document.querySelector(".synopsis-section");
-
-                if (synopsisSection && !getElement("movieWatchNowBtn")) {
-                    const watchBtn = document.createElement("a");
-                    watchBtn.id = "movieWatchNowBtn";
-                    watchBtn.href = `watch.html?id=${encodeURIComponent(animeId)}`;
-                    watchBtn.className = "watch-now-btn";
-                    watchBtn.innerHTML = '<i class="fa-solid fa-play"></i> Watch Movie Now';
-                    synopsisSection.appendChild(watchBtn);
-                }
-
-                return;
-            }
-
-            if (episodesSection) episodesSection.style.display = "block";
-            if (!episodeList) return;
-
-            episodeList.innerHTML = "";
-
-            const seasons = data.seasons;
-            let totalEpisodes = 0;
-            const seasonNames = Object.keys(seasons);
-
-            seasonNames.forEach(seasonName => {
-                const episodes = seasons[seasonName] || {};
-
-                if (seasonNames.length > 1) {
-                    const heading = document.createElement("h4");
-                    heading.style.cssText =
-                        "color:#a855f7;margin:10px 0 5px;font-size:14px;";
-                    heading.textContent = seasonName;
-                    episodeList.appendChild(heading);
-                }
-
-                Object.entries(episodes).forEach(([episodeKey, episode]) => {
-                    totalEpisodes++;
-
-                    const link = document.createElement("a");
-                    link.href =
-                        `watch.html?id=${encodeURIComponent(animeId)}` +
-                        `&season=${encodeURIComponent(seasonName)}` +
-                        `&ep=${encodeURIComponent(episodeKey)}`;
-                    link.className = "episode-card";
-
-                    link.innerHTML = `
-                        <div class="ep-play-icon"><i class="fa-solid fa-play"></i></div>
-                        <div class="ep-info">
-                            <h4>Episode ${escapeHTML(episode.ep ?? "?")}</h4>
-                            <p>${escapeHTML(episode.title ?? "")}</p>
-                        </div>
-                        <i class="fa-solid fa-chevron-right ep-arrow"></i>
-                    `;
-
-                    episodeList.appendChild(link);
-                });
-            });
-
-            const episodeCount = getElement("episodeCount");
-            if (episodeCount) episodeCount.textContent = `${totalEpisodes} Episodes`;
-        })
-        .catch(error => {
-            console.error("Details load error:", error);
-            detailTitle.textContent = "Unable to load content";
         });
+    }
 });
 
+// ================= 6. WATCH PAGE (PLAYER) =================
+if (document.getElementById('customVideo') && database) {
+    const video = document.getElementById('customVideo');
+    const videoLoader = document.getElementById('videoLoader');
+    const topControls = document.getElementById('topControls'); 
+    const controlsBar = document.getElementById('controlsBar'); 
+    
+    // Top Menus
+    const audioIconBtn = document.getElementById('audioIconBtn');
+    const subtitleIconBtn = document.getElementById('subtitleIconBtn');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const audioMenu = document.getElementById('audioMenu');
+    const subtitleMenu = document.getElementById('subtitleMenu');
+    const qualityMenu = document.getElementById('qualityMenu');
 
-// ================= 7. WATCH PAGE / PLAYER =================
-
-if (getElement("customVideo") && database) {
-    initializeWatchPlayer();
-}
-
-function initializeWatchPlayer() {
-    const video = getElement("customVideo");
-    const playerWrapper = getElement("playerWrapper");
-    const videoLoader = getElement("videoLoader");
-    const controlsBar = getElement("controlsBar");
-    const topControls = getElement("topControls");
-
-    const audioMenu = getElement("audioMenu");
-    const subtitleMenu = getElement("subtitleMenu");
-    const qualityMenu = getElement("qualityMenu");
-
-    const audioOptions = getElement("audioOptions");
-    const subtitleOptions = getElement("subtitleOptions");
-    const qualityOptions = getElement("qualityOptions");
-
-    const playPauseBtn = getElement("playPauseBtn");
-    const muteBtn = getElement("muteBtn");
-    const seekBar = getElement("seekBar");
-    const timeDisplay = getElement("timeDisplay");
-    const settingsBtn = getElement("settingsBtn");
-    const fullscreenBtn = getElement("fullscreenBtn");
-    const skipBackBtn = getElement("skipBackBtn");
-    const skipForwardBtn = getElement("skipForwardBtn");
-
-    const urlParams = new URLSearchParams(location.search);
-    const animeId = urlParams.get("id");
-
-    let animeData = null;
-    let currentVideoData = null;
+    let currentAnimeData = null;
     let activeSeason = "";
     let currentEpKey = "";
-    let currentVideoUrl = "";
-    let currentAudioUrl = "";
-    let controlTimeout = null;
-    let switchToken = 0;
-    let wasPlayingBeforeSwitch = false;
 
-    // Separate audio element for audio-only URLs.
-    // This requires browser playback support and compatible CORS/streaming.
-    const audioPlayer = new Audio();
-    audioPlayer.preload = "auto";
-    audioPlayer.crossOrigin = "anonymous";
+    // URL Params
+    const urlParams = new URLSearchParams(window.location.search);
+    const animeId = urlParams.get('id'); 
+    
+    // Load Data
+    database.ref('content/' + animeId).once('value').then((snapshot) => {
+        currentAnimeData = snapshot.val();
+        
+        if (currentAnimeData) {
+            let videoDataToPlay = null;
+            let pageTitle = currentAnimeData.title;
 
-    let audioSyncTimer = null;
-    let lastTapTime = 0;
-
-    const leftOverlay = getElement("seekLeftOverlay");
-    const centerOverlay = getElement("centerOverlay");
-    const rightOverlay = getElement("seekRightOverlay");
-    const centerFeedbackIcon = getElement("centerFeedbackIcon");
-
-    function setLoader(show) {
-        if (videoLoader) {
-            videoLoader.style.display = show ? "block" : "none";
-        }
-    }
-
-    function closeMenus() {
-        [audioMenu, subtitleMenu, qualityMenu].forEach(menu => {
-            if (menu) menu.style.display = "none";
-        });
-    }
-
-    function toggleMenu(menu, event) {
-        if (event) event.stopPropagation();
-        if (!menu) return;
-
-        const shouldOpen = menu.style.display === "none" || !menu.style.display;
-        closeMenus();
-
-        if (shouldOpen) menu.style.display = "block";
-        resetControlTimeout();
-    }
-
-    function setActiveButton(container, selectedButton) {
-        if (!container) return;
-
-        container.querySelectorAll(".setting-btn").forEach(button => {
-            button.classList.toggle("active", button === selectedButton);
-        });
-    }
-
-    function makeOption(container, label, active, callback) {
-        if (!container) return null;
-
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = `setting-btn${active ? " active" : ""}`;
-        button.textContent = label;
-
-        button.addEventListener("click", event => {
-            event.stopPropagation();
-            callback(button);
-        });
-
-        container.appendChild(button);
-        return button;
-    }
-
-    function showEmptyOption(container, message) {
-        if (container) {
-            container.innerHTML =
-                `<p style="font-size:12px;color:#888;">${escapeHTML(message)}</p>`;
-        }
-    }
-
-    function setVideoSourceUrl(url) {
-        const value = normalizeMediaUrl(url);
-
-        if (!value) return "";
-
-        // Preserve valid direct media URLs. Drive sharing links may not
-        // be direct media URLs and might not stream in an HTML5 player.
-        return value;
-    }
-
-    function updateSubtitleTrack(url) {
-        const track = getElement("subtitleTrack");
-
-        if (!track) return;
-
-        // Disable previous text tracks first.
-        Array.from(video.textTracks || []).forEach(textTrack => {
-            textTrack.mode = "disabled";
-        });
-
-        track.mode = "disabled";
-        track.removeAttribute("src");
-
-        if (!url) {
-            activeSubtitleUrl = null;
-            return;
-        }
-
-        activeSubtitleUrl = url;
-        track.src = url;
-        track.label = "Selected subtitles";
-        track.srclang = "en";
-        track.kind = "subtitles";
-
-        // Browser loads the new subtitle track asynchronously.
-        track.track.mode = "showing";
-    }
-
-    function startAudioSync() {
-        stopAudioSync();
-
-        audioSyncTimer = setInterval(() => {
-            if (!currentAudioUrl || audioPlayer.paused || video.paused) return;
-
-            // Correct small drift between separate audio/video streams.
-            const drift = audioPlayer.currentTime - video.currentTime;
-
-            if (Math.abs(drift) > 0.35) {
-                try {
-                    audioPlayer.currentTime = video.currentTime;
-                } catch (_) {}
-            }
-        }, 700);
-    }
-
-    function stopAudioSync() {
-        if (audioSyncTimer) {
-            clearInterval(audioSyncTimer);
-            audioSyncTimer = null;
-        }
-    }
-
-    async function switchAudio(language) {
-        if (!currentVideoData || !currentVideoData.audios) return;
-
-        const url = currentVideoData.audios[language];
-        if (!url) return;
-
-        currentAudio = language;
-        currentAudioUrl = normalizeMediaUrl(url);
-
-        try {
-            audioPlayer.pause();
-            audioPlayer.src = currentAudioUrl;
-            audioPlayer.load();
-
-            if (Number.isFinite(video.currentTime) && video.currentTime > 0) {
-                audioPlayer.currentTime = video.currentTime;
-            }
-
-            if (!video.paused) {
-                await audioPlayer.play();
-                startAudioSync();
+            if (currentAnimeData.type === 'movie' || !currentAnimeData.seasons) {
+                videoDataToPlay = currentAnimeData; 
+                const wrapper = document.getElementById('seasonsEpisodesWrapper');
+                if(wrapper) wrapper.style.display = 'none';
+                currentEpKey = "movie";
             } else {
-                stopAudioSync();
-            }
-
-            console.info("Selected audio track:", language);
-        } catch (error) {
-            console.error("Audio switching failed:", error);
-            alert(
-                "Audio file play nahi ho payi. Check karein ki Google Drive URL direct playable hai aur file accessible hai."
-            );
-        }
-
-        closeMenus();
-        resetControlTimeout();
-    }
-
-    function switchQuality(qualityName) {
-        if (!currentVideoData || !currentVideoData.qualities) return;
-
-        const url = currentVideoData.qualities[qualityName];
-        if (!url) return;
-
-        currentQuality = qualityName;
-
-        const newUrl = setVideoSourceUrl(url);
-
-        if (!newUrl) return;
-
-        loadVideoSource(newUrl, {
-            preserveTime: true,
-            preserveAudio: true,
-            preserveSubtitle: true
-        });
-
-        closeMenus();
-    }
-
-    function renderAudioOptions(data) {
-        if (!audioOptions) return;
-
-        audioOptions.innerHTML = "";
-
-        const audios = data.audios || {};
-        const languages = Object.keys(audios);
-
-        if (!languages.length) {
-            showEmptyOption(audioOptions, "No Audio Tracks");
-            return;
-        }
-
-        if (!currentAudio || !audios[currentAudio]) {
-            currentAudio = languages[0];
-        }
-
-        languages.forEach(language => {
-            makeOption(audioOptions, language, language === currentAudio, button => {
-                currentAudio = language;
-                setActiveButton(audioOptions, button);
-                switchAudio(language);
-            });
-        });
-    }
-
-    function renderQualityOptions(data) {
-        if (!qualityOptions) return;
-
-        qualityOptions.innerHTML = "";
-
-        const qualities = data.qualities || {};
-        const names = Object.keys(qualities);
-
-        if (!names.length) {
-            showEmptyOption(qualityOptions, "No Quality Options");
-            return;
-        }
-
-        // Prefer 480p when available; otherwise first database entry.
-        if (!currentQuality || !qualities[currentQuality]) {
-            currentQuality = qualities["480p"] ? "480p" : names[0];
-        }
-
-        names.forEach(name => {
-            makeOption(qualityOptions, name, name === currentQuality, button => {
-                currentQuality = name;
-                setActiveButton(qualityOptions, button);
-                switchQuality(name);
-            });
-        });
-    }
-
-    function renderSubtitleOptions(data) {
-        if (!subtitleOptions) return;
-
-        subtitleOptions.innerHTML = "";
-
-        makeOption(subtitleOptions, "Off", !activeSubtitleUrl, button => {
-            updateSubtitleTrack(null);
-            setActiveButton(subtitleOptions, button);
-            closeMenus();
-        });
-
-        const subtitles = data.subtitles || {};
-        const names = Object.keys(subtitles);
-
-        names.forEach(name => {
-            makeOption(
-                subtitleOptions,
-                name,
-                activeSubtitleUrl === subtitles[name],
-                button => {
-                    updateSubtitleTrack(subtitles[name]);
-                    setActiveButton(subtitleOptions, button);
-                    closeMenus();
-                }
-            );
-        });
-    }
-
-    function stopExternalAudio() {
-        stopAudioSync();
-        audioPlayer.pause();
-        audioPlayer.removeAttribute("src");
-        audioPlayer.load();
-        currentAudioUrl = "";
-    }
-
-    function loadVideoSource(url, options = {}) {
-        if (!url) {
-            setLoader(false);
-            console.error("No valid video URL selected.");
-            return;
-        }
-
-        const token = ++switchToken;
-
-        const preserveTime = options.preserveTime !== false;
-        const previousTime = preserveTime ? video.currentTime || 0 : 0;
-        const wasPlaying = !video.paused;
-        const previousMuted = video.muted;
-        const previousVolume = video.volume;
-
-        wasPlayingBeforeSwitch = wasPlaying;
-        currentVideoUrl = url;
-
-        setLoader(true);
-
-        video.pause();
-        video.src = url;
-        video.load();
-
-        video.addEventListener("loadedmetadata", async function onMetadata() {
-            if (token !== switchToken) return;
-
-            video.removeEventListener("loadedmetadata", onMetadata);
-
-            if (
-                preserveTime &&
-                Number.isFinite(video.duration) &&
-                previousTime < video.duration
-            ) {
-                try {
-                    video.currentTime = previousTime;
-                } catch (_) {}
-            }
-
-            video.muted = previousMuted;
-            video.volume = previousVolume;
-
-            // Restore subtitle track.
-            if (activeSubtitleUrl) {
-                updateSubtitleTrack(activeSubtitleUrl);
-            }
-
-            setLoader(false);
-
-            // Keep separate audio aligned after quality change.
-            if (currentAudioUrl && options.preserveAudio !== false) {
-                try {
-                    audioPlayer.currentTime = video.currentTime;
-                } catch (_) {}
-            }
-
-            if (wasPlayingBeforeSwitch) {
-                try {
-                    await video.play();
-
-                    if (currentAudioUrl) {
-                        try {
-                            await audioPlayer.play();
-                            startAudioSync();
-                        } catch (audioError) {
-                            console.warn("Separate audio could not resume:", audioError);
-                        }
-                    }
-                } catch (error) {
-                    console.warn("Video playback needs user interaction:", error);
-                }
-            }
-        }, { once: true });
-
-        video.addEventListener("error", function onVideoError() {
-            if (token !== switchToken) return;
-
-            video.removeEventListener("error", onVideoError);
-            setLoader(false);
-
-            console.error("Video loading error:", video.error);
-
-            const hint = getElement("playerErrorMessage");
-
-            if (hint) {
-                hint.textContent =
-                    "Video load nahi ho paya. URL, permissions aur video format check karein.";
-                hint.style.display = "block";
-            }
-        }, { once: true });
-    }
-
-    function setupPlayer(data) {
-        if (!data) return;
-
-        currentVideoData = data;
-
-        closeMenus();
-        stopExternalAudio();
-
-        currentAudio = null;
-        currentQuality = null;
-        activeSubtitleUrl = null;
-
-        renderAudioOptions(data);
-        renderQualityOptions(data);
-        renderSubtitleOptions(data);
-
-        const qualities = data.qualities || {};
-        const qualityNames = Object.keys(qualities);
-
-        let videoUrl = "";
-
-        if (qualityNames.length) {
-            currentQuality = qualities["480p"] ? "480p" : qualityNames[0];
-            videoUrl = qualities[currentQuality];
-        } else if (data.gdrive_id) {
-            videoUrl = data.gdrive_id;
-        } else if (data.videoUrl) {
-            videoUrl = data.videoUrl;
-        } else if (data.url) {
-            videoUrl = data.url;
-        }
-
-        if (!videoUrl) {
-            setLoader(false);
-            console.error("No video URL found for this episode.");
-            alert("Is episode ke liye video URL nahi mila.");
-            return;
-        }
-
-        // Do not start a separate audio file automatically here.
-        // User selects the language explicitly from the Audio Track menu.
-        loadVideoSource(setVideoSourceUrl(videoUrl), {
-            preserveTime: false,
-            preserveAudio: false,
-            preserveSubtitle: false
-        });
-    }
-
-    // ---------- Load Firebase episode ----------
-
-    function loadWatchContent() {
-        if (!animeId) {
-            alert("Anime ID URL mein nahi mila.");
-            return;
-        }
-
-        database.ref(`content/${animeId}`).once("value")
-            .then(snapshot => {
-                animeData = snapshot.val();
-
-                if (!animeData) {
-                    alert("Anime ya episode nahi mila.");
-                    return;
-                }
-
-                const isMovie = animeData.type === "movie" || !animeData.seasons;
-                let videoData = null;
-                let pageTitle = safeText(animeData.title, "Anime");
-
-                if (isMovie) {
-                    videoData = animeData;
-                    currentEpKey = "movie";
-
-                    const wrapper = getElement("seasonsEpisodesWrapper");
-                    if (wrapper) wrapper.style.display = "none";
-                } else {
-                    const wrapper = getElement("seasonsEpisodesWrapper");
-                    if (wrapper) wrapper.style.display = "block";
-
-                    const seasonNames = Object.keys(animeData.seasons || {});
-
-                    if (!seasonNames.length) {
-                        alert("Is anime mein seasons nahi hain.");
-                        return;
-                    }
-
-                    const requestedSeason = urlParams.get("season");
-                    activeSeason = seasonNames.includes(requestedSeason)
-                        ? requestedSeason
-                        : seasonNames[0];
-
-                    const episodes = animeData.seasons[activeSeason] || {};
-                    const episodeNames = Object.keys(episodes);
-
-                    if (!episodeNames.length) {
-                        alert("Is season mein episodes nahi hain.");
-                        return;
-                    }
-
-                    const requestedEpisode = urlParams.get("ep");
-                    currentEpKey = episodes[requestedEpisode]
-                        ? requestedEpisode
-                        : episodeNames[0];
-
-                    videoData = episodes[currentEpKey];
-                    pageTitle += ` - ${activeSeason} Ep ${videoData.ep ?? ""}`;
-
-                    renderWatchSeasons();
-                }
-
-                document.title = `${pageTitle} - Anime Max Zone`;
-
-                const titleElement = getElement("watchAnimeTitle");
-                const descElement = getElement("watchAnimeDesc");
-
-                if (titleElement) titleElement.textContent = pageTitle;
-                if (descElement) {
-                    descElement.textContent =
-                        safeText(animeData.synopsis, "No description available.");
-                }
-
-                setupPlayer(videoData);
-            })
-            .catch(error => {
-                console.error("Watch content load failed:", error);
-                alert("Content load nahi ho paya. Firebase connection check karein.");
-            });
-    }
-
-    function renderWatchSeasons() {
-        const seasonTabs = getElement("watchSeasonTabs");
-        if (!seasonTabs || !animeData || !animeData.seasons) return;
-
-        seasonTabs.innerHTML = "";
-
-        Object.keys(animeData.seasons).forEach(seasonName => {
-            const button = document.createElement("button");
-            button.type = "button";
-            button.className =
-                `season-btn${seasonName === activeSeason ? " active" : ""}`;
-            button.textContent = seasonName;
-
-            button.addEventListener("click", () => {
-                activeSeason = seasonName;
-
-                const episodes = animeData.seasons[seasonName] || {};
-                const keys = Object.keys(episodes);
-
-                if (!keys.length) return;
-
-                currentEpKey = keys[0];
-
-                updateEpisodeURL();
+                const wrapper = document.getElementById('seasonsEpisodesWrapper');
+                if(wrapper) wrapper.style.display = 'block';
+                
+                const urlSeason = urlParams.get('season');
+                const urlEp = urlParams.get('ep');
+                const seasons = Object.keys(currentAnimeData.seasons);
+                
+                activeSeason = (urlSeason && seasons.includes(urlSeason)) ? urlSeason : seasons[0];
+                const episodesObj = currentAnimeData.seasons[activeSeason];
+                
+                currentEpKey = urlEp || Object.keys(episodesObj)[0];
+                videoDataToPlay = episodesObj[currentEpKey];
+                
+                pageTitle += ` - ${activeSeason} Ep ${videoDataToPlay.ep}`;
                 renderWatchSeasons();
-                renderWatchEpisodes();
-                updateWatchTitle(episodes[currentEpKey]);
-                setupPlayer(episodes[currentEpKey]);
-            });
+            }
 
-            seasonTabs.appendChild(button);
-        });
+            document.title = `${pageTitle} - Anime Max Zone`;
+            const titleEl = document.getElementById('watchAnimeTitle');
+            if(titleEl) titleEl.innerText = pageTitle;
+            const descEl = document.getElementById('watchAnimeDesc');
+            if(descEl) descEl.innerText = currentAnimeData.synopsis || "No description available.";
 
-        renderWatchEpisodes();
-    }
-
-    function updateEpisodeURL() {
-        const url =
-            `watch.html?id=${encodeURIComponent(animeId)}` +
-            `&season=${encodeURIComponent(activeSeason)}` +
-            `&ep=${encodeURIComponent(currentEpKey)}`;
-
-        history.pushState({ path: url }, "", url);
-    }
-
-    function updateWatchTitle(episode) {
-        const titleElement = getElement("watchAnimeTitle");
-        if (titleElement && episode) {
-            titleElement.textContent =
-                `${safeText(animeData.title, "Anime")} - ${activeSeason} Ep ${episode.ep ?? ""}`;
+            if (videoDataToPlay) {
+                setupPlayer(videoDataToPlay);
+            }
         }
+    });
+
+    // --- Render Seasons & Episodes ---
+    function renderWatchSeasons() {
+        const seasonTabs = document.getElementById('watchSeasonTabs');
+        if (!seasonTabs) return;
+        seasonTabs.innerHTML = '';
+        
+        Object.keys(currentAnimeData.seasons).forEach(seasonName => {
+            const btn = document.createElement('button');
+            btn.className = `season-btn ${seasonName === activeSeason ? 'active' : ''}`;
+            btn.innerText = seasonName;
+            btn.onclick = () => {
+                activeSeason = seasonName;
+                const firstEpKey = Object.keys(currentAnimeData.seasons[seasonName])[0];
+                currentEpKey = firstEpKey;
+                
+                window.history.pushState({path: `watch.html?id=${animeId}&season=${encodeURIComponent(activeSeason)}&ep=${currentEpKey}`}, '', `watch.html?id=${animeId}&season=${encodeURIComponent(activeSeason)}&ep=${currentEpKey}`);
+                
+                renderWatchSeasons(); 
+                renderWatchEpisodes(); 
+                
+                activeSubtitleUrl = null; 
+                const newVideoData = currentAnimeData.seasons[activeSeason][currentEpKey];
+                setupPlayer(newVideoData);
+                document.getElementById('watchAnimeTitle').innerText = `${currentAnimeData.title} - ${activeSeason} Ep ${newVideoData.ep}`;
+            };
+            seasonTabs.appendChild(btn);
+        });
+        renderWatchEpisodes();
     }
 
     function renderWatchEpisodes() {
-        const container = getElement("watchEpisodeList");
-        if (!container || !animeData || !animeData.seasons) return;
-
-        container.innerHTML = "";
-
-        const episodes = animeData.seasons[activeSeason] || {};
-
-        Object.entries(episodes).forEach(([key, episode]) => {
-            const isPlaying = key === currentEpKey;
-
-            const card = document.createElement("div");
-            card.className = `episode-card${isPlaying ? " active" : ""}`;
-            card.style.cursor = "pointer";
-
+        const epContainer = document.getElementById('watchEpisodeList');
+        if (!epContainer) return;
+        epContainer.innerHTML = '';
+        
+        const episodesObj = currentAnimeData.seasons[activeSeason];
+        
+        Object.keys(episodesObj).forEach(key => {
+            const ep = episodesObj[key];
+            const isPlaying = (key === currentEpKey);
+            
+            const card = document.createElement('div');
+            card.className = `episode-card ${isPlaying ? 'active' : ''}`;
+            card.style.cursor = 'pointer';
             card.innerHTML = `
-                <div class="ep-play-icon">
-                    <i class="fa-solid ${isPlaying && !video.paused ? "fa-pause" : "fa-play"}"></i>
-                </div>
+                <div class="ep-play-icon"><i class="fa-solid ${isPlaying ? (video.paused ? 'fa-play' : 'fa-pause') : 'fa-play'}"></i></div>
                 <div class="ep-info">
-                    <h4>Episode ${escapeHTML(episode.ep ?? "?")} ${isPlaying ? "(Playing)" : ""}</h4>
-                    <p>${escapeHTML(episode.title ?? "")}</p>
+                    <h4>Episode ${ep.ep} ${isPlaying ? '(Playing)' : ''}</h4>
+                    <p>${ep.title}</p>
                 </div>
             `;
-
-            card.addEventListener("click", () => {
+            
+            card.addEventListener('click', () => {
                 if (isPlaying) {
                     togglePlayPause();
-                    return;
+                } else {
+                    currentEpKey = key;
+                    window.history.pushState({path: `watch.html?id=${animeId}&season=${encodeURIComponent(activeSeason)}&ep=${currentEpKey}`}, '', `watch.html?id=${animeId}&season=${encodeURIComponent(activeSeason)}&ep=${currentEpKey}`);
+                    
+                    renderWatchEpisodes(); 
+                    activeSubtitleUrl = null; 
+                    setupPlayer(ep); 
+                    document.getElementById('watchAnimeTitle').innerText = `${currentAnimeData.title} - ${activeSeason} Ep ${ep.ep}`;
                 }
-
-                currentEpKey = key;
-                updateEpisodeURL();
-                renderWatchEpisodes();
-                updateWatchTitle(episode);
-                setupPlayer(episode);
             });
-
-            container.appendChild(card);
+            epContainer.appendChild(card);
         });
     }
 
-    // ---------- Menus ----------
-
-    const audioIconBtn = getElement("audioIconBtn");
-    const subtitleIconBtn = getElement("subtitleIconBtn");
-
-    if (audioIconBtn) {
-        audioIconBtn.addEventListener("click", event => toggleMenu(audioMenu, event));
-    }
-
-    if (subtitleIconBtn) {
-        subtitleIconBtn.addEventListener("click", event => toggleMenu(subtitleMenu, event));
-    }
-
-    if (settingsBtn) {
-        settingsBtn.addEventListener("click", event => toggleMenu(qualityMenu, event));
-    }
-
-    // ---------- Playback controls ----------
-
-    function togglePlayPause() {
-        if (video.paused) {
-            video.play().catch(error => {
-                console.warn("Play request rejected:", error);
-            });
-
-            if (currentAudioUrl) {
-                audioPlayer.play().catch(error => {
-                    console.warn("Audio play request rejected:", error);
-                });
-            }
-        } else {
-            video.pause();
-            audioPlayer.pause();
-        }
-    }
-
-    if (playPauseBtn) {
-        playPauseBtn.addEventListener("click", event => {
-            event.stopPropagation();
-            togglePlayPause();
-            resetControlTimeout();
-        });
-    }
-
-    video.addEventListener("play", () => {
-        if (playPauseBtn) {
-            playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
-        }
-
-        if (currentAudioUrl && audioPlayer.paused) {
-            audioPlayer.currentTime = video.currentTime;
-            audioPlayer.play().catch(error => {
-                console.warn("Audio did not start:", error);
-            });
-        }
-
-        renderWatchEpisodes();
+    // --- PLAYER LOGIC ---
+    if(audioIconBtn) audioIconBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        audioMenu.style.display = audioMenu.style.display === 'none' ? 'block' : 'none';
+        if(subtitleMenu) subtitleMenu.style.display = 'none';
+        if(qualityMenu) qualityMenu.style.display = 'none';
         resetControlTimeout();
     });
 
-    video.addEventListener("pause", () => {
-        if (playPauseBtn) {
-            playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
-        }
-
-        audioPlayer.pause();
-        stopAudioSync();
-        renderWatchEpisodes();
-        showControls();
+    if(subtitleIconBtn) subtitleIconBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        subtitleMenu.style.display = subtitleMenu.style.display === 'none' ? 'block' : 'none';
+        if(audioMenu) audioMenu.style.display = 'none';
+        if(qualityMenu) qualityMenu.style.display = 'none';
+        resetControlTimeout();
     });
 
-    video.addEventListener("waiting", () => setLoader(true));
-    video.addEventListener("playing", () => setLoader(false));
-    video.addEventListener("canplay", () => setLoader(false));
-
-    video.addEventListener("ended", () => {
-        audioPlayer.pause();
-        stopAudioSync();
+    if(settingsBtn) settingsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        qualityMenu.style.display = qualityMenu.style.display === 'none' ? 'block' : 'none';
+        if(audioMenu) audioMenu.style.display = 'none';
+        if(subtitleMenu) subtitleMenu.style.display = 'none';
+        resetControlTimeout();
     });
 
-    video.addEventListener("timeupdate", () => {
-        if (!Number.isFinite(video.duration) || video.duration <= 0) return;
+    function setupPlayer(videoData) {
+        audioMenu.style.display = 'none';
+        subtitleMenu.style.display = 'none';
+        qualityMenu.style.display = 'none';
 
-        if (seekBar) {
-            seekBar.value = (video.currentTime / video.duration) * 100;
-        }
+        // --- AUDIO RENDER ---
+        const audioOptions = document.getElementById('audioOptions');
+        if (videoData.audios && Object.keys(videoData.audios).length > 0) {
+            audioOptions.innerHTML = '';
+            Object.keys(videoData.audios).forEach(lang => {
+                const btn = document.createElement('button');
+                btn.innerText = lang;
+                btn.className = `setting-btn ${currentAudio === lang ? 'active' : ''}`;
+                btn.onclick = (e) => { 
+                    e.stopPropagation(); 
+                    currentAudio = lang;
+                    
+                    // UI update
+                    Array.from(audioOptions.children).forEach(c => c.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    // 🔥 FIX: Force Audio Load, ignore Quality
+                    loadSpecificTrack(videoData, lang, null); 
+                };
+                audioOptions.appendChild(btn);
+            });
+        } else { audioOptions.innerHTML = '<p style="font-size:12px; color:#888;">No Audio</p>'; }
 
-        if (timeDisplay) {
-            timeDisplay.textContent =
-                `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
-        }
-    });
+        // --- QUALITY RENDER ---
+        const qualityOptions = document.getElementById('qualityOptions');
+        if (videoData.qualities && Object.keys(videoData.qualities).length > 0) {
+            qualityOptions.innerHTML = '';
+            Object.keys(videoData.qualities).forEach(q => {
+                const btn = document.createElement('button');
+                btn.innerText = q;
+                btn.className = `setting-btn ${currentQuality === q ? 'active' : ''}`;
+                btn.onclick = (e) => { 
+                    e.stopPropagation(); 
+                    currentQuality = q; 
+                    
+                    // UI update
+                    Array.from(qualityOptions.children).forEach(c => c.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    // 🔥 FIX: Force Quality Load, ignore Audio
+                    loadSpecificTrack(videoData, null, q); 
+                };
+                qualityOptions.appendChild(btn);
+            });
+        } else { qualityOptions.innerHTML = '<p style="font-size:12px; color:#888;">No Quality</p>'; }
 
-    if (seekBar) {
-        seekBar.addEventListener("input", event => {
-            event.stopPropagation();
-
-            if (Number.isFinite(video.duration)) {
-                video.currentTime = video.duration * (Number(seekBar.value) / 100);
-
-                if (currentAudioUrl) {
-                    try {
-                        audioPlayer.currentTime = video.currentTime;
-                    } catch (_) {}
-                }
-            }
-        });
-    }
-
-    if (skipBackBtn) {
-        skipBackBtn.addEventListener("click", event => {
-            event.stopPropagation();
-            video.currentTime = Math.max(0, video.currentTime - 10);
-
-            if (currentAudioUrl) {
-                audioPlayer.currentTime = video.currentTime;
-            }
-
-            resetControlTimeout();
-        });
-    }
-
-    if (skipForwardBtn) {
-        skipForwardBtn.addEventListener("click", event => {
-            event.stopPropagation();
-
-            const target = video.currentTime + 10;
-            video.currentTime = Number.isFinite(video.duration)
-                ? Math.min(video.duration, target)
-                : target;
-
-            if (currentAudioUrl) {
-                audioPlayer.currentTime = video.currentTime;
-            }
-
-            resetControlTimeout();
-        });
-    }
-
-    if (muteBtn) {
-        muteBtn.addEventListener("click", event => {
-            event.stopPropagation();
-            video.muted = !video.muted;
-            resetControlTimeout();
-        });
-    }
-
-    video.addEventListener("volumechange", () => {
-        if (!muteBtn) return;
-
-        muteBtn.innerHTML = (video.muted || video.volume === 0)
-            ? '<i class="fa-solid fa-volume-xmark"></i>'
-            : '<i class="fa-solid fa-volume-high"></i>';
-    });
-
-    if (fullscreenBtn && playerWrapper) {
-        fullscreenBtn.addEventListener("click", async event => {
-            event.stopPropagation();
-
-            try {
-                if (!document.fullscreenElement) {
-                    await playerWrapper.requestFullscreen();
-
-                    if (screen.orientation?.lock) {
-                        try {
-                            await screen.orientation.lock("landscape");
-                        } catch (_) {}
+        // --- SUBTITLE RENDER ---
+        const subtitleOptions = document.getElementById('subtitleOptions');
+        if (videoData.subtitles && Object.keys(videoData.subtitles).length > 0) {
+            subtitleOptions.innerHTML = '';
+            Object.keys(videoData.subtitles).forEach(sub => {
+                const btn = document.createElement('button');
+                btn.innerText = sub;
+                btn.className = 'setting-btn';
+                btn.onclick = (e) => { 
+                    e.stopPropagation();
+                    activeSubtitleUrl = videoData.subtitles[sub]; 
+                    const track = document.getElementById('subtitleTrack');
+                    if(track) { 
+                        track.src = activeSubtitleUrl; 
+                        track.style.display = 'block'; 
+                        track.mode = 'showing'; 
                     }
+                    subtitleMenu.style.display = 'none'; 
+                };
+                subtitleOptions.appendChild(btn);
+            });
+        } else { subtitleOptions.innerHTML = '<p style="font-size:12px; color:#888;">No Subtitles</p>'; }
+
+        const defaultAudio = currentAudio || Object.keys(videoData.audios || {})[0] || null;
+        const defaultQuality = currentQuality || Object.keys(videoData.qualities || {})[0] || null;
+        
+        // Initial load logic (Priority: Audio > Quality)
+        loadSpecificTrack(videoData, defaultAudio, defaultQuality);
+    }
+
+    function loadSpecificTrack(videoData, audioLang, qualityName) {
+        // 🔥 Don't reset the other variable if passed as null during explicit click
+        if (audioLang !== null) currentAudio = audioLang;
+        if (qualityName !== null) currentQuality = qualityName;
+        
+        let url = "";
+        // Priority: If quality is explicitly selected, use it. Else use audio.
+        if (qualityName && videoData.qualities && videoData.qualities[qualityName]) {
+            url = videoData.qualities[qualityName];
+        } else if (audioLang && videoData.audios && videoData.audios[audioLang]) {
+            url = videoData.audios[audioLang];
+        } else if (videoData.gdrive_id) { 
+            url = videoData.gdrive_id;
+        }
+
+        if(url) playVideoUrl(url);
+        audioMenu.style.display = 'none';
+        qualityMenu.style.display = 'none';
+    }
+
+    // 🔥 TRUE SEAMLESS SWITCHING LOGIC 🔥
+    function playVideoUrl(url) {
+        if(!url) return;
+        
+        // 1. State Save karo
+        const previousTime = video.currentTime;
+        const wasMuted = video.muted;
+        const currentVolume = video.volume;
+        const wasPlaying = !video.paused; // 🔥 Play status yaad rakho
+        
+        let fileId = null;
+        if (url.includes('drive.google.com')) {
+            const patterns = [/\/file\/d\/([a-zA-Z0-9_-]+)/, /[?&]id=([a-zA-Z0-9_-]+)/];
+            for (let pattern of patterns) {
+                const match = url.match(pattern);
+                if (match) { fileId = match[1]; break; }
+            }
+        } else if (!url.startsWith('http')) {
+            fileId = url;
+        }
+
+        let finalUrl = fileId ? `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=AIzaSyCpfrluxsBhnz48ve9RykIy1IxzbBfk7dA` : url;
+
+        if(videoLoader) videoLoader.style.display = 'block';
+
+        video.src = finalUrl;
+        video.load();
+        
+        video.onloadedmetadata = function() {
+            // 2. State Restore karo
+            if(previousTime > 0 && previousTime < video.duration) {
+                video.currentTime = previousTime;
+            }
+            video.muted = wasMuted;
+            video.volume = currentVolume;
+
+            // 3. Subtitle restore
+            const track = document.getElementById('subtitleTrack');
+            if (track) {
+                if (activeSubtitleUrl) {
+                    track.src = activeSubtitleUrl;
+                    track.style.display = 'block';
+                    track.mode = 'showing';
                 } else {
-                    await document.exitFullscreen();
-
-                    if (screen.orientation?.unlock) {
-                        screen.orientation.unlock();
-                    }
+                    track.style.display = 'none';
+                    track.mode = 'disabled';
                 }
-            } catch (error) {
-                console.warn("Fullscreen unavailable:", error);
             }
-
-            resetControlTimeout();
-        });
+            
+            // 4. Play karo (Sirf tab jab pehle play ho raha tha)
+            if (wasPlaying) {
+                let playPromise = video.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(_ => {
+                        if(muteBtn) muteBtn.innerHTML = wasMuted ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
+                    }).catch(e => {
+                        console.log("Autoplay with sound blocked by browser, muting...", e);
+                        video.muted = true;
+                        if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+                        video.play();
+                        showUnmuteHint();
+                    });
+                }
+            }
+            
+            video.onloadedmetadata = null; 
+        };
     }
 
-    // ---------- Show/hide controls ----------
+    // Hint Box dikhane ka function
+    function showUnmuteHint() {
+        let hint = document.getElementById('unmuteHint');
+        if(!hint && playerWrapper) {
+            hint = document.createElement('div');
+            hint.id = 'unmuteHint';
+            hint.style.cssText = "position: absolute; top: 20%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 8px 15px; border-radius: 20px; font-size: 12px; z-index: 999; pointer-events: none; transition: opacity 0.5s;";
+            hint.innerHTML = '<i class="fa-solid fa-volume-xmark"></i> Tap speaker to Unmute';
+            playerWrapper.appendChild(hint);
+        }
+        if(hint) {
+            hint.style.opacity = '1';
+            setTimeout(() => { hint.style.opacity = '0'; }, 3000);
+        }
+    }
+
+    // --- CONTROLS & DOUBLE TAP ---
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const seekBar = document.getElementById('seekBar');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const muteBtn = document.getElementById('muteBtn');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const skipBackBtn = document.getElementById('skipBackBtn');
+    const skipForwardBtn = document.getElementById('skipForwardBtn');
+    const playerWrapper = document.getElementById('playerWrapper');
+    
+    const leftOverlay = document.getElementById('seekLeftOverlay');
+    const centerOverlay = document.getElementById('centerOverlay');
+    const rightOverlay = document.getElementById('seekRightOverlay');
+    const centerFeedbackIcon = document.getElementById('centerFeedbackIcon');
+
+    video.addEventListener('waiting', () => { if(videoLoader) videoLoader.style.display = 'block'; });
+    video.addEventListener('playing', () => { if(videoLoader) videoLoader.style.display = 'none'; });
+
+    video.addEventListener('play', () => {
+        if(playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+        renderWatchEpisodes(); 
+    });
+
+    video.addEventListener('pause', () => {
+        if(playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+        renderWatchEpisodes(); 
+    });
+
+    video.addEventListener('volumechange', () => {
+        if(video.muted || video.volume === 0) {
+            if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+        } else {
+            if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+        }
+    });
+
+    playPauseBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        togglePlayPause();
+        resetControlTimeout();
+    });
+
+    function togglePlayPause() {
+        if (video.paused) {
+            video.play(); 
+        } else {
+            video.pause(); 
+        }
+    }
+
+    video.addEventListener('timeupdate', () => {
+        if (!isNaN(video.duration)) {
+            seekBar.value = (video.currentTime / video.duration) * 100;
+            let currMin = Math.floor(video.currentTime / 60);
+            let currSec = Math.floor(video.currentTime % 60);
+            let totalMin = Math.floor(video.duration / 60);
+            let totalSec = Math.floor(video.duration % 60);
+            currSec = currSec < 10 ? '0' + currSec : currSec;
+            totalSec = totalSec < 10 ? '0' + totalSec : totalSec;
+            timeDisplay.innerText = `${currMin}:${currSec} / ${totalMin}:${totalSec}`;
+        }
+    });
+
+    seekBar.addEventListener('input', (e) => {
+        e.stopPropagation();
+        video.currentTime = video.duration * (seekBar.value / 100);
+    });
+    
+    skipForwardBtn.addEventListener('click', (e) => { e.stopPropagation(); video.currentTime += 10; resetControlTimeout(); });
+    skipBackBtn.addEventListener('click', (e) => { e.stopPropagation(); video.currentTime -= 10; resetControlTimeout(); });
+    
+    muteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        video.muted = !video.muted;
+        resetControlTimeout();
+    });
+
+    fullscreenBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (!document.fullscreenElement) {
+            try {
+                await playerWrapper.requestFullscreen();
+                if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
+            } catch (err) {}
+        } else {
+            document.exitFullscreen();
+            if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
+        }
+        resetControlTimeout();
+    });
+
+    // 🔥 Auto Hide Controls Logic (3 Seconds) 🔥
+    let controlTimeout;
 
     function showControls() {
-        if (controlsBar) controlsBar.classList.remove("hidden");
-        if (topControls) topControls.classList.remove("hidden");
+        controlsBar.classList.remove('hidden');
+        topControls.classList.remove('hidden');
         resetControlTimeout();
     }
 
     function hideControls() {
-        if (video.paused) return;
-
-        if (controlsBar) controlsBar.classList.add("hidden");
-        if (topControls) topControls.classList.add("hidden");
-
-        closeMenus();
+        if (!video.paused) {
+            controlsBar.classList.add('hidden');
+            topControls.classList.add('hidden');
+            if(audioMenu) audioMenu.style.display = 'none';
+            if(subtitleMenu) subtitleMenu.style.display = 'none';
+            if(qualityMenu) qualityMenu.style.display = 'none';
+        }
     }
 
     function resetControlTimeout() {
         clearTimeout(controlTimeout);
-
         if (!video.paused) {
-            controlTimeout = setTimeout(hideControls, 3000);
+            controlTimeout = setTimeout(hideControls, 3000); 
         }
     }
 
-    if (playerWrapper) {
-        playerWrapper.addEventListener("mousemove", showControls);
-        playerWrapper.addEventListener("touchstart", showControls, { passive: true });
-    }
-
-    // ---------- Tap and double-tap seek ----------
-
-    function handleTap(overlay, action) {
-        const now = Date.now();
-        const isDoubleTap = now - lastTapTime < 300;
-        lastTapTime = now;
-
-        if (!isDoubleTap) {
-            showControls();
-            return;
-        }
-
-        if (action === "left") {
-            video.currentTime = Math.max(0, video.currentTime - 10);
-        } else if (action === "right") {
-            const target = video.currentTime + 10;
-
-            video.currentTime = Number.isFinite(video.duration)
-                ? Math.min(video.duration, target)
-                : target;
-        } else {
-            togglePlayPause();
-        }
-
-        if (overlay) {
-            overlay.classList.add("active");
-            setTimeout(() => overlay.classList.remove("active"), 500);
-        }
-
-        resetControlTimeout();
-    }
-
-    if (leftOverlay) {
-        leftOverlay.addEventListener("click", () => handleTap(leftOverlay, "left"));
-    }
-
-    if (rightOverlay) {
-        rightOverlay.addEventListener("click", () => handleTap(rightOverlay, "right"));
-    }
-
-    if (centerOverlay) {
-        centerOverlay.addEventListener("click", () => {
-            handleTap(centerOverlay, "center");
-        });
-    }
-
-    // Close menus on outside click.
-    document.addEventListener("click", event => {
-        const insideMenu = event.target.closest(
-            "#audioMenu, #subtitleMenu, #qualityMenu, #audioIconBtn, #subtitleIconBtn, #settingsBtn"
-        );
-
-        if (!insideMenu) closeMenus();
+    video.addEventListener('pause', () => {
+        clearTimeout(controlTimeout);
+        showControls();
     });
 
-    // ---------- Start ----------
+    // --- Single Tap / Double Tap Logic ---
+    let lastTap = 0;
+    
+    function handleTap(overlay, action) {
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTap;
+        
+        if (tapLength < 300 && tapLength > 0) {
+            if (action === 'left') {
+                video.currentTime = Math.max(0, video.currentTime - 10);
+                overlay.querySelector('.tap-feedback').innerHTML = '<i class="fa-solid fa-backward"></i> 10s';
+            } else if (action === 'right') {
+                video.currentTime = Math.min(video.duration, video.currentTime + 10);
+                overlay.querySelector('.tap-feedback').innerHTML = '10s <i class="fa-solid fa-forward"></i>';
+            } else if (action === 'center') {
+                togglePlayPause();
+                centerFeedbackIcon.innerHTML = video.paused ? '<i class="fa-solid fa-play"></i>' : '<i class="fa-solid fa-pause"></i>';
+            }
+            overlay.classList.add('active');
+            setTimeout(() => { overlay.classList.remove('active'); }, 500);
+            
+        } else {
+            if (controlsBar.classList.contains('hidden')) {
+                showControls();
+            } else {
+                if (!video.paused) hideControls();
+            }
+        }
+        lastTap = currentTime;
+    }
+
+    if(leftOverlay) leftOverlay.addEventListener('click', () => handleTap(leftOverlay, 'left'));
+    if(rightOverlay) rightOverlay.addEventListener('click', () => handleTap(rightOverlay, 'right'));
+    if(centerOverlay) centerOverlay.addEventListener('click', () => handleTap(centerOverlay, 'center'));
 
     showControls();
-    loadWatchContent();
 }
 
+// ================= 7. COMMENT SYSTEM & BOTTOM SHEET LOGIC =================
+if (document.getElementById('customVideo') && database) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const animeId = urlParams.get('id'); 
 
-// ================= 8. COMMENTS SYSTEM =================
+    const commentForm = document.getElementById('commentForm');
+    const commentsList = document.getElementById('commentsList');
 
-if (getElement("customVideo") && database) {
-    const animeId = new URLSearchParams(location.search).get("id");
+    const openCommentsBtn = document.getElementById('openCommentsBtn');
+    const closeCommentsBtn = document.getElementById('closeCommentsBtn');
+    const bottomSheet = document.getElementById('commentsBottomSheet');
+    const backdrop = document.getElementById('bottomSheetBackdrop');
 
-    const commentForm = getElement("commentForm");
-    const commentsList = getElement("commentsList");
-    const openCommentsBtn = getElement("openCommentsBtn");
-    const closeCommentsBtn = getElement("closeCommentsBtn");
-    const bottomSheet = getElement("commentsBottomSheet");
-    const backdrop = getElement("bottomSheetBackdrop");
-
-    function closeCommentsSheet() {
-        if (bottomSheet) bottomSheet.classList.remove("active");
-        if (backdrop) backdrop.classList.remove("active");
-    }
-
-    if (openCommentsBtn && bottomSheet && backdrop) {
-        openCommentsBtn.addEventListener("click", () => {
-            bottomSheet.classList.add("active");
-            backdrop.classList.add("active");
+    if(openCommentsBtn && bottomSheet) {
+        openCommentsBtn.addEventListener('click', () => {
+            bottomSheet.classList.add('active');
+            backdrop.classList.add('active');
         });
 
-        if (closeCommentsBtn) {
-            closeCommentsBtn.addEventListener("click", closeCommentsSheet);
-        }
+        closeCommentsBtn.addEventListener('click', () => {
+            bottomSheet.classList.remove('active');
+            backdrop.classList.remove('active');
+        });
 
-        backdrop.addEventListener("click", closeCommentsSheet);
+        backdrop.addEventListener('click', () => {
+            bottomSheet.classList.remove('active');
+            backdrop.classList.remove('active');
+        });
     }
 
-    let commentUserId = localStorage.getItem("commentUserId");
-
-    if (!commentUserId) {
-        commentUserId =
-            "user_" + Math.random().toString(36).slice(2, 11);
-
-        localStorage.setItem("commentUserId", commentUserId);
+    let localCommentUserId = localStorage.getItem('commentUserId');
+    if (!localCommentUserId) {
+        localCommentUserId = 'user_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('commentUserId', localCommentUserId);
     }
 
     let isAdmin = false;
-
-    if (firebase.auth) {
-        firebase.auth().onAuthStateChanged(user => {
-            // Sign-in alone should not automatically grant admin permissions.
-            // Use Firebase database security rules for actual authorization.
-            isAdmin = Boolean(user && user.email);
+    if (typeof firebase.auth === 'function') {
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                isAdmin = true;
+                if (animeId) loadComments(); 
+            }
         });
     }
 
-    function renderComments(snapshot) {
-        if (!commentsList) return;
-
-        commentsList.innerHTML = "";
-
-        const data = snapshot.val();
-
-        if (!data) {
-            commentsList.innerHTML =
-                '<p style="color:#888;font-size:13px;text-align:center;">No comments yet. Be the first to comment!</p>';
-            return;
-        }
-
-        const comments = Object.entries(data)
-            .map(([key, value]) => ({ key, ...value }))
-            .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-
-        comments.forEach(comment => {
-            const item = document.createElement("div");
-            item.className = "comment-item";
-
-            const header = document.createElement("div");
-            header.className = "comment-header";
-
-            const name = document.createElement("span");
-            name.className = "comment-name";
-            name.textContent = safeText(comment.name, "Anonymous");
-
-            const right = document.createElement("div");
-            right.style.cssText = "display:flex;align-items:center;gap:10px;";
-
-            const time = document.createElement("span");
-            time.className = "comment-time";
-
-            time.textContent = comment.timestamp
-                ? new Date(comment.timestamp).toLocaleString()
-                : "";
-
-            right.appendChild(time);
-
-            const canDelete = comment.userId === commentUserId || isAdmin;
-
-            if (canDelete) {
-                const deleteBtn = document.createElement("button");
-                deleteBtn.type = "button";
-                deleteBtn.className = "delete-comment-btn";
-                deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
-
-                deleteBtn.addEventListener("click", () => {
-                    window.deleteComment(animeId, comment.key);
-                });
-
-                right.appendChild(deleteBtn);
+    if (commentForm) {
+        commentForm.addEventListener('submit', (e) => {
+            e.preventDefault(); 
+            
+            if (!animeId) {
+                alert("Error: Content ID missing from URL. Cannot post comment.");
+                return;
             }
 
-            header.append(name, right);
+            const name = document.getElementById('commentName').value.trim();
+            const email = document.getElementById('commentEmail').value.trim();
+            const text = document.getElementById('commentText').value.trim();
 
-            const text = document.createElement("p");
-            text.className = "comment-text";
-            text.textContent = safeText(comment.text);
+            if(!name || !email || !text) {
+                alert("Please fill all the fields.");
+                return;
+            }
 
-            item.append(header, text);
-            commentsList.appendChild(item);
+            const submitBtn = commentForm.querySelector('button[type="submit"]');
+            if(submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Posting...';
+            }
+
+            database.ref('comments/' + animeId).push({
+                name: name,
+                email: email,
+                text: text,
+                userId: localCommentUserId,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => { 
+                commentForm.reset(); 
+                if(submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Post Comment';
+                }
+            }).catch(err => {
+                alert("Comment post nahi ho paya: " + err.message);
+                if(submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Post Comment';
+                }
+            });
         });
     }
 
     function loadComments() {
         if (!animeId || !commentsList) return;
+        
+        database.ref('comments/' + animeId).on('value', (snapshot) => {
+            const commentsData = snapshot.val();
+            commentsList.innerHTML = '';
 
-        database.ref(`comments/${animeId}`).on(
-            "value",
-            renderComments,
-            error => {
-                console.error("Comments load error:", error);
+            if (commentsData) {
+                const sortedComments = Object.keys(commentsData).map(key => ({
+                    key: key,
+                    ...commentsData[key]
+                })).sort((a, b) => b.timestamp - a.timestamp);
 
-                commentsList.innerHTML =
-                    '<p style="color:#ef4444;text-align:center;">Unable to load comments.</p>';
-            }
-        );
-    }
+                sortedComments.forEach(comment => {
+                    const date = new Date(comment.timestamp);
+                    const timeString = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
-    if (commentForm) {
-        commentForm.addEventListener("submit", event => {
-            event.preventDefault();
+                    const canDelete = (comment.userId === localCommentUserId) || isAdmin;
+                    const deleteBtn = canDelete ? `<button class="delete-comment-btn" onclick="deleteComment('${animeId}', '${comment.key}')"><i class="fa-solid fa-trash"></i></button>` : '';
 
-            if (!animeId) {
-                alert("Content ID URL mein nahi mila.");
-                return;
-            }
-
-            const name = safeText(getElement("commentName")?.value).trim();
-            const email = safeText(getElement("commentEmail")?.value).trim();
-            const text = safeText(getElement("commentText")?.value).trim();
-
-            if (!name || !email || !text) {
-                alert("Please fill all fields.");
-                return;
-            }
-
-            const submitBtn = commentForm.querySelector('button[type="submit"]');
-
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.innerHTML =
-                    '<i class="fa-solid fa-spinner fa-spin"></i> Posting...';
-            }
-
-            database.ref(`comments/${animeId}`).push({
-                name,
-                email,
-                text,
-                userId: commentUserId,
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            })
-                .then(() => commentForm.reset())
-                .catch(error => {
-                    console.error("Comment post error:", error);
-                    alert("Comment post nahi ho paya: " + error.message);
-                })
-                .finally(() => {
-                    if (submitBtn) {
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML =
-                            '<i class="fa-solid fa-paper-plane"></i> Post Comment';
-                    }
+                    commentsList.innerHTML += `
+                        <div class="comment-item">
+                            <div class="comment-header">
+                                <span class="comment-name">${comment.name}</span>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span class="comment-time">${timeString}</span>
+                                    ${deleteBtn}
+                                </div>
+                            </div>
+                            <p class="comment-text">${comment.text}</p>
+                        </div>
+                    `;
                 });
+            } else {
+                commentsList.innerHTML = '<p style="color: #888; font-size: 13px; text-align: center;">No comments yet. Be the first to comment!</p>';
+            }
         });
     }
-
+    
     if (animeId) {
         loadComments();
     } else if (commentsList) {
-        commentsList.innerHTML =
-            '<p style="color:#ef4444;text-align:center;">Error: Anime ID not found in URL.</p>';
+        commentsList.innerHTML = '<p style="color: #ef4444; font-size: 13px; text-align: center;">Error: Anime ID not found in URL.</p>';
     }
 }
 
-
-// ================= 9. DELETE CONFIRMATION MODAL =================
-
+// ================= 8. CUSTOM CONFIRM MODAL LOGIC =================
 let pendingDeleteAction = null;
 
+// Modal ko open karne ka function
 window.showCustomConfirm = (message, action) => {
-    const modal = getElement("customConfirmModal");
-    const messageElement = getElement("confirmMessage");
-
-    if (!modal) {
-        if (confirm(message)) action?.();
-        return;
-    }
-
-    if (messageElement) messageElement.textContent = message;
-
+    const modal = document.getElementById('customConfirmModal');
+    const msgEl = document.getElementById('confirmMessage');
+    if (!modal) return; 
+    
+    if(msgEl) msgEl.innerText = message;
     pendingDeleteAction = action;
-    modal.style.display = "flex";
+    modal.style.display = 'flex';
 };
 
-document.addEventListener("DOMContentLoaded", () => {
-    const yesBtn = getElement("confirmYesBtn");
-    const noBtn = getElement("confirmNoBtn");
-    const modal = getElement("customConfirmModal");
+// Modal ke buttons ko handle karna
+document.addEventListener('DOMContentLoaded', () => {
+    const yesBtn = document.getElementById('confirmYesBtn');
+    const noBtn = document.getElementById('confirmNoBtn');
+    const modal = document.getElementById('customConfirmModal');
 
-    function closeModal() {
-        if (modal) modal.style.display = "none";
-        pendingDeleteAction = null;
-    }
-
-    if (yesBtn) {
-        yesBtn.addEventListener("click", () => {
-            const action = pendingDeleteAction;
-            closeModal();
-
-            if (typeof action === "function") action();
+    if (yesBtn && noBtn && modal) {
+        // Yes / Delete button click
+        yesBtn.addEventListener('click', () => {
+            if (pendingDeleteAction) {
+                pendingDeleteAction();
+            }
+            modal.style.display = 'none';
+            pendingDeleteAction = null;
         });
-    }
 
-    if (noBtn) {
-        noBtn.addEventListener("click", closeModal);
-    }
+        // No / Cancel button click
+        noBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+            pendingDeleteAction = null;
+        });
 
-    if (modal) {
-        modal.addEventListener("click", event => {
-            if (event.target === modal) closeModal();
+        // Agar user background (dark area) par click kare toh band ho jaye
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+                pendingDeleteAction = null;
+            }
         });
     }
 });
 
+// Global Delete Comment Function (Updated to use Custom Modal)
 window.deleteComment = (animeId, commentKey) => {
-    if (!database || !animeId || !commentKey) return;
-
-    window.showCustomConfirm(
-        "Are you sure you want to delete this comment permanently?",
-        () => {
-            database.ref(`comments/${animeId}/${commentKey}`)
-                .remove()
-                .catch(error => {
-                    alert("Error deleting comment: " + error.message);
-                });
-        }
-    );
+    showCustomConfirm("Are you sure you want to delete this comment permanently?", () => {
+        database.ref(`comments/${animeId}/${commentKey}`).remove()
+            .catch((err) => alert("Error deleting comment: " + err.message));
+    });
 };
