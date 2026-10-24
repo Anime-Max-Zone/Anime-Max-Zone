@@ -998,63 +998,103 @@ input:checked + .slider:before {
     margin-left: 5px;
 }
 
-/* ================= PLAYER SETTINGS MENU (Quality, Audio, Subtitle) ================= */
-.settings-menu, .top-settings-menu {
+/* ================= SIDE MENUS (NETFLIX/MX STYLE) ================= */
+.side-menu {
     position: absolute;
-    background: rgba(13, 13, 18, 0.95);
-    backdrop-filter: blur(10px);
-    padding: 15px;
-    border-radius: 10px;
-    border: 1px solid #2a2a35;
-    z-index: 40;
-    min-width: 180px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.8);
-}
-
-.settings-menu {
-    bottom: 60px;
-    right: 15px;
-    display: none;
-}
-
-.top-settings-menu {
-    top: 55px;
-    right: 15px;
-    display: none;
-}
-
-.settings-menu h4, .top-settings-menu h4 {
-    color: #888;
-    font-size: 11px;
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-}
-
-.settings-options {
+    top: 0;
+    right: -320px; /* Start hidden on the right */
+    width: 300px;
+    height: 100%;
+    background: rgba(15, 15, 20, 0.95);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    z-index: 50;
     display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    margin-bottom: 5px;
+    flex-direction: column;
+    transition: right 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: -5px 0 20px rgba(0,0,0,0.5);
 }
 
-.setting-btn {
-    background: #1a1a24;
-    border: 1px solid #333;
+.side-menu.active {
+    right: 0;
+}
+
+.side-menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.side-menu-header h4 {
     color: #fff;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 12px;
+    font-size: 16px;
+    margin: 0;
+    font-weight: 600;
+}
+
+.close-menu-btn {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 20px;
     cursor: pointer;
-    transition: 0.2s;
+    padding: 5px;
+}
+
+.side-menu-options {
+    display: flex;
+    flex-direction: column;
+    padding: 10px 0;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Radio Button Style */
+.setting-btn {
+    background: transparent;
+    border: none;
+    color: #ccc;
+    padding: 15px 20px;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    cursor: pointer;
+    transition: background 0.2s;
+    text-align: left;
+    width: 100%;
     font-family: 'Poppins', sans-serif;
 }
 
-.setting-btn:hover, .setting-btn.active {
-    background: #a855f7;
-    border-color: #a855f7;
+.setting-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Empty Circle */
+.setting-btn::before {
+    content: '';
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #666;
+    border-radius: 50%;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+/* Active State (Blue Circle like screenshot) */
+.setting-btn.active {
     color: #fff;
+    font-weight: 500;
+}
+
+.setting-btn.active::before {
+    border-color: #3b82f6; /* Blue */
+    background: #3b82f6;
+    box-shadow: inset 0 0 0 3px #0f0f14; /* Ring effect */
 }
 
 /* ================= TAP OVERLAYS (Double Tap) ================= */
