@@ -24,7 +24,8 @@ try {
 let allContentDatabase = [];
 let currentAudio = null;
 let currentQuality = null;
-let activeSubtitleUrl = null; // 🔥 Subtitle yaad rakhne ke liye
+let activeSubtitleUrl = null;
+let hls = null; // 🔥 HLS Instance ke liye global variable
 
 // ================= 2. SPLASH SCREEN & INITIAL LOAD =================
 document.addEventListener('DOMContentLoaded', () => {
@@ -434,7 +435,28 @@ if (document.getElementById('customVideo') && database) {
         subtitleMenu.style.display = 'none';
         qualityMenu.style.display = 'none';
 
-        // --- AUDIO RENDER ---
+        // 🔥 CHECK FOR HLS LINK (.m3u8) 🔥
+        let mainUrl = "";
+        if (videoData.gdrive_id && videoData.gdrive_id.includes('.m3u8')) {
+            mainUrl = videoData.gdrive_id;
+        } else if (videoData.qualities && Object.values(videoData.qualities).length > 0) {
+            // Agar qualities me se koi .m3u8 link hai
+            for (let q in videoData.qualities) {
+                if (videoData.qualities[q].includes('.m3u8')) {
+                    mainUrl = videoData.qualities[q];
+                    break;
+                }
+            }
+        }
+
+        if (mainUrl && mainUrl.includes('.m3u8') && typeof Hls !== 'undefined' && Hls.isSupported()) {
+            setupHlsPlayer(videoData, mainUrl);
+            return; // HLS setup karke return ho jao, purana MP4 logic skip karo
+        }
+
+        // ==========================================
+        // PURANA MP4 LOGIC (FALLBACK)
+        // ==========================================
         const audioOptions = document.getElementById('audioOptions');
         if (videoData.audios && Object.keys(videoData.audios).length > 0) {
             audioOptions.innerHTML = '';
@@ -445,19 +467,14 @@ if (document.getElementById('customVideo') && database) {
                 btn.onclick = (e) => { 
                     e.stopPropagation(); 
                     currentAudio = lang;
-                    
-                    // UI update
                     Array.from(audioOptions.children).forEach(c => c.classList.remove('active'));
                     btn.classList.add('active');
-                    
-                    // 🔥 FIX: Force Audio Load, ignore Quality
                     loadSpecificTrack(videoData, lang, null); 
                 };
                 audioOptions.appendChild(btn);
             });
         } else { audioOptions.innerHTML = '<p style="font-size:12px; color:#888;">No Audio</p>'; }
 
-        // --- QUALITY RENDER ---
         const qualityOptions = document.getElementById('qualityOptions');
         if (videoData.qualities && Object.keys(videoData.qualities).length > 0) {
             qualityOptions.innerHTML = '';
@@ -468,19 +485,14 @@ if (document.getElementById('customVideo') && database) {
                 btn.onclick = (e) => { 
                     e.stopPropagation(); 
                     currentQuality = q; 
-                    
-                    // UI update
                     Array.from(qualityOptions.children).forEach(c => c.classList.remove('active'));
                     btn.classList.add('active');
-                    
-                    // 🔥 FIX: Force Quality Load, ignore Audio
                     loadSpecificTrack(videoData, null, q); 
                 };
                 qualityOptions.appendChild(btn);
             });
         } else { qualityOptions.innerHTML = '<p style="font-size:12px; color:#888;">No Quality</p>'; }
 
-        // --- SUBTITLE RENDER ---
         const subtitleOptions = document.getElementById('subtitleOptions');
         if (videoData.subtitles && Object.keys(videoData.subtitles).length > 0) {
             subtitleOptions.innerHTML = '';
@@ -505,18 +517,138 @@ if (document.getElementById('customVideo') && database) {
 
         const defaultAudio = currentAudio || Object.keys(videoData.audios || {})[0] || null;
         const defaultQuality = currentQuality || Object.keys(videoData.qualities || {})[0] || null;
-        
-        // Initial load logic (Priority: Audio > Quality)
         loadSpecificTrack(videoData, defaultAudio, defaultQuality);
     }
 
+    // 🔥 NETFLIX JAISA HLS PLAYER (m3u8) 🔥
+    function setupHlsPlayer(videoData, url) {
+        if (hls) {
+            hls.destroy(); // Purana HLS instance destroy karo
+        }
+
+        if(videoLoader) videoLoader.style.display = 'block';
+        video.muted = false;
+
+        hls = new Hls({
+            enableWorker: true,
+            lowLatencyMode: true,
+            backBufferLength: 90
+        });
+
+        hls.loadSource(url);
+        hls.attachMedia(video);
+
+        hls.on(Hls.Events.MANIFEST_PARSED, function() {
+            // 🔥 1. QUALITY TRACKS RENDER KARO (From HLS Levels)
+            const qualityOptions = document.getElementById('qualityOptions');
+            qualityOptions.innerHTML = '';
+            
+            // Auto Button
+            const autoBtn = document.createElement('button');
+            autoBtn.innerText = 'Auto';
+            autoBtn.className = `setting-btn ${hls.autoLevelEnabled ? 'active' : ''}`;
+            autoBtn.onclick = (e) => {
+                e.stopPropagation();
+                hls.currentLevel = -1; // -1 means Auto
+                Array.from(qualityOptions.children).forEach(c => c.classList.remove('active'));
+                autoBtn.classList.add('active');
+            };
+            qualityOptions.appendChild(autoBtn);
+
+            // Individual Levels (1080p, 720p, etc.)
+            hls.levels.forEach((level, index) => {
+                const btn = document.createElement('button');
+                btn.innerText = level.height ? `${level.height}p` : `Level ${index + 1}`;
+                btn.className = 'setting-btn';
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    hls.currentLevel = index; // Seamless switch
+                    Array.from(qualityOptions.children).forEach(c => c.classList.remove('active'));
+                    btn.classList.add('active');
+                };
+                qualityOptions.appendChild(btn);
+            });
+
+            // 🔥 2. AUDIO TRACKS RENDER KARO (From HLS AudioTracks)
+            const audioOptions = document.getElementById('audioOptions');
+            audioOptions.innerHTML = '';
+            
+            if (hls.audioTracks && hls.audioTracks.length > 0) {
+                hls.audioTracks.forEach((track, index) => {
+                    const btn = document.createElement('button');
+                    btn.innerText = track.name || track.lang || `Audio ${index + 1}`;
+                    btn.className = `setting-btn ${hls.audioTrack === index ? 'active' : ''}`;
+                    btn.onclick = (e) => {
+                        e.stopPropagation();
+                        hls.audioTrack = index; // Seamless switch
+                        Array.from(audioOptions.children).forEach(c => c.classList.remove('active'));
+                        btn.classList.add('active');
+                    };
+                    audioOptions.appendChild(btn);
+                });
+            } else {
+                audioOptions.innerHTML = '<p style="font-size:12px; color:#888;">No Audio Tracks</p>';
+            }
+
+            // 🔥 3. SUBTITLE RENDER (From Firebase, kyunki HLS me subs kam hote hain)
+            const subtitleOptions = document.getElementById('subtitleOptions');
+            if (videoData.subtitles && Object.keys(videoData.subtitles).length > 0) {
+                subtitleOptions.innerHTML = '';
+                Object.keys(videoData.subtitles).forEach(sub => {
+                    const btn = document.createElement('button');
+                    btn.innerText = sub;
+                    btn.className = 'setting-btn';
+                    btn.onclick = (e) => { 
+                        e.stopPropagation();
+                        activeSubtitleUrl = videoData.subtitles[sub]; 
+                        const track = document.getElementById('subtitleTrack');
+                        if(track) { 
+                            track.src = activeSubtitleUrl; 
+                            track.style.display = 'block'; 
+                            track.mode = 'showing'; 
+                        }
+                        subtitleMenu.style.display = 'none'; 
+                    };
+                    subtitleOptions.appendChild(btn);
+                });
+            } else { subtitleOptions.innerHTML = '<p style="font-size:12px; color:#888;">No Subtitles</p>'; }
+
+            // Play Video
+            video.play().catch(e => {
+                console.log("Autoplay blocked, muting...", e);
+                video.muted = true;
+                if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+                video.play();
+                showUnmuteHint();
+            });
+        });
+
+        hls.on(Hls.Events.ERROR, function (event, data) {
+            if (data.fatal) {
+                switch (data.type) {
+                    case Hls.ErrorTypes.NETWORK_ERROR:
+                        console.log("Network error, trying to recover...");
+                        hls.startLoad();
+                        break;
+                    case Hls.ErrorTypes.MEDIA_ERROR:
+                        console.log("Media error, trying to recover...");
+                        hls.recoverMediaError();
+                        break;
+                    default:
+                        console.log("Fatal error, destroying HLS.");
+                        hls.destroy();
+                        break;
+                }
+            }
+        });
+    }
+
+    // Purana MP4 Loader (Agar HLS na ho)
     function loadSpecificTrack(videoData, audioLang, qualityName) {
-        // 🔥 Don't reset the other variable if passed as null during explicit click
         if (audioLang !== null) currentAudio = audioLang;
         if (qualityName !== null) currentQuality = qualityName;
         
         let url = "";
-        // Priority: If quality is explicitly selected, use it. Else use audio.
         if (qualityName && videoData.qualities && videoData.qualities[qualityName]) {
             url = videoData.qualities[qualityName];
         } else if (audioLang && videoData.audios && videoData.audios[audioLang]) {
@@ -530,15 +662,20 @@ if (document.getElementById('customVideo') && database) {
         qualityMenu.style.display = 'none';
     }
 
-    // 🔥 TRUE SEAMLESS SWITCHING LOGIC 🔥
+    // Purana MP4 Play Logic (State Restore)
     function playVideoUrl(url) {
         if(!url) return;
         
-        // 1. State Save karo
+        // Agar HLS player chal raha hai aur naya link MP4 hai, toh use destroy karo
+        if (hls) {
+            hls.destroy();
+            hls = null;
+        }
+
         const previousTime = video.currentTime;
         const wasMuted = video.muted;
         const currentVolume = video.volume;
-        const wasPlaying = !video.paused; // 🔥 Play status yaad rakho
+        const wasPlaying = !video.paused; 
         
         let fileId = null;
         if (url.includes('drive.google.com')) {
@@ -559,14 +696,12 @@ if (document.getElementById('customVideo') && database) {
         video.load();
         
         video.onloadedmetadata = function() {
-            // 2. State Restore karo
             if(previousTime > 0 && previousTime < video.duration) {
                 video.currentTime = previousTime;
             }
             video.muted = wasMuted;
             video.volume = currentVolume;
 
-            // 3. Subtitle restore
             const track = document.getElementById('subtitleTrack');
             if (track) {
                 if (activeSubtitleUrl) {
@@ -579,14 +714,13 @@ if (document.getElementById('customVideo') && database) {
                 }
             }
             
-            // 4. Play karo (Sirf tab jab pehle play ho raha tha)
             if (wasPlaying) {
                 let playPromise = video.play();
                 if (playPromise !== undefined) {
                     playPromise.then(_ => {
                         if(muteBtn) muteBtn.innerHTML = wasMuted ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
                     }).catch(e => {
-                        console.log("Autoplay with sound blocked by browser, muting...", e);
+                        console.log("Autoplay blocked, muting...", e);
                         video.muted = true;
                         if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
                         video.play();
@@ -599,7 +733,6 @@ if (document.getElementById('customVideo') && database) {
         };
     }
 
-    // Hint Box dikhane ka function
     function showUnmuteHint() {
         let hint = document.getElementById('unmuteHint');
         if(!hint && playerWrapper) {
@@ -706,7 +839,6 @@ if (document.getElementById('customVideo') && database) {
         resetControlTimeout();
     });
 
-    // 🔥 Auto Hide Controls Logic (3 Seconds) 🔥
     let controlTimeout;
 
     function showControls() {
@@ -737,7 +869,6 @@ if (document.getElementById('customVideo') && database) {
         showControls();
     });
 
-    // --- Single Tap / Double Tap Logic ---
     let lastTap = 0;
     
     function handleTap(overlay, action) {
@@ -916,7 +1047,6 @@ if (document.getElementById('customVideo') && database) {
 // ================= 8. CUSTOM CONFIRM MODAL LOGIC =================
 let pendingDeleteAction = null;
 
-// Modal ko open karne ka function
 window.showCustomConfirm = (message, action) => {
     const modal = document.getElementById('customConfirmModal');
     const msgEl = document.getElementById('confirmMessage');
@@ -927,14 +1057,12 @@ window.showCustomConfirm = (message, action) => {
     modal.style.display = 'flex';
 };
 
-// Modal ke buttons ko handle karna
 document.addEventListener('DOMContentLoaded', () => {
     const yesBtn = document.getElementById('confirmYesBtn');
     const noBtn = document.getElementById('confirmNoBtn');
     const modal = document.getElementById('customConfirmModal');
 
     if (yesBtn && noBtn && modal) {
-        // Yes / Delete button click
         yesBtn.addEventListener('click', () => {
             if (pendingDeleteAction) {
                 pendingDeleteAction();
@@ -943,13 +1071,11 @@ document.addEventListener('DOMContentLoaded', () => {
             pendingDeleteAction = null;
         });
 
-        // No / Cancel button click
         noBtn.addEventListener('click', () => {
             modal.style.display = 'none';
             pendingDeleteAction = null;
         });
 
-        // Agar user background (dark area) par click kare toh band ho jaye
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 modal.style.display = 'none';
@@ -959,7 +1085,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Global Delete Comment Function (Updated to use Custom Modal)
 window.deleteComment = (animeId, commentKey) => {
     showCustomConfirm("Are you sure you want to delete this comment permanently?", () => {
         database.ref(`comments/${animeId}/${commentKey}`).remove()
