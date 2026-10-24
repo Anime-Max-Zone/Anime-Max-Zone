@@ -1003,7 +1003,7 @@ input:checked + .slider:before {
     position: absolute;
     top: 0;
     right: -260px; /* Start hidden on the right */
-    width: 240px; /* Size chhota kiya */
+    width: 180px; /* Size chhota kiya */
     height: 100%;
     background: rgba(15, 15, 20, 0.95);
     backdrop-filter: blur(15px);
