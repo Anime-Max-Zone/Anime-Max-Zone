@@ -11,15 +11,12 @@ const firebaseConfig = {
 };
 
 let database;
-
 try {
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
-
     database = firebase.database();
     console.log("Firebase Connected!");
-
 } catch (error) {
     console.error("Firebase Init Error:", error);
 }
@@ -28,93 +25,57 @@ let allContentDatabase = [];
 let currentAudio = null;
 let currentQuality = null;
 let activeSubtitleUrl = null;
-let hls = null;
-let audioHls = null;
-let isMutedByUser = false;
-
+let hls = null; 
+let audioHls = null; 
+let isMutedByUser = false; 
 
 // ================= 2. SPLASH SCREEN & INITIAL LOAD =================
-
-document.addEventListener('DOMContentLoaded', function() {
-
+document.addEventListener('DOMContentLoaded', () => {
     const splashScreen = document.getElementById('splash-screen');
-
     if (splashScreen) {
-        setTimeout(function() {
-            splashScreen.classList.add('hidden');
-        }, 2000);
+        setTimeout(() => splashScreen.classList.add('hidden'), 2000);
     }
 
     if (database) {
         database.ref('content').once('value')
-            .then(function(snapshot) {
-
+            .then((snapshot) => {
                 const data = snapshot.val();
-
                 if (data) {
-                    allContentDatabase = Object.keys(data).map(function(key) {
-                        return Object.assign({
-                            firebaseKey: key
-                        }, data[key]);
-                    });
-
+                    allContentDatabase = Object.keys(data).map(key => ({
+                        firebaseKey: key,
+                        ...data[key]
+                    }));
                     loadHomePageData();
                     initSearchAndGrids();
-
                 } else {
                     showNoDataFound();
                 }
-
             })
-            .catch(function(error) {
+            .catch((error) => {
                 console.error("Firebase Fetch Error:", error);
                 showNoDataFound();
             });
     }
 });
 
-
 function showNoDataFound() {
-
-    const containers = [
-        'latestContainer',
-        'onAirContainer',
-        'newArrivalsContainer',
-        'animeGrid',
-        'movieGrid'
-    ];
-
-    containers.forEach(function(id) {
-
+    const containers = ['latestContainer', 'onAirContainer', 'newArrivalsContainer', 'animeGrid', 'movieGrid'];
+    containers.forEach(id => {
         const el = document.getElementById(id);
-
-        if (el) {
-            el.innerHTML =
-                '<p style="color:#888;padding:20px;width:100%;text-align:center;">No Content Available.</p>';
-        }
-
+        if (el) el.innerHTML = `<p style="color:#888; padding: 20px; width:100%; text-align:center;">No Content Available.</p>`;
     });
 }
 
-
 // ================= 3. HOME PAGE DATA =================
-
 function loadHomePageData() {
-
     const latestContainer = document.getElementById('latestContainer');
     const onAirContainer = document.getElementById('onAirContainer');
     const newArrivalsContainer = document.getElementById('newArrivalsContainer');
 
-    if (
-        latestContainer &&
-        onAirContainer &&
-        newArrivalsContainer
-    ) {
-
-        setTimeout(function() {
-
-            latestContainer.innerHTML = '';
-            onAirContainer.innerHTML = '';
+    if (latestContainer && onAirContainer && newArrivalsContainer) {
+        setTimeout(() => {
+            latestContainer.innerHTML = ''; 
+            onAirContainer.innerHTML = ''; 
             newArrivalsContainer.innerHTML = '';
 
             const latestAnime = allContentDatabase.slice(0, 3);
@@ -122,3074 +83,911 @@ function loadHomePageData() {
             const newArrivals = allContentDatabase.slice(6, 10);
 
             function createCard(item) {
-
                 const card = document.createElement('a');
-
-                card.href = 'anime-details.html?id=' + item.firebaseKey;
+                card.href = `anime-details.html?id=${item.firebaseKey}`;
                 card.className = 'anime-card';
-
-                const img = document.createElement('img');
-
-                img.src = item.image || '';
-                img.alt = item.title || 'Anime';
-
-                img.onerror = function() {
-                    this.src =
-                        'https://via.placeholder.com/130x190?text=No+Image';
-                };
-
-                card.appendChild(img);
-
+                card.innerHTML = `<img src="${item.image}" alt="${item.title}" onerror="this.src='https://via.placeholder.com/130x190?text=No+Image'">`;
                 return card;
             }
 
-            latestAnime.forEach(function(item) {
-                latestContainer.appendChild(createCard(item));
-            });
-
-            onAirAnime.forEach(function(item) {
-                onAirContainer.appendChild(createCard(item));
-            });
-
-            newArrivals.forEach(function(item) {
-                newArrivalsContainer.appendChild(createCard(item));
-            });
-
-        }, 1000);
+            if (latestAnime.length) latestAnime.forEach(item => latestContainer.appendChild(createCard(item)));
+            if (onAirAnime.length) onAirAnime.forEach(item => onAirContainer.appendChild(createCard(item)));
+            if (newArrivals.length) newArrivals.forEach(item => newArrivalsContainer.appendChild(createCard(item)));
+        }, 1000); 
     }
 }
 
-
 // ================= 4. SEARCH & GRIDS =================
-
 function initSearchAndGrids() {
-
     const searchPanel = document.getElementById('searchPanel');
     const openSearchBtn = document.getElementById('openSearchBtn');
     const closeSearchBtn = document.getElementById('closeSearchBtn');
     const searchInput = document.getElementById('searchInput');
     const searchResults = document.getElementById('searchResults');
 
-    if (openSearchBtn && searchPanel && searchInput && searchResults) {
-
-        openSearchBtn.addEventListener('click', function() {
-
+    if (openSearchBtn && searchPanel) {
+        openSearchBtn.addEventListener('click', () => {
             searchPanel.classList.add('active');
-
-            setTimeout(function() {
-                searchInput.focus();
-            }, 300);
-
+            setTimeout(() => { searchInput.focus(); }, 300);
         });
 
-        if (closeSearchBtn) {
+        closeSearchBtn.addEventListener('click', () => {
+            searchPanel.classList.remove('active');
+            setTimeout(() => {
+                searchInput.value = ''; 
+                searchResults.innerHTML = '<p class="search-hint">Start typing to search...</p>';
+            }, 300);
+        });
 
-            closeSearchBtn.addEventListener('click', function() {
-
-                searchPanel.classList.remove('active');
-
-                setTimeout(function() {
-
-                    searchInput.value = '';
-
-                    searchResults.innerHTML =
-                        '<p class="search-hint">Start typing to search...</p>';
-
-                }, 300);
-
-            });
-        }
-
-        searchInput.addEventListener('input', function(e) {
-
+        searchInput.addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase().trim();
-
             if (query === '') {
-
-                searchResults.innerHTML =
-                    '<p class="search-hint">Start typing to search...</p>';
-
+                searchResults.innerHTML = '<p class="search-hint">Start typing to search...</p>';
                 return;
             }
-
-            const filtered = allContentDatabase.filter(function(item) {
-
-                return item.title &&
-                    item.title.toLowerCase().includes(query);
-
-            });
-
+            const filtered = allContentDatabase.filter(item => item.title && item.title.toLowerCase().includes(query));
             renderSearchResults(filtered);
-
         });
     }
-
 
     function renderSearchResults(results) {
-
-        if (!searchResults) return;
-
-        searchResults.innerHTML = '';
+        if (!searchResults) return; 
+        searchResults.innerHTML = ''; 
 
         if (results.length === 0) {
-
-            searchResults.innerHTML =
-                '<p class="search-hint">No results found.</p>';
-
+            searchResults.innerHTML = `<p class="search-hint">No results found for "${searchInput.value}"</p>`;
             return;
         }
 
-        results.forEach(function(item) {
-
+        results.forEach(item => {
             const link = document.createElement('a');
-
-            link.href = 'anime-details.html?id=' + item.firebaseKey;
+            link.href = `anime-details.html?id=${item.firebaseKey}`; 
             link.className = 'search-item';
-
-            const img = document.createElement('img');
-
-            img.src = item.image || '';
-            img.alt = item.title || 'Anime';
-
-            img.onerror = function() {
-                this.src =
-                    'https://via.placeholder.com/55x75?text=No+Image';
-            };
-
-            const info = document.createElement('div');
-            info.className = 'search-item-info';
-
-            const title = document.createElement('h3');
-            title.textContent = item.title || 'Untitled';
-
-            const description = document.createElement('p');
-            description.textContent = 'Tap to watch';
-
-            info.appendChild(title);
-            info.appendChild(description);
-
-            const icon = document.createElement('i');
-            icon.className = 'fa-solid fa-chevron-right';
-
-            link.appendChild(img);
-            link.appendChild(info);
-            link.appendChild(icon);
-
+            link.innerHTML = `
+                <img src="${item.image}" alt="${item.title}" onerror="this.src='https://via.placeholder.com/55x75?text=No+Image'">
+                <div class="search-item-info">
+                    <h3>${item.title}</h3>
+                    <p>Tap to watch</p>
+                </div>
+                <i class="fa-solid fa-chevron-right"></i>
+            `;
             searchResults.appendChild(link);
-
         });
     }
 
-
-    // ---------- ANIME GRID ----------
-
+    // --- ANIME GRID ---
     const animeGridContainer = document.getElementById('animeGrid');
-
     if (animeGridContainer) {
-
-        animeGridContainer.innerHTML = '';
-
-        const animeOnly = allContentDatabase.filter(function(item) {
-            return item.type === 'anime' || !item.type;
-        });
-
-        if (animeOnly.length === 0) {
-
-            animeGridContainer.innerHTML =
-                "<p style='color:#888;text-align:center;width:100%;'>No Anime found.</p>";
-
-        }
-
-        animeOnly.forEach(function(item) {
-
+        animeGridContainer.innerHTML = ''; 
+        const animeOnly = allContentDatabase.filter(item => item.type === 'anime' || !item.type);
+        if(animeOnly.length === 0) animeGridContainer.innerHTML = "<p style='color:#888; text-align:center; width:100%;'>No Anime found.</p>";
+        
+        animeOnly.forEach(item => {
             const card = document.createElement('a');
-
-            card.href = 'anime-details.html?id=' + item.firebaseKey;
+            card.href = `anime-details.html?id=${item.firebaseKey}`; 
             card.className = 'grid-card';
-
-            const img = document.createElement('img');
-
-            img.src = item.image || '';
-            img.alt = item.title || 'Anime';
-
-            img.onerror = function() {
-                this.src =
-                    'https://via.placeholder.com/150x225?text=No+Image';
-            };
-
-            const title = document.createElement('div');
-            title.className = 'grid-card-title';
-            title.textContent = item.title || 'Untitled';
-
-            card.appendChild(img);
-            card.appendChild(title);
-
+            card.innerHTML = `
+                <img src="${item.image}" alt="${item.title}" onerror="this.src='https://via.placeholder.com/150x225?text=No+Image'">
+                <div class="grid-card-title">${item.title}</div>
+            `;
             animeGridContainer.appendChild(card);
-
         });
     }
 
-
-    // ---------- MOVIES GRID ----------
-
+    // --- MOVIES GRID ---
     const movieGridContainer = document.getElementById('movieGrid');
-
     if (movieGridContainer) {
-
         movieGridContainer.innerHTML = '';
+        const moviesOnly = allContentDatabase.filter(item => item.type === 'movie');
+        if(moviesOnly.length === 0) movieGridContainer.innerHTML = "<p style='color:#888; text-align:center; width:100%;'>No Movies found.</p>";
 
-        const moviesOnly = allContentDatabase.filter(function(item) {
-            return item.type === 'movie';
-        });
-
-        if (moviesOnly.length === 0) {
-
-            movieGridContainer.innerHTML =
-                "<p style='color:#888;text-align:center;width:100%;'>No Movies found.</p>";
-
-        }
-
-        moviesOnly.forEach(function(item) {
-
+        moviesOnly.forEach(item => {
             const card = document.createElement('a');
-
-            card.href = 'anime-details.html?id=' + item.firebaseKey;
+            card.href = `anime-details.html?id=${item.firebaseKey}`; 
             card.className = 'grid-card';
-
-            const img = document.createElement('img');
-
-            img.src = item.image || '';
-            img.alt = item.title || 'Movie';
-
-            img.onerror = function() {
-                this.src =
-                    'https://via.placeholder.com/150x225?text=No+Image';
-            };
-
-            const title = document.createElement('div');
-            title.className = 'grid-card-title';
-            title.textContent = item.title || 'Untitled';
-
-            card.appendChild(img);
-            card.appendChild(title);
-
+            card.innerHTML = `
+                <img src="${item.image}" alt="${item.title}" onerror="this.src='https://via.placeholder.com/150x225?text=No+Image'">
+                <div class="grid-card-title">${item.title}</div>
+            `;
             movieGridContainer.appendChild(card);
-
         });
     }
-
 }
 
-
 // ================= 5. ANIME DETAILS PAGE =================
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('detailTitle') && database) {
+        const animeId = new URLSearchParams(window.location.search).get('id');
 
-document.addEventListener('DOMContentLoaded', function() {
+        if (!animeId) {
+            document.getElementById('detailTitle').innerText = "No ID Provided";
+            return;
+        }
 
-    if (
-        !document.getElementById('detailTitle') ||
-        !database
-    ) {
-        return;
-    }
-
-    const animeId =
-        new URLSearchParams(window.location.search).get('id');
-
-    if (!animeId) {
-
-        document.getElementById('detailTitle').innerText =
-            'No ID Provided';
-
-        return;
-    }
-
-    database.ref('content/' + animeId).once('value')
-        .then(function(snapshot) {
-
+        database.ref('content/' + animeId).once('value').then((snapshot) => {
             const data = snapshot.val();
-
+            
             if (!data) {
-
-                document.getElementById('detailTitle').innerText =
-                    'Content Not Found';
-
-                document.getElementById('detailSynopsis').innerText =
-                    'This content does not exist.';
-
+                document.getElementById('detailTitle').innerText = "Content Not Found";
+                document.getElementById('detailSynopsis').innerText = "This content does not exist.";
                 return;
             }
 
-            document.title = data.title + ' - Anime Max Zone';
-
-            const banner = document.getElementById('detailBanner');
-            const poster = document.getElementById('detailPoster');
-            const title = document.getElementById('detailTitle');
-            const rating = document.getElementById('detailRating');
-            const year = document.getElementById('detailYear');
-            const synopsis = document.getElementById('detailSynopsis');
-            const genres = document.getElementById('detailGenres');
-
-            if (banner) {
-                banner.style.backgroundImage =
-                    'url("' + (data.banner || data.image || '') + '")';
+            document.title = `${data.title} - Anime Max Zone`;
+            document.getElementById('detailBanner').style.backgroundImage = `url(${data.banner || data.image})`;
+            document.getElementById('detailPoster').src = data.image;
+            document.getElementById('detailTitle').innerText = data.title;
+            document.getElementById('detailRating').innerText = data.rating || "0.0";
+            document.getElementById('detailYear').innerText = data.year || "----";
+            document.getElementById('detailSynopsis').innerText = data.synopsis || "No description available.";
+            
+            if (data.genres && Array.isArray(data.genres)) {
+                document.getElementById('detailGenres').innerHTML = data.genres.map(g => `<span class="genre-tag">${g}</span>`).join('');
             }
 
-            if (poster) poster.src = data.image || '';
-            if (title) title.innerText = data.title || 'Untitled';
-            if (rating) rating.innerText = data.rating || '0.0';
-            if (year) year.innerText = data.year || '----';
-
-            if (synopsis) {
-                synopsis.innerText =
-                    data.synopsis || 'No description available.';
-            }
-
-            if (genres && data.genres && Array.isArray(data.genres)) {
-
-                genres.innerHTML = '';
-
-                data.genres.forEach(function(genre) {
-
-                    const tag = document.createElement('span');
-
-                    tag.className = 'genre-tag';
-                    tag.textContent = genre;
-
-                    genres.appendChild(tag);
-
-                });
-            }
-
-            const episodesSection =
-                document.querySelector('.episodes-section');
-
-            const episodeList =
-                document.getElementById('episodeList');
-
-            const synopsisSection =
-                document.querySelector('.synopsis-section');
-
-
-            // ---------- MOVIE ----------
+            const episodesSection = document.querySelector('.episodes-section');
+            const episodeList = document.getElementById('episodeList');
 
             if (data.type === 'movie' || !data.seasons) {
+                if (episodesSection) episodesSection.style.display = 'none';
+                
+                const watchBtn = document.createElement('a');
+                watchBtn.href = `watch.html?id=${animeId}`;
+                watchBtn.className = 'watch-now-btn'; 
+                watchBtn.innerHTML = `<i class="fa-solid fa-play"></i> Watch Movie Now`;
+                document.querySelector('.synopsis-section').appendChild(watchBtn);
 
-                if (episodesSection) {
-                    episodesSection.style.display = 'none';
-                }
+            } else {
+                if (episodesSection) episodesSection.style.display = 'block';
+                let totalEps = 0;
+                episodeList.innerHTML = '';
 
-                if (synopsisSection) {
+                Object.keys(data.seasons).forEach(seasonName => {
+                    const episodesObj = data.seasons[seasonName];
+                    const epArray = Object.keys(episodesObj).map(k => ({ firebaseKey: k, ...episodesObj[k] }));
+                    totalEps += epArray.length;
 
-                    const watchBtn = document.createElement('a');
+                    if (Object.keys(data.seasons).length > 1) {
+                        episodeList.innerHTML += `<h4 style="color:#a855f7; margin: 10px 0 5px 0; font-size: 14px;">${seasonName}</h4>`;
+                    }
 
-                    watchBtn.href = 'watch.html?id=' + animeId;
-                    watchBtn.className = 'watch-now-btn';
-
-                    watchBtn.innerHTML =
-                        '<i class="fa-solid fa-play"></i> Watch Movie Now';
-
-                    synopsisSection.appendChild(watchBtn);
-                }
-
-                return;
-            }
-
-
-            // ---------- SERIES / ANIME EPISODES ----------
-
-            if (episodesSection) {
-                episodesSection.style.display = 'block';
-            }
-
-            if (!episodeList) return;
-
-            let totalEps = 0;
-
-            episodeList.innerHTML = '';
-
-            const seasonNames = Object.keys(data.seasons);
-
-            seasonNames.forEach(function(seasonName) {
-
-                const episodesObj = data.seasons[seasonName];
-
-                const epArray = Object.keys(episodesObj).map(function(key) {
-
-                    return Object.assign({
-                        firebaseKey: key
-                    }, episodesObj[key]);
-
+                    epArray.forEach(episode => {
+                        const epCard = document.createElement('a');
+                        epCard.href = `watch.html?id=${animeId}&season=${encodeURIComponent(seasonName)}&ep=${episode.firebaseKey}`; 
+                        epCard.className = 'episode-card';
+                        epCard.innerHTML = `
+                            <div class="ep-play-icon"><i class="fa-solid fa-play"></i></div>
+                            <div class="ep-info">
+                                <h4>Episode ${episode.ep}</h4>
+                                <p>${episode.title}</p>
+                            </div>
+                            <i class="fa-solid fa-chevron-right ep-arrow"></i>
+                        `;
+                        episodeList.appendChild(epCard);
+                    });
                 });
-
-                totalEps += epArray.length;
-
-                if (seasonNames.length > 1) {
-
-                    const heading = document.createElement('h4');
-
-                    heading.style.cssText =
-                        'color:#a855f7;margin:10px 0 5px;font-size:14px;';
-
-                    heading.textContent = seasonName;
-
-                    episodeList.appendChild(heading);
-                }
-
-                epArray.forEach(function(episode) {
-
-                    const epCard = document.createElement('a');
-
-                    epCard.href =
-                        'watch.html?id=' + animeId +
-                        '&season=' + encodeURIComponent(seasonName) +
-                        '&ep=' + episode.firebaseKey;
-
-                    epCard.className = 'episode-card';
-
-                    epCard.innerHTML =
-                        '<div class="ep-play-icon"><i class="fa-solid fa-play"></i></div>' +
-                        '<div class="ep-info">' +
-                        '<h4>Episode ' + (episode.ep || '') + '</h4>' +
-                        '<p>' + (episode.title || '') + '</p>' +
-                        '</div>' +
-                        '<i class="fa-solid fa-chevron-right ep-arrow"></i>';
-
-                    episodeList.appendChild(epCard);
-
-                });
-            });
-
-            const episodeCount =
-                document.getElementById('episodeCount');
-
-            if (episodeCount) {
-                episodeCount.innerText = totalEps + ' Episodes';
+                document.getElementById('episodeCount').innerText = `${totalEps} Episodes`;
             }
-
-        })
-        .catch(function(error) {
-            console.error('Anime Details Error:', error);
         });
-
+    }
 });
 
-/* =========================================================
-   PART 2/4 — WATCH PLAYER + HLS AUDIO TRACK FIX
-   Anime Max Zone
-========================================================= */
+// ================= 6. WATCH PAGE (PLAYER) =================
+if (document.getElementById('customVideo') && database) {
+    const video = document.getElementById('customVideo');
+    const hiddenAudioPlayer = document.getElementById('hiddenAudioPlayer'); 
+    const videoLoader = document.getElementById('videoLoader');
+    const topControls = document.getElementById('topControls'); 
+    const controlsBar = document.getElementById('controlsBar'); 
+    
+    const audioIconBtn = document.getElementById('audioIconBtn');
+    const subtitleIconBtn = document.getElementById('subtitleIconBtn');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const audioMenu = document.getElementById('audioMenu');
+    const subtitleMenu = document.getElementById('subtitleMenu');
+    const qualityMenu = document.getElementById('qualityMenu');
 
-(function () {
-    "use strict";
+    let currentAnimeData = null;
+    let activeSeason = "";
+    let currentEpKey = "";
 
-    /* -------------------------
-       PLAYER STATE
-    ------------------------- */
+    const urlParams = new URLSearchParams(window.location.search);
+    const animeId = urlParams.get('id'); 
 
-    let amzHls = null;
-    let amzVideo = null;
+    window.closeAllMenus = () => {
+        if(audioMenu) audioMenu.classList.remove('active');
+        if(subtitleMenu) subtitleMenu.classList.remove('active');
+        if(qualityMenu) qualityMenu.classList.remove('active');
+    };
 
-    let amzCurrentAudioTracks = [];
-    let amzCurrentQualityLevels = [];
+    if(audioIconBtn) audioIconBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isActive = audioMenu.classList.contains('active');
+        closeAllMenus();
+        if(!isActive) audioMenu.classList.add('active');
+        resetControlTimeout();
+    });
 
-    let amzSelectedAudioTrack = -1;
-    let amzSelectedQuality = -1;
+    if(subtitleIconBtn) subtitleIconBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isActive = subtitleMenu.classList.contains('active');
+        closeAllMenus();
+        if(!isActive) subtitleMenu.classList.add('active');
+        resetControlTimeout();
+    });
 
-    let amzHlsReady = false;
-    let amzAudioMenuReady = false;
+    if(settingsBtn) settingsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isActive = qualityMenu.classList.contains('active');
+        closeAllMenus();
+        if(!isActive) qualityMenu.classList.add('active');
+        resetControlTimeout();
+    });
 
-    const AMZ_MASTER_PLAYLIST =
-        "https://raw.githubusercontent.com/Anime-Max-Zone/Anime-Max-Zone/refs/heads/main/master.m3u8";
+    database.ref('content/' + animeId).once('value').then((snapshot) => {
+        currentAnimeData = snapshot.val();
+        
+        if (currentAnimeData) {
+            let videoDataToPlay = null;
+            let pageTitle = currentAnimeData.title;
 
-
-    /* -------------------------
-       FIND HTML ELEMENTS
-    ------------------------- */
-
-    function amzGetVideo() {
-        if (amzVideo && document.contains(amzVideo)) {
-            return amzVideo;
-        }
-
-        amzVideo =
-            document.getElementById("videoPlayer") ||
-            document.getElementById("video") ||
-            document.getElementById("player") ||
-            document.querySelector("video");
-
-        return amzVideo;
-    }
-
-    function amzGetAudioMenu() {
-        return (
-            document.getElementById("audioTrackMenu") ||
-            document.getElementById("audioTracksMenu") ||
-            document.getElementById("audio-track-menu")
-        );
-    }
-
-    function amzGetAudioButton() {
-        return (
-            document.getElementById("audioTrackBtn") ||
-            document.getElementById("audioTrackButton") ||
-            document.getElementById("audio-track-btn")
-        );
-    }
-
-    function amzGetQualityMenu() {
-        return (
-            document.getElementById("qualityMenu") ||
-            document.getElementById("quality-menu")
-        );
-    }
-
-    function amzGetQualityButton() {
-        return (
-            document.getElementById("qualityBtn") ||
-            document.getElementById("qualityButton") ||
-            document.getElementById("quality-btn")
-        );
-    }
-
-
-    /* -------------------------
-       AUDIO LABEL
-    ------------------------- */
-
-    function amzGetAudioLabel(track, index) {
-        let label = "";
-
-        if (track) {
-            label =
-                track.name ||
-                track.lang ||
-                track.language ||
-                "";
-        }
-
-        label = String(label).trim();
-
-        if (!label) {
-            label = "Audio " + (index + 1);
-        }
-
-        const languageNames = {
-            "en": "English",
-            "eng": "English",
-            "hi": "Hindi",
-            "hin": "Hindi",
-            "ja": "Japanese",
-            "jpn": "Japanese",
-            "ko": "Korean",
-            "kor": "Korean",
-            "ta": "Tamil",
-            "tam": "Tamil",
-            "te": "Telugu",
-            "tel": "Telugu",
-            "bn": "Bengali",
-            "ben": "Bengali",
-            "or": "Odia",
-            "ori": "Odia",
-            "od": "Odia",
-            "es": "Spanish",
-            "spa": "Spanish",
-            "fr": "French",
-            "fra": "French",
-            "pt": "Portuguese",
-            "por": "Portuguese",
-            "zh": "Chinese",
-            "zho": "Chinese",
-            "ar": "Arabic",
-            "ara": "Arabic",
-            "ru": "Russian",
-            "rus": "Russian"
-        };
-
-        const normalized = label.toLowerCase();
-
-        if (languageNames[normalized]) {
-            return languageNames[normalized];
-        }
-
-        return label;
-    }
-
-
-    /* -------------------------
-       CREATE AUDIO MENU
-    ------------------------- */
-
-    function amzEnsureAudioMenu() {
-        let menu = amzGetAudioMenu();
-
-        if (menu) {
-            return menu;
-        }
-
-        const button = amzGetAudioButton();
-
-        if (!button) {
-            console.warn(
-                "Anime Max Zone: Audio Track button was not found."
-            );
-            return null;
-        }
-
-        menu = document.createElement("div");
-        menu.id = "audioTrackMenu";
-        menu.className = "amz-audio-track-menu";
-
-        menu.style.position = "absolute";
-        menu.style.right = "12px";
-        menu.style.bottom = "55px";
-        menu.style.zIndex = "9999";
-        menu.style.minWidth = "180px";
-        menu.style.maxWidth = "260px";
-        menu.style.maxHeight = "260px";
-        menu.style.overflowY = "auto";
-        menu.style.padding = "8px";
-        menu.style.borderRadius = "10px";
-        menu.style.background = "rgba(18,18,22,0.97)";
-        menu.style.color = "#ffffff";
-        menu.style.boxShadow = "0 4px 18px rgba(0,0,0,0.45)";
-        menu.style.display = "none";
-
-        const parent =
-            button.closest(".player-container") ||
-            button.closest(".video-container") ||
-            button.parentElement;
-
-        if (parent) {
-            const position =
-                window.getComputedStyle(parent).position;
-
-            if (position === "static") {
-                parent.style.position = "relative";
+            if (currentAnimeData.type === 'movie' || !currentAnimeData.seasons) {
+                videoDataToPlay = currentAnimeData; 
+                const wrapper = document.getElementById('seasonsEpisodesWrapper');
+                if(wrapper) wrapper.style.display = 'none';
+                currentEpKey = "movie";
+            } else {
+                const wrapper = document.getElementById('seasonsEpisodesWrapper');
+                if(wrapper) wrapper.style.display = 'block';
+                
+                const urlSeason = urlParams.get('season');
+                const urlEp = urlParams.get('ep');
+                const seasons = Object.keys(currentAnimeData.seasons);
+                
+                activeSeason = (urlSeason && seasons.includes(urlSeason)) ? urlSeason : seasons[0];
+                const episodesObj = currentAnimeData.seasons[activeSeason];
+                
+                currentEpKey = urlEp || Object.keys(episodesObj)[0];
+                videoDataToPlay = episodesObj[currentEpKey];
+                
+                pageTitle += ` - ${activeSeason} Ep ${videoDataToPlay.ep}`;
+                renderWatchSeasons();
             }
 
-            parent.appendChild(menu);
-        } else {
-            document.body.appendChild(menu);
-        }
+            document.title = `${pageTitle} - Anime Max Zone`;
+            const titleEl = document.getElementById('watchAnimeTitle');
+            if(titleEl) titleEl.innerText = pageTitle;
+            const descEl = document.getElementById('watchAnimeDesc');
+            if(descEl) descEl.innerText = currentAnimeData.synopsis || "No description available.";
 
-        return menu;
+            if (videoDataToPlay) {
+                setupPlayer(videoDataToPlay);
+            }
+        }
+    });
+
+    function renderWatchSeasons() {
+        const seasonTabs = document.getElementById('watchSeasonTabs');
+        if (!seasonTabs) return;
+        seasonTabs.innerHTML = '';
+        
+        Object.keys(currentAnimeData.seasons).forEach(seasonName => {
+            const btn = document.createElement('button');
+            btn.className = `season-btn ${seasonName === activeSeason ? 'active' : ''}`;
+            btn.innerText = seasonName;
+            btn.onclick = () => {
+                activeSeason = seasonName;
+                const firstEpKey = Object.keys(currentAnimeData.seasons[seasonName])[0];
+                currentEpKey = firstEpKey;
+                
+                window.history.pushState({path: `watch.html?id=${animeId}&season=${encodeURIComponent(activeSeason)}&ep=${currentEpKey}`}, '', `watch.html?id=${animeId}&season=${encodeURIComponent(activeSeason)}&ep=${currentEpKey}`);
+                
+                renderWatchSeasons(); 
+                renderWatchEpisodes(); 
+                
+                activeSubtitleUrl = null; 
+                const newVideoData = currentAnimeData.seasons[activeSeason][currentEpKey];
+                setupPlayer(newVideoData);
+                document.getElementById('watchAnimeTitle').innerText = `${currentAnimeData.title} - ${activeSeason} Ep ${newVideoData.ep}`;
+            };
+            seasonTabs.appendChild(btn);
+        });
+        renderWatchEpisodes();
     }
 
-
-    /* -------------------------
-       RENDER AUDIO TRACKS
-    ------------------------- */
-
-    function amzRenderAudioTracks() {
-        const menu = amzEnsureAudioMenu();
-
-        if (!menu) {
-            return;
-        }
-
-        menu.innerHTML = "";
-
-        if (
-            !amzCurrentAudioTracks ||
-            amzCurrentAudioTracks.length === 0
-        ) {
-            const empty = document.createElement("div");
-
-            empty.textContent = "No audio tracks available";
-            empty.style.padding = "12px";
-            empty.style.fontSize = "13px";
-            empty.style.color = "#cccccc";
-
-            menu.appendChild(empty);
-
-            return;
-        }
-
-        amzCurrentAudioTracks.forEach(function (track, index) {
-            const item = document.createElement("button");
-
-            item.type = "button";
-            item.className = "amz-audio-track-item";
-
-            const label = amzGetAudioLabel(track, index);
-
-            item.textContent =
-                (index === amzSelectedAudioTrack ? "✓ " : "") +
-                label;
-
-            item.style.display = "block";
-            item.style.width = "100%";
-            item.style.padding = "11px 12px";
-            item.style.margin = "2px 0";
-            item.style.border = "0";
-            item.style.borderRadius = "6px";
-            item.style.textAlign = "left";
-            item.style.fontSize = "14px";
-            item.style.cursor = "pointer";
-
-            item.style.background =
-                index === amzSelectedAudioTrack
-                    ? "#3d5afe"
-                    : "transparent";
-
-            item.style.color = "#ffffff";
-
-            item.addEventListener("click", function () {
-                amzSelectAudioTrack(index);
+    function renderWatchEpisodes() {
+        const epContainer = document.getElementById('watchEpisodeList');
+        if (!epContainer) return;
+        epContainer.innerHTML = '';
+        
+        const episodesObj = currentAnimeData.seasons[activeSeason];
+        
+        Object.keys(episodesObj).forEach(key => {
+            const ep = episodesObj[key];
+            const isPlaying = (key === currentEpKey);
+            
+            const card = document.createElement('div');
+            card.className = `episode-card ${isPlaying ? 'active' : ''}`;
+            card.style.cursor = 'pointer';
+            card.innerHTML = `
+                <div class="ep-play-icon"><i class="fa-solid ${isPlaying ? (video.paused ? 'fa-play' : 'fa-pause') : 'fa-play'}"></i></div>
+                <div class="ep-info">
+                    <h4>Episode ${ep.ep} ${isPlaying ? '(Playing)' : ''}</h4>
+                    <p>${ep.title}</p>
+                </div>
+            `;
+            
+            card.addEventListener('click', () => {
+                if (isPlaying) {
+                    togglePlayPause();
+                } else {
+                    currentEpKey = key;
+                    window.history.pushState({path: `watch.html?id=${animeId}&season=${encodeURIComponent(activeSeason)}&ep=${currentEpKey}`}, '', `watch.html?id=${animeId}&season=${encodeURIComponent(activeSeason)}&ep=${currentEpKey}`);
+                    
+                    renderWatchEpisodes(); 
+                    activeSubtitleUrl = null; 
+                    setupPlayer(ep); 
+                    document.getElementById('watchAnimeTitle').innerText = `${currentAnimeData.title} - ${activeSeason} Ep ${ep.ep}`;
+                }
             });
-
-            menu.appendChild(item);
+            epContainer.appendChild(card);
         });
     }
 
+    function setupPlayer(videoData) {
+        closeAllMenus(); 
 
-    /* -------------------------
-       SELECT AUDIO TRACK
-    ------------------------- */
+        if (hls) { hls.destroy(); hls = null; }
+        if (audioHls) { audioHls.destroy(); audioHls = null; }
+        hiddenAudioPlayer.removeAttribute('src');
+        hiddenAudioPlayer.load();
+        
+        video.muted = false; 
 
-    function amzSelectAudioTrack(index) {
-        if (!amzHls) {
-            console.warn(
-                "Anime Max Zone: HLS player is not initialized."
-            );
-            return;
-        }
-
-        if (
-            index < 0 ||
-            index >= amzCurrentAudioTracks.length
-        ) {
-            return;
-        }
-
-        try {
-            amzHls.audioTrack = index;
-
-            amzSelectedAudioTrack = index;
-
-            amzRenderAudioTracks();
-
-            const track = amzCurrentAudioTracks[index];
-            const label = amzGetAudioLabel(track, index);
-
-            console.log(
-                "Anime Max Zone: Audio switched to " + label
-            );
-
-            const menu = amzGetAudioMenu();
-
-            if (menu) {
-                menu.style.display = "none";
-            }
-
-            document.dispatchEvent(
-                new CustomEvent("amz-audio-track-changed", {
-                    detail: {
-                        index: index,
-                        label: label,
-                        track: track
-                    }
-                })
-            );
-
-        } catch (error) {
-            console.error(
-                "Anime Max Zone: Could not switch audio track.",
-                error
-            );
-        }
-    }
-
-
-    /* -------------------------
-       AUDIO BUTTON
-    ------------------------- */
-
-    function amzSetupAudioButton() {
-        const button = amzGetAudioButton();
-
-        if (!button || button.dataset.amzBound === "1") {
-            return;
-        }
-
-        button.dataset.amzBound = "1";
-
-        button.addEventListener("click", function (event) {
-            event.preventDefault();
-            event.stopPropagation();
-
-            const menu = amzEnsureAudioMenu();
-
-            if (!menu) {
-                return;
-            }
-
-            const isVisible =
-                window.getComputedStyle(menu).display !== "none";
-
-            menu.style.display = isVisible ? "none" : "block";
-
-            if (!isVisible) {
-                amzRenderAudioTracks();
-            }
-        });
-
-        document.addEventListener("click", function (event) {
-            const menu = amzGetAudioMenu();
-            const audioButton = amzGetAudioButton();
-
-            if (!menu) {
-                return;
-            }
-
-            if (
-                !menu.contains(event.target) &&
-                audioButton &&
-                !audioButton.contains(event.target)
-            ) {
-                menu.style.display = "none";
-            }
-        });
-    }
-
-
-    /* -------------------------
-       QUALITY MENU
-    ------------------------- */
-
-    function amzEnsureQualityMenu() {
-        let menu = amzGetQualityMenu();
-
-        if (menu) {
-            return menu;
-        }
-
-        const button = amzGetQualityButton();
-
-        if (!button) {
-            return null;
-        }
-
-        menu = document.createElement("div");
-        menu.id = "qualityMenu";
-        menu.className = "amz-quality-menu";
-
-        menu.style.position = "absolute";
-        menu.style.right = "12px";
-        menu.style.bottom = "55px";
-        menu.style.zIndex = "9998";
-        menu.style.minWidth = "140px";
-        menu.style.maxHeight = "250px";
-        menu.style.overflowY = "auto";
-        menu.style.padding = "8px";
-        menu.style.borderRadius = "10px";
-        menu.style.background = "rgba(18,18,22,0.97)";
-        menu.style.color = "#ffffff";
-        menu.style.boxShadow = "0 4px 18px rgba(0,0,0,0.45)";
-        menu.style.display = "none";
-
-        const parent =
-            button.closest(".player-container") ||
-            button.closest(".video-container") ||
-            button.parentElement;
-
-        if (parent) {
-            if (
-                window.getComputedStyle(parent).position === "static"
-            ) {
-                parent.style.position = "relative";
-            }
-
-            parent.appendChild(menu);
-        } else {
-            document.body.appendChild(menu);
-        }
-
-        return menu;
-    }
-
-
-    function amzRenderQualityLevels() {
-        const menu = amzEnsureQualityMenu();
-
-        if (!menu) {
-            return;
-        }
-
-        menu.innerHTML = "";
-
-        const autoButton = document.createElement("button");
-
-        autoButton.type = "button";
-        autoButton.textContent =
-            amzSelectedQuality === -1
-                ? "✓ Auto"
-                : "Auto";
-
-        amzStyleMenuButton(
-            autoButton,
-            amzSelectedQuality === -1
-        );
-
-        autoButton.addEventListener("click", function () {
-            if (amzHls) {
-                amzHls.currentLevel = -1;
-                amzSelectedQuality = -1;
-                amzRenderQualityLevels();
-            }
-
-            menu.style.display = "none";
-        });
-
-        menu.appendChild(autoButton);
-
-        if (!amzCurrentQualityLevels.length) {
-            const message = document.createElement("div");
-
-            message.textContent = "Quality unavailable";
-            message.style.padding = "10px";
-            message.style.fontSize = "12px";
-
-            menu.appendChild(message);
-
-            return;
-        }
-
-        amzCurrentQualityLevels.forEach(function (level, index) {
-            const height = level.height || 0;
-
-            let label = height ? height + "p" : "Quality " + (index + 1);
-
-            if (level.name) {
-                label = level.name;
-            }
-
-            const item = document.createElement("button");
-
-            item.type = "button";
-
-            item.textContent =
-                amzSelectedQuality === index
-                    ? "✓ " + label
-                    : label;
-
-            amzStyleMenuButton(
-                item,
-                amzSelectedQuality === index
-            );
-
-            item.addEventListener("click", function () {
-                if (!amzHls) {
-                    return;
+        let videoUrl = "";
+        if (videoData.gdrive_id && videoData.gdrive_id.includes('.m3u8')) {
+            videoUrl = videoData.gdrive_id;
+        } else if (videoData.qualities && Object.values(videoData.qualities).length > 0) {
+            for (let q in videoData.qualities) {
+                if (videoData.qualities[q].includes('.m3u8')) {
+                    videoUrl = videoData.qualities[q];
+                    break;
                 }
+            }
+        }
 
-                amzHls.currentLevel = index;
-                amzSelectedQuality = index;
+        if (videoUrl && videoUrl.includes('.m3u8') && typeof Hls !== 'undefined' && Hls.isSupported()) {
+            setupHlsPlayer(videoData, videoUrl);
+            return; 
+        }
 
-                amzRenderQualityLevels();
-
-                menu.style.display = "none";
+        // MP4 Fallback
+        const audioOptions = document.getElementById('audioOptions');
+        if (videoData.audios && Object.keys(videoData.audios).length > 0) {
+            audioOptions.innerHTML = '';
+            Object.keys(videoData.audios).forEach(lang => {
+                const btn = document.createElement('button');
+                btn.innerText = lang;
+                btn.className = `setting-btn ${currentAudio === lang ? 'active' : ''}`;
+                btn.onclick = (e) => { 
+                    e.stopPropagation(); 
+                    currentAudio = lang;
+                    Array.from(audioOptions.children).forEach(c => c.classList.remove('active'));
+                    btn.classList.add('active');
+                    loadSpecificTrack(videoData, lang, null); 
+                    setTimeout(closeAllMenus, 300);
+                };
+                audioOptions.appendChild(btn);
             });
-
-            menu.appendChild(item);
-        });
+        } else { audioOptions.innerHTML = '<p style="font-size:14px; color:#888; padding:15px;">No Audio</p>'; }
     }
 
+    function setupHlsPlayer(videoData, videoUrl) {
+        hls = new Hls({ enableWorker: true, lowLatencyMode: true, backBufferLength: 90 });
+        hls.loadSource(videoUrl);
+        hls.attachMedia(video);
 
-    function amzStyleMenuButton(button, selected) {
-        button.style.display = "block";
-        button.style.width = "100%";
-        button.style.padding = "10px 12px";
-        button.style.margin = "2px 0";
-        button.style.border = "0";
-        button.style.borderRadius = "6px";
-        button.style.textAlign = "left";
-        button.style.fontSize = "14px";
-        button.style.cursor = "pointer";
-
-        button.style.background =
-            selected ? "#3d5afe" : "transparent";
-
-        button.style.color = "#ffffff";
-    }
-
-
-    function amzSetupQualityButton() {
-        const button = amzGetQualityButton();
-
-        if (!button || button.dataset.amzBound === "1") {
-            return;
+        let audioUrl = "";
+        if (videoData.audios && Object.values(videoData.audios).length > 0) {
+            audioUrl = Object.values(videoData.audios)[0]; 
         }
 
-        button.dataset.amzBound = "1";
-
-        button.addEventListener("click", function (event) {
-            event.preventDefault();
-            event.stopPropagation();
-
-            const menu = amzEnsureQualityMenu();
-
-            if (!menu) {
-                return;
-            }
-
-            const visible =
-                window.getComputedStyle(menu).display !== "none";
-
-            menu.style.display = visible ? "none" : "block";
-
-            if (!visible) {
-                amzRenderQualityLevels();
-            }
-        });
-
-        document.addEventListener("click", function (event) {
-            const menu = amzGetQualityMenu();
-
-            if (
-                menu &&
-                !menu.contains(event.target) &&
-                !button.contains(event.target)
-            ) {
-                menu.style.display = "none";
-            }
-        });
-    }
-
-
-    /* -------------------------
-       PLAYER ERROR DISPLAY
-    ------------------------- */
-
-    function amzShowPlayerError(message) {
-        let box = document.getElementById("amzPlayerError");
-
-        if (!box) {
-            box = document.createElement("div");
-            box.id = "amzPlayerError";
-
-            box.style.position = "absolute";
-            box.style.left = "12px";
-            box.style.right = "12px";
-            box.style.top = "50%";
-            box.style.transform = "translateY(-50%)";
-            box.style.zIndex = "9997";
-            box.style.padding = "14px";
-            box.style.borderRadius = "8px";
-            box.style.background = "rgba(0,0,0,0.85)";
-            box.style.color = "#ffffff";
-            box.style.textAlign = "center";
-            box.style.fontSize = "14px";
-
-            const video = amzGetVideo();
-
-            const parent = video
-                ? video.parentElement
-                : document.body;
-
-            if (parent) {
-                if (
-                    window.getComputedStyle(parent).position === "static"
-                ) {
-                    parent.style.position = "relative";
-                }
-
-                parent.appendChild(box);
-            }
+        if (audioUrl) {
+            audioHls = new Hls({ enableWorker: true, lowLatencyMode: true });
+            audioHls.loadSource(audioUrl);
+            audioHls.attachMedia(hiddenAudioPlayer);
+            
+            // Agar hidden audio use ho raha hai, toh main video ko mute karo
+            video.muted = true; 
         }
 
-        box.textContent = message;
-        box.style.display = "block";
-    }
-
-
-    function amzHidePlayerError() {
-        const box = document.getElementById("amzPlayerError");
-
-        if (box) {
-            box.style.display = "none";
-        }
-    }
-
-
-    /* -------------------------
-       GET PLAYLIST URL
-    ------------------------- */
-
-    function amzGetStreamUrl() {
-        const params = new URLSearchParams(window.location.search);
-
-        const possibleKeys = [
-            "url",
-            "stream",
-            "video",
-            "src",
-            "hls"
-        ];
-
-        for (let i = 0; i < possibleKeys.length; i++) {
-            const value = params.get(possibleKeys[i]);
-
-            if (value) {
-                return value;
-            }
-        }
-
-        const video = amzGetVideo();
-
-        if (video) {
-            const source =
-                video.getAttribute("data-src") ||
-                video.getAttribute("src");
-
-            if (source) {
-                return source;
-            }
-        }
-
-        return AMZ_MASTER_PLAYLIST;
-    }
-
-
-    /* -------------------------
-       INITIALIZE HLS PLAYER
-    ------------------------- */
-
-    function amzInitializeHlsPlayer(streamUrl) {
-        const video = amzGetVideo();
-
-        if (!video) {
-            console.error(
-                "Anime Max Zone: <video> element was not found."
-            );
-            return;
-        }
-
-        if (!streamUrl) {
-            amzShowPlayerError("Video URL is missing.");
-            return;
-        }
-
-        amzSetupAudioButton();
-        amzSetupQualityButton();
-
-        amzHidePlayerError();
-
-        if (amzHls) {
-            try {
-                amzHls.destroy();
-            } catch (error) {
-                console.warn("Could not destroy previous HLS instance.", error);
-            }
-
-            amzHls = null;
-        }
-
-        amzCurrentAudioTracks = [];
-        amzCurrentQualityLevels = [];
-
-        amzSelectedAudioTrack = -1;
-        amzSelectedQuality = -1;
-
-        /*
-         * Native HLS fallback.
-         * On Safari, the browser may handle HLS internally.
-         * Native HLS does not expose the same track list as hls.js.
-         */
-
-        const nativeHls =
-            video.canPlayType("application/vnd.apple.mpegurl") ||
-            video.canPlayType("application/x-mpegURL");
-
-        if (
-            nativeHls &&
-            !window.Hls
-        ) {
-            video.src = streamUrl;
-
-            video.addEventListener("loadedmetadata", function () {
-                amzHlsReady = true;
-            }, { once: true });
-
-            video.addEventListener("error", function () {
-                amzShowPlayerError(
-                    "Unable to load video. Please check the stream URL."
-                );
-            }, { once: true });
-
-            video.load();
-            return;
-        }
-
-        if (!window.Hls) {
-            amzShowPlayerError(
-                "HLS.js is not loaded. Add the HLS.js library to watch.html."
-            );
-
-            console.error(
-                "HLS.js missing. Load hls.min.js before script.js."
-            );
-
-            return;
-        }
-
-        if (!window.Hls.isSupported()) {
-            amzShowPlayerError(
-                "This browser does not support HLS playback."
-            );
-
-            return;
-        }
-
-        amzHls = new Hls({
-            enableWorker: true,
-            lowLatencyMode: false,
-
-            /*
-             * These settings allow hls.js to discover
-             * alternate audio renditions in the master playlist.
-             */
-            startLevel: -1,
-            capLevelToPlayerSize: false,
-            testBandwidth: true
-        });
-
-        amzHls.attachMedia(video);
-
-        amzHls.on(Hls.Events.MEDIA_ATTACHED, function () {
-            amzHls.loadSource(streamUrl);
-        });
-
-        /* -------------------------
-           MANIFEST PARSED
-        ------------------------- */
-
-        amzHls.on(
-            Hls.Events.MANIFEST_PARSED,
-            function (event, data) {
-                amzHlsReady = true;
-
-                amzHidePlayerError();
-
-                amzCurrentAudioTracks =
-                    amzHls.audioTracks || [];
-
-                amzCurrentQualityLevels =
-                    amzHls.levels || [];
-
-                amzSelectedAudioTrack =
-                    typeof amzHls.audioTrack === "number"
-                        ? amzHls.audioTrack
-                        : -1;
-
-                amzSelectedQuality =
-                    typeof amzHls.currentLevel === "number" &&
-                    amzHls.currentLevel >= 0
-                        ? amzHls.currentLevel
-                        : -1;
-
-                amzRenderAudioTracks();
-                amzRenderQualityLevels();
-
-                console.log(
-                    "Anime Max Zone: HLS manifest loaded."
-                );
-
-                console.log(
-                    "Audio tracks found:",
-                    amzCurrentAudioTracks.length
-                );
-
-                console.log(
-                    "Quality levels found:",
-                    amzCurrentQualityLevels.length
-                );
-
-                if (
-                    amzCurrentAudioTracks.length === 0
-                ) {
-                    console.warn(
-                        "No alternate audio tracks were exposed by hls.js. " +
-                        "Check the master playlist AUDIO groups and EXT-X-MEDIA tags."
-                    );
-                }
-
-                document.dispatchEvent(
-                    new CustomEvent("amz-hls-manifest-ready", {
-                        detail: {
-                            audioTracks: amzCurrentAudioTracks,
-                            qualityLevels: amzCurrentQualityLevels,
-                            manifest: data
-                        }
-                    })
-                );
-            }
-        );
-
-
-        /* -------------------------
-           AUDIO TRACKS UPDATED
-        ------------------------- */
-
-        amzHls.on(
-            Hls.Events.AUDIO_TRACKS_UPDATED,
-            function (event, data) {
-                amzCurrentAudioTracks =
-                    amzHls.audioTracks || [];
-
-                if (
-                    amzSelectedAudioTrack >=
-                    amzCurrentAudioTracks.length
-                ) {
-                    amzSelectedAudioTrack =
-                        typeof amzHls.audioTrack === "number"
-                            ? amzHls.audioTrack
-                            : -1;
-                }
-
-                amzRenderAudioTracks();
-
-                console.log(
-                    "Audio tracks updated:",
-                    amzCurrentAudioTracks.map(function (track, index) {
-                        return {
-                            index: index,
-                            name: track.name,
-                            lang: track.lang,
-                            type: track.type,
-                            default: track.default
-                        };
-                    })
-                );
-            }
-        );
-
-
-        /* -------------------------
-           AUDIO TRACK SWITCHED
-        ------------------------- */
-
-        amzHls.on(
-            Hls.Events.AUDIO_TRACK_SWITCHED,
-            function (event, data) {
-                amzSelectedAudioTrack = data.id;
-
-                amzCurrentAudioTracks =
-                    amzHls.audioTracks || [];
-
-                amzRenderAudioTracks();
-
-                console.log(
-                    "Active audio track index:",
-                    data.id
-                );
-            }
-        );
-
-
-        /* -------------------------
-           QUALITY LEVELS UPDATED
-        ------------------------- */
-
-        amzHls.on(
-            Hls.Events.LEVELS_UPDATED,
-            function () {
-                amzCurrentQualityLevels =
-                    amzHls.levels || [];
-
-                amzRenderQualityLevels();
-            }
-        );
-
-
-        /* -------------------------
-           QUALITY LEVEL SWITCHED
-        ------------------------- */
-
-        amzHls.on(
-            Hls.Events.LEVEL_SWITCHED,
-            function (event, data) {
-                amzSelectedQuality = data.level;
-
-                amzRenderQualityLevels();
-            }
-        );
-
-
-        /* -------------------------
-           MEDIA CAN PLAY
-        ------------------------- */
-
-        amzHls.on(
-            Hls.Events.FRAG_LOADED,
-            function () {
-                amzHidePlayerError();
-            }
-        );
-
-
-        /* -------------------------
-           HLS ERROR HANDLING
-        ------------------------- */
-
-        amzHls.on(
-            Hls.Events.ERROR,
-            function (event, data) {
-                console.error(
-                    "HLS error:",
-                    data.type,
-                    data.details,
-                    data
-                );
-
-                if (!data.fatal) {
-                    return;
-                }
-
-                if (
-                    data.type === Hls.ErrorTypes.NETWORK_ERROR
-                ) {
-                    amzShowPlayerError(
-                        "Network error. Retrying video stream..."
-                    );
-
-                    amzHls.startLoad();
-                    return;
-                }
-
-                if (
-                    data.type === Hls.ErrorTypes.MEDIA_ERROR
-                ) {
-                    amzShowPlayerError(
-                        "Recovering video playback..."
-                    );
-
-                    amzHls.recoverMediaError();
-                    return;
-                }
-
-                amzShowPlayerError(
-                    "Video playback failed. Please try again."
-                );
-
-                try {
-                    amzHls.destroy();
-                } catch (error) {
-                    console.error(error);
-                }
-
-                amzHls = null;
-            }
-        );
-    }
-
-
-    /* -------------------------
-       PUBLIC PLAYER API
-    ------------------------- */
-
-    window.AMZPlayer = window.AMZPlayer || {};
-
-    window.AMZPlayer.init = function (url) {
-        amzInitializeHlsPlayer(
-            url || amzGetStreamUrl()
-        );
-    };
-
-    window.AMZPlayer.getAudioTracks = function () {
-        return amzCurrentAudioTracks;
-    };
-
-    window.AMZPlayer.getQualityLevels = function () {
-        return amzCurrentQualityLevels;
-    };
-
-    window.AMZPlayer.selectAudioTrack = function (index) {
-        amzSelectAudioTrack(Number(index));
-    };
-
-    window.AMZPlayer.selectQuality = function (index) {
-        if (!amzHls) {
-            return;
-        }
-
-        const qualityIndex = Number(index);
-
-        if (
-            qualityIndex < -1 ||
-            qualityIndex >= amzCurrentQualityLevels.length
-        ) {
-            return;
-        }
-
-        amzHls.currentLevel = qualityIndex;
-        amzSelectedQuality = qualityIndex;
-
-        amzRenderQualityLevels();
-    };
-
-
-    /* -------------------------
-       AUTO INITIALIZE
-    ------------------------- */
-
-    function amzWaitForPlayer() {
-        const video = amzGetVideo();
-
-        if (!video) {
-            return;
-        }
-
-        amzSetupAudioButton();
-        amzSetupQualityButton();
-
-        const streamUrl = amzGetStreamUrl();
-
-        if (streamUrl) {
-            amzInitializeHlsPlayer(streamUrl);
-        }
-    }
-
-    if (document.readyState === "loading") {
-        document.addEventListener(
-            "DOMContentLoaded",
-            amzWaitForPlayer
-        );
-    } else {
-        amzWaitForPlayer();
-    }
-
-})();
-
-/* =========================================================
-   PART 3/4 — PLAYER CONTROLS + SUBTITLES
-   Anime Max Zone
-========================================================= */
-
-(function () {
-    "use strict";
-
-    let video = null;
-    let controlsTimer = null;
-    let subtitleTracks = [];
-    let selectedSpeed = 1;
-
-    /* -------------------------
-       FIND ELEMENTS
-    ------------------------- */
-
-    function getVideo() {
-        if (video && document.contains(video)) {
-            return video;
-        }
-
-        video =
-            document.getElementById("videoPlayer") ||
-            document.getElementById("video") ||
-            document.getElementById("player") ||
-            document.querySelector("video");
-
-        return video;
-    }
-
-    function getElement(ids) {
-        for (let i = 0; i < ids.length; i++) {
-            const element = document.getElementById(ids[i]);
-
-            if (element) {
-                return element;
-            }
-        }
-
-        return null;
-    }
-
-    function getPlayerContainer() {
-        const currentVideo = getVideo();
-
-        if (!currentVideo) {
-            return null;
-        }
-
-        return (
-            currentVideo.closest(".player-container") ||
-            currentVideo.closest(".video-container") ||
-            currentVideo.parentElement
-        );
-    }
-
-
-    /* -------------------------
-       PLAY / PAUSE
-    ------------------------- */
-
-    function setupPlayPause() {
-        const currentVideo = getVideo();
-
-        if (!currentVideo) {
-            return;
-        }
-
-        const button = getElement([
-            "playPauseBtn",
-            "playPauseButton",
-            "playBtn",
-            "play-pause"
-        ]);
-
-        if (button && button.dataset.amzControlBound !== "1") {
-            button.dataset.amzControlBound = "1";
-
-            button.addEventListener("click", function () {
-                togglePlayback();
-            });
-        }
-
-        currentVideo.addEventListener("play", updatePlayButton);
-        currentVideo.addEventListener("pause", updatePlayButton);
-
-        updatePlayButton();
-    }
-
-    function togglePlayback() {
-        const currentVideo = getVideo();
-
-        if (!currentVideo) {
-            return;
-        }
-
-        if (currentVideo.paused) {
-            const playPromise = currentVideo.play();
-
-            if (playPromise && typeof playPromise.catch === "function") {
-                playPromise.catch(function (error) {
-                    console.warn("Playback could not start:", error);
+        // Sync Events
+        video.addEventListener('play', () => { if(hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.play(); });
+        video.addEventListener('pause', () => { if(hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.pause(); });
+        video.addEventListener('seeked', () => { if(hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.currentTime = video.currentTime; });
+
+        hls.on(Hls.Events.MANIFEST_PARSED, function() {
+            
+            // 1. QUALITY TRACKS
+            const qualityOptions = document.getElementById('qualityOptions');
+            qualityOptions.innerHTML = '';
+            
+            if (videoData.qualities && Object.keys(videoData.qualities).length > 0) {
+                Object.keys(videoData.qualities).forEach(q => {
+                    const btn = document.createElement('button');
+                    btn.innerText = q;
+                    btn.className = `setting-btn ${currentQuality === q ? 'active' : ''}`;
+                    btn.onclick = (e) => { 
+                        e.stopPropagation(); 
+                        currentQuality = q; 
+                        Array.from(qualityOptions.children).forEach(c => c.classList.remove('active'));
+                        btn.classList.add('active');
+                        
+                        const newVideoUrl = videoData.qualities[q];
+                        if(hls) { hls.destroy(); }
+                        hls = new Hls({ enableWorker: true });
+                        hls.loadSource(newVideoUrl);
+                        hls.attachMedia(video);
+                        
+                        setTimeout(closeAllMenus, 300);
+                    };
+                    qualityOptions.appendChild(btn);
                 });
             }
-        } else {
-            currentVideo.pause();
-        }
-    }
 
-    function updatePlayButton() {
-        const currentVideo = getVideo();
-
-        const button = getElement([
-            "playPauseBtn",
-            "playPauseButton",
-            "playBtn",
-            "play-pause"
-        ]);
-
-        if (!currentVideo || !button) {
-            return;
-        }
-
-        button.textContent = currentVideo.paused ? "▶" : "❚❚";
-
-        button.setAttribute(
-            "aria-label",
-            currentVideo.paused ? "Play video" : "Pause video"
-        );
-    }
-
-
-    /* -------------------------
-       TIME FORMAT
-    ------------------------- */
-
-    function formatTime(seconds) {
-        if (!Number.isFinite(seconds) || seconds < 0) {
-            return "00:00";
-        }
-
-        const total = Math.floor(seconds);
-        const hours = Math.floor(total / 3600);
-        const minutes = Math.floor((total % 3600) / 60);
-        const secs = total % 60;
-
-        const pad = function (number) {
-            return number < 10 ? "0" + number : String(number);
-        };
-
-        if (hours > 0) {
-            return (
-                pad(hours) + ":" +
-                pad(minutes) + ":" +
-                pad(secs)
-            );
-        }
-
-        return pad(minutes) + ":" + pad(secs);
-    }
-
-
-    /* -------------------------
-       SEEK BAR
-    ------------------------- */
-
-    function setupSeekBar() {
-        const currentVideo = getVideo();
-
-        if (!currentVideo) {
-            return;
-        }
-
-        const seekBar = getElement([
-            "seekBar",
-            "progressBar",
-            "videoSeekBar",
-            "seekbar"
-        ]);
-
-        const currentTime = getElement([
-            "currentTime",
-            "current-time",
-            "timeCurrent"
-        ]);
-
-        const durationTime = getElement([
-            "durationTime",
-            "totalTime",
-            "duration",
-            "videoDuration"
-        ]);
-
-        if (seekBar && seekBar.dataset.amzControlBound !== "1") {
-            seekBar.dataset.amzControlBound = "1";
-
-            seekBar.addEventListener("input", function () {
-                if (!Number.isFinite(currentVideo.duration)) {
-                    return;
-                }
-
-                currentVideo.currentTime =
-                    (Number(seekBar.value) / 100) *
-                    currentVideo.duration;
-            });
-        }
-
-        if (currentVideo.dataset.amzTimeBound !== "1") {
-            currentVideo.dataset.amzTimeBound = "1";
-
-            currentVideo.addEventListener("timeupdate", function () {
-                if (
-                    seekBar &&
-                    Number.isFinite(currentVideo.duration) &&
-                    currentVideo.duration > 0
-                ) {
-                    seekBar.value =
-                        (currentVideo.currentTime /
-                            currentVideo.duration) * 100;
-                }
-
-                if (currentTime) {
-                    currentTime.textContent =
-                        formatTime(currentVideo.currentTime);
-                }
-            });
-
-            currentVideo.addEventListener("loadedmetadata", function () {
-                if (durationTime) {
-                    durationTime.textContent =
-                        formatTime(currentVideo.duration);
-                }
-            });
-
-            currentVideo.addEventListener("durationchange", function () {
-                if (durationTime) {
-                    durationTime.textContent =
-                        formatTime(currentVideo.duration);
-                }
-            });
-        }
-    }
-
-
-    /* -------------------------
-       SKIP BACK / FORWARD
-    ------------------------- */
-
-    function seekBy(seconds) {
-        const currentVideo = getVideo();
-
-        if (!currentVideo) {
-            return;
-        }
-
-        const duration = Number.isFinite(currentVideo.duration)
-            ? currentVideo.duration
-            : Infinity;
-
-        currentVideo.currentTime = Math.max(
-            0,
-            Math.min(currentVideo.currentTime + seconds, duration)
-        );
-    }
-
-    function setupSkipButtons() {
-        const backButton = getElement([
-            "rewindBtn",
-            "backwardBtn",
-            "skipBackBtn",
-            "seekBack"
-        ]);
-
-        const forwardButton = getElement([
-            "forwardBtn",
-            "skipForwardBtn",
-            "seekForward"
-        ]);
-
-        if (
-            backButton &&
-            backButton.dataset.amzControlBound !== "1"
-        ) {
-            backButton.dataset.amzControlBound = "1";
-
-            backButton.addEventListener("click", function () {
-                seekBy(-10);
-            });
-        }
-
-        if (
-            forwardButton &&
-            forwardButton.dataset.amzControlBound !== "1"
-        ) {
-            forwardButton.dataset.amzControlBound = "1";
-
-            forwardButton.addEventListener("click", function () {
-                seekBy(10);
-            });
-        }
-    }
-
-
-    /* -------------------------
-       VOLUME
-    ------------------------- */
-
-    function setupVolume() {
-        const currentVideo = getVideo();
-
-        if (!currentVideo) {
-            return;
-        }
-
-        const volumeBar = getElement([
-            "volumeBar",
-            "volumeSlider",
-            "volume"
-        ]);
-
-        const muteButton = getElement([
-            "muteBtn",
-            "volumeBtn",
-            "muteButton"
-        ]);
-
-        if (
-            volumeBar &&
-            volumeBar.dataset.amzControlBound !== "1"
-        ) {
-            volumeBar.dataset.amzControlBound = "1";
-
-            volumeBar.addEventListener("input", function () {
-                const value = Number(volumeBar.value);
-
-                currentVideo.volume = Math.max(
-                    0,
-                    Math.min(1, value > 1 ? value / 100 : value)
-                );
-
-                currentVideo.muted = currentVideo.volume === 0;
-                updateMuteButton();
-            });
-        }
-
-        if (
-            muteButton &&
-            muteButton.dataset.amzControlBound !== "1"
-        ) {
-            muteButton.dataset.amzControlBound = "1";
-
-            muteButton.addEventListener("click", function () {
-                currentVideo.muted = !currentVideo.muted;
-                updateMuteButton();
-            });
-        }
-
-        currentVideo.addEventListener("volumechange", updateMuteButton);
-
-        updateMuteButton();
-    }
-
-    function updateMuteButton() {
-        const currentVideo = getVideo();
-
-        const muteButton = getElement([
-            "muteBtn",
-            "volumeBtn",
-            "muteButton"
-        ]);
-
-        if (!currentVideo || !muteButton) {
-            return;
-        }
-
-        if (currentVideo.muted || currentVideo.volume === 0) {
-            muteButton.textContent = "🔇";
-        } else if (currentVideo.volume < 0.5) {
-            muteButton.textContent = "🔉";
-        } else {
-            muteButton.textContent = "🔊";
-        }
-    }
-
-
-    /* -------------------------
-       PLAYBACK SPEED
-    ------------------------- */
-
-    function setupSpeedMenu() {
-        const button = getElement([
-            "speedBtn",
-            "playbackSpeedBtn",
-            "speedButton"
-        ]);
-
-        if (!button || button.dataset.amzControlBound === "1") {
-            return;
-        }
-
-        button.dataset.amzControlBound = "1";
-
-        button.addEventListener("click", function (event) {
-            event.preventDefault();
-            event.stopPropagation();
-
-            let menu = document.getElementById("amzSpeedMenu");
-
-            if (!menu) {
-                menu = document.createElement("div");
-                menu.id = "amzSpeedMenu";
-
-                menu.style.position = "absolute";
-                menu.style.right = "12px";
-                menu.style.bottom = "55px";
-                menu.style.zIndex = "9999";
-                menu.style.padding = "8px";
-                menu.style.minWidth = "120px";
-                menu.style.background = "#17171c";
-                menu.style.color = "#ffffff";
-                menu.style.borderRadius = "10px";
-                menu.style.boxShadow = "0 4px 18px rgba(0,0,0,.4)";
-
-                const parent = getPlayerContainer() || document.body;
-
-                if (
-                    window.getComputedStyle(parent).position === "static"
-                ) {
-                    parent.style.position = "relative";
-                }
-
-                parent.appendChild(menu);
-
-                const speeds = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
-
-                speeds.forEach(function (speed) {
-                    const item = document.createElement("button");
-
-                    item.type = "button";
-                    item.textContent =
-                        speed === 1 ? "Normal" : speed + "x";
-
-                    item.style.display = "block";
-                    item.style.width = "100%";
-                    item.style.padding = "9px";
-                    item.style.border = "0";
-                    item.style.background = "transparent";
-                    item.style.color = "#ffffff";
-                    item.style.textAlign = "left";
-                    item.style.cursor = "pointer";
-
-                    item.addEventListener("click", function () {
-                        const currentVideo = getVideo();
-
-                        if (currentVideo) {
-                            currentVideo.playbackRate = speed;
-                            selectedSpeed = speed;
+            // 2. AUDIO TRACKS
+            const audioOptions = document.getElementById('audioOptions');
+            audioOptions.innerHTML = '';
+            let hasHlsAudio = false;
+
+            if (hls.audioTracks && hls.audioTracks.length > 0) {
+                hasHlsAudio = true;
+                hls.audioTracks.forEach((track, index) => {
+                    const btn = document.createElement('button');
+                    btn.innerText = track.name || track.lang || `Audio ${index + 1}`;
+                    btn.className = `setting-btn ${hls.audioTrack === index ? 'active' : ''}`;
+                    btn.onclick = (e) => {
+                        e.stopPropagation();
+                        hls.audioTrack = index; 
+                        Array.from(audioOptions.children).forEach(c => c.classList.remove('active'));
+                        btn.classList.add('active');
+                        setTimeout(closeAllMenus, 300);
+                    };
+                    audioOptions.appendChild(btn);
+                });
+            } 
+            
+            if (!hasHlsAudio && videoData.audios && Object.keys(videoData.audios).length > 0) {
+                Object.keys(videoData.audios).forEach(lang => {
+                    const btn = document.createElement('button');
+                    btn.innerText = lang;
+                    btn.className = `setting-btn ${currentAudio === lang ? 'active' : ''}`;
+                    btn.onclick = (e) => {
+                        e.stopPropagation();
+                        currentAudio = lang;
+                        
+                        const newAudioUrl = videoData.audios[lang];
+                        if (audioHls) audioHls.destroy();
+                        
+                        audioHls = new Hls({ enableWorker: true });
+                        audioHls.loadSource(newAudioUrl);
+                        audioHls.attachMedia(hiddenAudioPlayer);
+                        
+                        audioHls.on(Hls.Events.MANIFEST_PARSED, () => {
+                            hiddenAudioPlayer.currentTime = video.currentTime;
+                            hiddenAudioPlayer.play();
+                        });
+
+                        Array.from(audioOptions.children).forEach(c => c.classList.remove('active'));
+                        btn.classList.add('active');
+                        setTimeout(closeAllMenus, 300);
+                    };
+                    audioOptions.appendChild(btn);
+                });
+            } else if (!hasHlsAudio) {
+                audioOptions.innerHTML = '<p style="font-size:14px; color:#888; padding:15px;">No Audio Tracks</p>';
+            }
+
+            // 3. SUBTITLES
+            const subtitleOptions = document.getElementById('subtitleOptions');
+            subtitleOptions.innerHTML = '';
+            const offBtn = document.createElement('button');
+            offBtn.innerText = 'Off';
+            offBtn.className = `setting-btn ${!activeSubtitleUrl ? 'active' : ''}`;
+            offBtn.onclick = (e) => {
+                e.stopPropagation();
+                activeSubtitleUrl = null;
+                const track = document.getElementById('subtitleTrack');
+                if(track) { track.mode = 'disabled'; track.style.display = 'none'; }
+                Array.from(subtitleOptions.children).forEach(c => c.classList.remove('active'));
+                offBtn.classList.add('active');
+                setTimeout(closeAllMenus, 300);
+            };
+            subtitleOptions.appendChild(offBtn);
+
+            if (videoData.subtitles && Object.keys(videoData.subtitles).length > 0) {
+                Object.keys(videoData.subtitles).forEach(sub => {
+                    const btn = document.createElement('button');
+                    btn.innerText = sub;
+                    btn.className = `setting-btn ${activeSubtitleUrl === videoData.subtitles[sub] ? 'active' : ''}`;
+                    btn.onclick = (e) => { 
+                        e.stopPropagation();
+                        activeSubtitleUrl = videoData.subtitles[sub]; 
+                        const track = document.getElementById('subtitleTrack');
+                        if(track) { 
+                            track.src = activeSubtitleUrl; 
+                            track.style.display = 'block'; 
+                            track.mode = 'showing'; 
                         }
+                        Array.from(subtitleOptions.children).forEach(c => c.classList.remove('active'));
+                        btn.classList.add('active');
+                        setTimeout(closeAllMenus, 300);
+                    };
+                    subtitleOptions.appendChild(btn);
+                });
+            }
 
-                        button.textContent =
-                            speed === 1 ? "1x" : speed + "x";
+            video.play().then(() => {
+                if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+            }).catch(e => {
+                video.muted = true;
+                isMutedByUser = true; 
+                if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+                video.play();
+                showUnmuteHint();
+            });
+        });
 
-                        menu.style.display = "none";
+        hls.on(Hls.Events.ERROR, function (event, data) {
+            if (data.fatal) {
+                switch (data.type) {
+                    case Hls.ErrorTypes.NETWORK_ERROR: hls.startLoad(); break;
+                    case Hls.ErrorTypes.MEDIA_ERROR: hls.recoverMediaError(); break;
+                    default: hls.destroy(); break;
+                }
+            }
+        });
+    }
+
+    function loadSpecificTrack(videoData, audioLang, qualityName) {
+        if (audioLang !== null) currentAudio = audioLang;
+        if (qualityName !== null) currentQuality = qualityName;
+        
+        let url = "";
+        if (qualityName && videoData.qualities && videoData.qualities[qualityName]) {
+            url = videoData.qualities[qualityName];
+        } else if (audioLang && videoData.audios && videoData.audios[audioLang]) {
+            url = videoData.audios[audioLang];
+        } else if (videoData.gdrive_id) { 
+            url = videoData.gdrive_id;
+        }
+
+        if(url) playVideoUrl(url);
+        closeAllMenus(); 
+    }
+
+    function playVideoUrl(url) {
+        if(!url) return;
+        
+        if (hls) { hls.destroy(); hls = null; }
+        if (audioHls) { audioHls.destroy(); audioHls = null; }
+
+        const previousTime = video.currentTime;
+        const wasMuted = isMutedByUser;
+        const currentVolume = video.volume;
+        const wasPlaying = !video.paused; 
+        
+        let fileId = null;
+        if (url.includes('drive.google.com')) {
+            const patterns = [/\/file\/d\/([a-zA-Z0-9_-]+)/, /[?&]id=([a-zA-Z0-9_-]+)/];
+            for (let pattern of patterns) {
+                const match = url.match(pattern);
+                if (match) { fileId = match[1]; break; }
+            }
+        } else if (!url.startsWith('http')) {
+            fileId = url;
+        }
+
+        let finalUrl = fileId ? `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=AIzaSyCpfrluxsBhnz48ve9RykIy1IxzbBfk7dA` : url;
+
+        if(videoLoader) videoLoader.style.display = 'block';
+
+        video.src = finalUrl;
+        video.load();
+        
+        video.onloadedmetadata = function() {
+            if(previousTime > 0 && previousTime < video.duration) {
+                video.currentTime = previousTime;
+            }
+            video.muted = wasMuted;
+            video.volume = currentVolume;
+
+            const track = document.getElementById('subtitleTrack');
+            if (track) {
+                if (activeSubtitleUrl) {
+                    track.src = activeSubtitleUrl;
+                    track.style.display = 'block';
+                    track.mode = 'showing';
+                } else {
+                    track.style.display = 'none';
+                    track.mode = 'disabled';
+                }
+            }
+            
+            if (wasPlaying) {
+                let playPromise = video.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(_ => {
+                        if(muteBtn) muteBtn.innerHTML = wasMuted ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
+                    }).catch(e => {
+                        video.muted = true;
+                        isMutedByUser = true;
+                        if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+                        video.play();
+                        showUnmuteHint();
                     });
-
-                    menu.appendChild(item);
-                });
+                }
             }
+            
+            video.onloadedmetadata = null; 
+        };
+    }
 
-            menu.style.display =
-                menu.style.display === "block" ? "none" : "block";
+    function showUnmuteHint() {
+        let hint = document.getElementById('unmuteHint');
+        if(!hint && playerWrapper) {
+            hint = document.createElement('div');
+            hint.id = 'unmuteHint';
+            hint.style.cssText = "position: absolute; top: 20%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 8px 15px; border-radius: 20px; font-size: 12px; z-index: 999; pointer-events: none; transition: opacity 0.5s;";
+            hint.innerHTML = '<i class="fa-solid fa-volume-xmark"></i> Tap speaker to Unmute';
+            playerWrapper.appendChild(hint);
+        }
+        if(hint) {
+            hint.style.opacity = '1';
+            setTimeout(() => { hint.style.opacity = '0'; }, 3000);
+        }
+    }
+
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const seekBar = document.getElementById('seekBar');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const muteBtn = document.getElementById('muteBtn');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const skipBackBtn = document.getElementById('skipBackBtn');
+    const skipForwardBtn = document.getElementById('skipForwardBtn');
+    const playerWrapper = document.getElementById('playerWrapper');
+    
+    const leftOverlay = document.getElementById('seekLeftOverlay');
+    const centerOverlay = document.getElementById('centerOverlay');
+    const rightOverlay = document.getElementById('seekRightOverlay');
+    const centerFeedbackIcon = document.getElementById('centerFeedbackIcon');
+
+    video.addEventListener('waiting', () => { if(videoLoader) videoLoader.style.display = 'block'; });
+    video.addEventListener('playing', () => { if(videoLoader) videoLoader.style.display = 'none'; });
+
+    video.addEventListener('play', () => {
+        if(playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+        renderWatchEpisodes(); 
+    });
+
+    video.addEventListener('pause', () => {
+        if(playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+        renderWatchEpisodes(); 
+    });
+
+    muteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (hiddenAudioPlayer && hiddenAudioPlayer.src && audioHls) {
+            hiddenAudioPlayer.muted = !hiddenAudioPlayer.muted;
+            isMutedByUser = hiddenAudioPlayer.muted;
+        } else {
+            video.muted = !video.muted;
+            isMutedByUser = video.muted;
+        }
+        
+        if(isMutedByUser) {
+            muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+        } else {
+            muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+        }
+        resetControlTimeout();
+    });
+
+    playPauseBtn.addEventListener('click', (e) => { e.stopPropagation(); togglePlayPause(); resetControlTimeout(); });
+
+    function togglePlayPause() {
+        if (video.paused) video.play(); else video.pause();
+    }
+
+    video.addEventListener('timeupdate', () => {
+        if (!isNaN(video.duration)) {
+            seekBar.value = (video.currentTime / video.duration) * 100;
+            let currMin = Math.floor(video.currentTime / 60);
+            let currSec = Math.floor(video.currentTime % 60);
+            let totalMin = Math.floor(video.duration / 60);
+            let totalSec = Math.floor(video.duration % 60);
+            currSec = currSec < 10 ? '0' + currSec : currSec;
+            totalSec = totalSec < 10 ? '0' + totalSec : totalSec;
+            timeDisplay.innerText = `${currMin}:${currSec} / ${totalMin}:${totalSec}`;
+        }
+    });
+
+    seekBar.addEventListener('input', (e) => {
+        e.stopPropagation();
+        video.currentTime = video.duration * (seekBar.value / 100);
+        if(hiddenAudioPlayer && hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.currentTime = video.currentTime;
+    });
+    
+    skipForwardBtn.addEventListener('click', (e) => { 
+        e.stopPropagation(); video.currentTime += 10; 
+        if(hiddenAudioPlayer && hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.currentTime = video.currentTime;
+        resetControlTimeout(); 
+    });
+    
+    skipBackBtn.addEventListener('click', (e) => { 
+        e.stopPropagation(); video.currentTime -= 10; 
+        if(hiddenAudioPlayer && hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.currentTime = video.currentTime;
+        resetControlTimeout(); 
+    });
+
+    fullscreenBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (!document.fullscreenElement) {
+            try { await playerWrapper.requestFullscreen(); if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); } catch (err) {}
+        } else { document.exitFullscreen(); if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); }
+        resetControlTimeout();
+    });
+
+    let controlTimeout;
+
+    function showControls() { controlsBar.classList.remove('hidden'); topControls.classList.remove('hidden'); resetControlTimeout(); }
+    function hideControls() { if (!video.paused) { controlsBar.classList.add('hidden'); topControls.classList.add('hidden'); closeAllMenus(); } }
+    function resetControlTimeout() { clearTimeout(controlTimeout); if (!video.paused) { controlTimeout = setTimeout(hideControls, 3000); } }
+
+    video.addEventListener('pause', () => { clearTimeout(controlTimeout); showControls(); });
+
+    let lastTap = 0;
+    
+    function handleTap(overlay, action) {
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTap;
+        if (tapLength < 300 && tapLength > 0) {
+            if (action === 'left') {
+                video.currentTime = Math.max(0, video.currentTime - 10);
+                if(hiddenAudioPlayer && hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.currentTime = video.currentTime;
+                overlay.querySelector('.tap-feedback').innerHTML = '<i class="fa-solid fa-backward"></i> 10s';
+            } else if (action === 'right') {
+                video.currentTime = Math.min(video.duration, video.currentTime + 10);
+                if(hiddenAudioPlayer && hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.currentTime = video.currentTime;
+                overlay.querySelector('.tap-feedback').innerHTML = '10s <i class="fa-solid fa-forward"></i>';
+            } else if (action === 'center') {
+                togglePlayPause();
+                centerFeedbackIcon.innerHTML = video.paused ? '<i class="fa-solid fa-play"></i>' : '<i class="fa-solid fa-pause"></i>';
+            }
+            overlay.classList.add('active');
+            setTimeout(() => { overlay.classList.remove('active'); }, 500);
+        } else {
+            if (controlsBar.classList.contains('hidden')) showControls(); else { if (!video.paused) hideControls(); }
+        }
+        lastTap = currentTime;
+    }
+
+    if(leftOverlay) leftOverlay.addEventListener('click', () => handleTap(leftOverlay, 'left'));
+    if(rightOverlay) rightOverlay.addEventListener('click', () => handleTap(rightOverlay, 'right'));
+    if(centerOverlay) centerOverlay.addEventListener('click', () => handleTap(centerOverlay, 'center'));
+
+    showControls();
+}
+
+// ================= 7. COMMENT SYSTEM =================
+if (document.getElementById('customVideo') && database) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const animeId = urlParams.get('id'); 
+    const commentForm = document.getElementById('commentForm');
+    const commentsList = document.getElementById('commentsList');
+    const openCommentsBtn = document.getElementById('openCommentsBtn');
+    const closeCommentsBtn = document.getElementById('closeCommentsBtn');
+    const bottomSheet = document.getElementById('commentsBottomSheet');
+    const backdrop = document.getElementById('bottomSheetBackdrop');
+
+    if(openCommentsBtn && bottomSheet) {
+        openCommentsBtn.addEventListener('click', () => { bottomSheet.classList.add('active'); backdrop.classList.add('active'); });
+        closeCommentsBtn.addEventListener('click', () => { bottomSheet.classList.remove('active'); backdrop.classList.remove('active'); });
+        backdrop.addEventListener('click', () => { bottomSheet.classList.remove('active'); backdrop.classList.remove('active'); });
+    }
+
+    let localCommentUserId = localStorage.getItem('commentUserId');
+    if (!localCommentUserId) {
+        localCommentUserId = 'user_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('commentUserId', localCommentUserId);
+    }
+
+    let isAdmin = false;
+    if (typeof firebase.auth === 'function') {
+        firebase.auth().onAuthStateChanged((user) => { if (user) { isAdmin = true; if (animeId) loadComments(); } });
+    }
+
+    if (commentForm) {
+        commentForm.addEventListener('submit', (e) => {
+            e.preventDefault(); 
+            if (!animeId) return;
+            const name = document.getElementById('commentName').value.trim();
+            const email = document.getElementById('commentEmail').value.trim();
+            const text = document.getElementById('commentText').value.trim();
+            if(!name || !email || !text) return;
+
+            const submitBtn = commentForm.querySelector('button[type="submit"]');
+            if(submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Posting...'; }
+
+            database.ref('comments/' + animeId).push({
+                name: name, email: email, text: text, userId: localCommentUserId,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => { 
+                commentForm.reset(); 
+                if(submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Post Comment'; }
+            }).catch(err => {
+                if(submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Post Comment'; }
+            });
         });
     }
 
-
-    /* -------------------------
-       FULLSCREEN
-    ------------------------- */
-
-    function setupFullscreen() {
-        const button = getElement([
-            "fullscreenBtn",
-            "fullScreenBtn",
-            "fullscreenButton"
-        ]);
-
-        if (!button || button.dataset.amzControlBound === "1") {
-            return;
-        }
-
-        button.dataset.amzControlBound = "1";
-
-        button.addEventListener("click", function () {
-            const container = getPlayerContainer() || getVideo();
-
-            if (!container) {
-                return;
-            }
-
-            if (document.fullscreenElement) {
-                document.exitFullscreen().catch(function (error) {
-                    console.warn("Exit fullscreen failed:", error);
-                });
-
-                return;
-            }
-
-            if (container.requestFullscreen) {
-                container.requestFullscreen().catch(function (error) {
-                    console.warn("Fullscreen failed:", error);
+    function loadComments() {
+        if (!animeId || !commentsList) return;
+        database.ref('comments/' + animeId).on('value', (snapshot) => {
+            const commentsData = snapshot.val();
+            commentsList.innerHTML = '';
+            if (commentsData) {
+                const sortedComments = Object.keys(commentsData).map(key => ({ key: key, ...commentsData[key] })).sort((a, b) => b.timestamp - a.timestamp);
+                sortedComments.forEach(comment => {
+                    const date = new Date(comment.timestamp);
+                    const timeString = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const canDelete = (comment.userId === localCommentUserId) || isAdmin;
+                    const deleteBtn = canDelete ? `<button class="delete-comment-btn" onclick="deleteComment('${animeId}', '${comment.key}')"><i class="fa-solid fa-trash"></i></button>` : '';
+                    commentsList.innerHTML += `
+                        <div class="comment-item">
+                            <div class="comment-header">
+                                <span class="comment-name">${comment.name}</span>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span class="comment-time">${timeString}</span>
+                                    ${deleteBtn}
+                                </div>
+                            </div>
+                            <p class="comment-text">${comment.text}</p>
+                        </div>
+                    `;
                 });
             } else {
-                const currentVideo = getVideo();
-
-                if (currentVideo && currentVideo.webkitEnterFullscreen) {
-                    currentVideo.webkitEnterFullscreen();
-                }
+                commentsList.innerHTML = '<p style="color: #888; font-size: 13px; text-align: center;">No comments yet. Be the first to comment!</p>';
             }
         });
     }
+    if (animeId) loadComments();
+}
 
+// ================= 8. CUSTOM CONFIRM MODAL LOGIC =================
+let pendingDeleteAction = null;
+window.showCustomConfirm = (message, action) => {
+    const modal = document.getElementById('customConfirmModal');
+    const msgEl = document.getElementById('confirmMessage');
+    if (!modal) return; 
+    if(msgEl) msgEl.innerText = message;
+    pendingDeleteAction = action;
+    modal.style.display = 'flex';
+};
 
-    /* -------------------------
-       SUBTITLE TRACKS
-    ------------------------- */
-
-    function getSubtitleTracks() {
-        const currentVideo = getVideo();
-
-        if (!currentVideo) {
-            return [];
-        }
-
-        return Array.from(currentVideo.textTracks || []);
+document.addEventListener('DOMContentLoaded', () => {
+    const yesBtn = document.getElementById('confirmYesBtn');
+    const noBtn = document.getElementById('confirmNoBtn');
+    const modal = document.getElementById('customConfirmModal');
+    if (yesBtn && noBtn && modal) {
+        yesBtn.addEventListener('click', () => { if (pendingDeleteAction) pendingDeleteAction(); modal.style.display = 'none'; pendingDeleteAction = null; });
+        noBtn.addEventListener('click', () => { modal.style.display = 'none'; pendingDeleteAction = null; });
+        modal.addEventListener('click', (e) => { if (e.target === modal) { modal.style.display = 'none'; pendingDeleteAction = null; } });
     }
-
-    function setupSubtitleMenu() {
-        const button = getElement([
-            "subtitleBtn",
-            "subtitlesBtn",
-            "subtitleButton",
-            "captionsBtn"
-        ]);
-
-        if (!button || button.dataset.amzControlBound === "1") {
-            return;
-        }
-
-        button.dataset.amzControlBound = "1";
-
-        button.addEventListener("click", function (event) {
-            event.preventDefault();
-            event.stopPropagation();
-
-            let menu = document.getElementById("amzSubtitleMenu");
-
-            if (!menu) {
-                menu = document.createElement("div");
-                menu.id = "amzSubtitleMenu";
-
-                menu.style.position = "absolute";
-                menu.style.right = "12px";
-                menu.style.bottom = "55px";
-                menu.style.zIndex = "9999";
-                menu.style.padding = "8px";
-                menu.style.minWidth = "170px";
-                menu.style.maxHeight = "240px";
-                menu.style.overflowY = "auto";
-                menu.style.background = "#17171c";
-                menu.style.color = "#ffffff";
-                menu.style.borderRadius = "10px";
-                menu.style.boxShadow = "0 4px 18px rgba(0,0,0,.4)";
-
-                const parent = getPlayerContainer() || document.body;
-
-                if (
-                    window.getComputedStyle(parent).position === "static"
-                ) {
-                    parent.style.position = "relative";
-                }
-
-                parent.appendChild(menu);
-            }
-
-            renderSubtitleMenu(menu);
-
-            menu.style.display =
-                menu.style.display === "block" ? "none" : "block";
-        });
-    }
-
-    function renderSubtitleMenu(menu) {
-        menu.innerHTML = "";
-
-        const currentVideo = getVideo();
-
-        if (!currentVideo) {
-            return;
-        }
-
-        const offButton = document.createElement("button");
-
-        offButton.type = "button";
-        offButton.textContent = "Off";
-        styleSubtitleButton(offButton);
-
-        offButton.addEventListener("click", function () {
-            const tracks = getSubtitleTracks();
-
-            tracks.forEach(function (track) {
-                track.mode = "disabled";
-            });
-
-            menu.style.display = "none";
-        });
-
-        menu.appendChild(offButton);
-
-        const tracks = getSubtitleTracks();
-
-        if (!tracks.length) {
-            const empty = document.createElement("div");
-
-            empty.textContent = "No subtitles loaded";
-            empty.style.padding = "10px";
-            empty.style.fontSize = "13px";
-
-            menu.appendChild(empty);
-            return;
-        }
-
-        tracks.forEach(function (track, index) {
-            const item = document.createElement("button");
-
-            item.type = "button";
-
-            item.textContent =
-                track.label ||
-                track.language ||
-                ("Subtitle " + (index + 1));
-
-            styleSubtitleButton(item);
-
-            item.addEventListener("click", function () {
-                tracks.forEach(function (otherTrack, otherIndex) {
-                    otherTrack.mode =
-                        otherIndex === index ? "showing" : "disabled";
-                });
-
-                menu.style.display = "none";
-            });
-
-            menu.appendChild(item);
-        });
-    }
-
-    function styleSubtitleButton(button) {
-        button.style.display = "block";
-        button.style.width = "100%";
-        button.style.padding = "10px";
-        button.style.margin = "2px 0";
-        button.style.border = "0";
-        button.style.borderRadius = "6px";
-        button.style.background = "transparent";
-        button.style.color = "#ffffff";
-        button.style.textAlign = "left";
-        button.style.cursor = "pointer";
-    }
-
-
-    /* -------------------------
-       AUTO-HIDE PLAYER CONTROLS
-    ------------------------- */
-
-    function setupAutoHideControls() {
-        const container = getPlayerContainer();
-
-        if (!container || container.dataset.amzHideBound === "1") {
-            return;
-        }
-
-        container.dataset.amzHideBound = "1";
-
-        const controls = getElement([
-            "playerControls",
-            "videoControls",
-            "controls"
-        ]);
-
-        function showControls() {
-            if (controls) {
-                controls.style.opacity = "1";
-                controls.style.pointerEvents = "auto";
-            }
-
-            container.style.cursor = "default";
-
-            if (controlsTimer) {
-                clearTimeout(controlsTimer);
-            }
-
-            controlsTimer = setTimeout(function () {
-                const currentVideo = getVideo();
-
-                if (
-                    currentVideo &&
-                    !currentVideo.paused &&
-                    !currentVideo.ended
-                ) {
-                    if (controls) {
-                        controls.style.opacity = "0";
-                        controls.style.pointerEvents = "none";
-                    }
-
-                    container.style.cursor = "none";
-                }
-            }, 3000);
-        }
-
-        container.addEventListener("mousemove", showControls);
-        container.addEventListener("touchstart", showControls);
-        container.addEventListener("click", showControls);
-
-        showControls();
-    }
-
-
-    /* -------------------------
-       KEYBOARD SHORTCUTS
-    ------------------------- */
-
-    function setupKeyboardControls() {
-        if (document.body.dataset.amzKeyboardBound === "1") {
-            return;
-        }
-
-        document.body.dataset.amzKeyboardBound = "1";
-
-        document.addEventListener("keydown", function (event) {
-            const target = event.target;
-
-            if (
-                target &&
-                (
-                    target.tagName === "INPUT" ||
-                    target.tagName === "TEXTAREA" ||
-                    target.isContentEditable
-                )
-            ) {
-                return;
-            }
-
-            const currentVideo = getVideo();
-
-            if (!currentVideo) {
-                return;
-            }
-
-            switch (event.key) {
-                case " ":
-                case "k":
-                case "K":
-                    event.preventDefault();
-                    togglePlayback();
-                    break;
-
-                case "ArrowLeft":
-                    event.preventDefault();
-                    seekBy(-10);
-                    break;
-
-                case "ArrowRight":
-                    event.preventDefault();
-                    seekBy(10);
-                    break;
-
-                case "ArrowUp":
-                    event.preventDefault();
-                    currentVideo.volume = Math.min(
-                        1,
-                        currentVideo.volume + 0.05
-                    );
-                    currentVideo.muted = false;
-                    break;
-
-                case "ArrowDown":
-                    event.preventDefault();
-                    currentVideo.volume = Math.max(
-                        0,
-                        currentVideo.volume - 0.05
-                    );
-                    break;
-
-                case "m":
-                case "M":
-                    currentVideo.muted = !currentVideo.muted;
-                    break;
-
-                case "f":
-                case "F":
-                    const fullscreenButton = getElement([
-                        "fullscreenBtn",
-                        "fullScreenBtn",
-                        "fullscreenButton"
-                    ]);
-
-                    if (fullscreenButton) {
-                        fullscreenButton.click();
-                    }
-                    break;
-            }
-        });
-    }
-
-
-    /* -------------------------
-       INITIALIZE CONTROLS
-    ------------------------- */
-
-    function initializeControls() {
-        if (!getVideo()) {
-            return;
-        }
-
-        setupPlayPause();
-        setupSeekBar();
-        setupSkipButtons();
-        setupVolume();
-        setupSpeedMenu();
-        setupFullscreen();
-        setupSubtitleMenu();
-        setupAutoHideControls();
-        setupKeyboardControls();
-    }
-
-    window.AMZControls = {
-        init: initializeControls,
-        playPause: togglePlayback,
-        seekBy: seekBy,
-        formatTime: formatTime,
-        getSubtitleTracks: getSubtitleTracks,
-        setSpeed: function (speed) {
-            const currentVideo = getVideo();
-
-            if (!currentVideo) {
-                return;
-            }
-
-            const value = Number(speed);
-
-            if (Number.isFinite(value) && value > 0) {
-                currentVideo.playbackRate = value;
-                selectedSpeed = value;
-            }
-        }
-    };
-
-    if (document.readyState === "loading") {
-        document.addEventListener(
-            "DOMContentLoaded",
-            initializeControls
-        );
-    } else {
-        initializeControls();
-    }
-
-})();
-
-/* =========================================================
-   PART 4/4 — COMMENTS + EPISODES + WATCH PROGRESS
-   Anime Max Zone
-========================================================= */
-
-(function () {
-    "use strict";
-
-    const AMZ_PROGRESS_PREFIX = "amz_watch_progress_";
-    const AMZ_COMMENTS_PREFIX = "amz_comments_";
-
-    let amzProgressVideo = null;
-    let amzProgressTimer = null;
-
-    /* -------------------------
-       GENERAL HELPERS
-    ------------------------- */
-
-    function amzFindElement(ids) {
-        for (let i = 0; i < ids.length; i++) {
-            const element = document.getElementById(ids[i]);
-
-            if (element) {
-                return element;
-            }
-        }
-
-        return null;
-    }
-
-    function amzFindVideo() {
-        return (
-            document.getElementById("videoPlayer") ||
-            document.getElementById("video") ||
-            document.getElementById("player") ||
-            document.querySelector("video")
-        );
-    }
-
-    function amzGetEpisodeId() {
-        const params = new URLSearchParams(window.location.search);
-
-        return (
-            params.get("episode") ||
-            params.get("id") ||
-            params.get("ep") ||
-            window.location.pathname
-        );
-    }
-
-    function amzGetSafeStorage(key, fallback) {
-        try {
-            const value = localStorage.getItem(key);
-
-            return value === null ? fallback : value;
-        } catch (error) {
-            console.warn("Local storage unavailable:", error);
-
-            return fallback;
-        }
-    }
-
-    function amzSetSafeStorage(key, value) {
-        try {
-            localStorage.setItem(key, value);
-            return true;
-        } catch (error) {
-            console.warn("Could not save local data:", error);
-
-            return false;
-        }
-    }
-
-
-    /* -------------------------
-       WATCH PROGRESS
-    ------------------------- */
-
-    function amzSaveWatchProgress() {
-        const video = amzFindVideo();
-
-        if (
-            !video ||
-            !Number.isFinite(video.currentTime) ||
-            !Number.isFinite(video.duration) ||
-            video.duration <= 0
-        ) {
-            return;
-        }
-
-        const episodeId = amzGetEpisodeId();
-
-        const progress = {
-            currentTime: video.currentTime,
-            duration: video.duration,
-            updatedAt: Date.now()
-        };
-
-        amzSetSafeStorage(
-            AMZ_PROGRESS_PREFIX + episodeId,
-            JSON.stringify(progress)
-        );
-    }
-
-    function amzRestoreWatchProgress() {
-        const video = amzFindVideo();
-
-        if (!video || video.dataset.amzResumeBound === "1") {
-            return;
-        }
-
-        video.dataset.amzResumeBound = "1";
-
-        video.addEventListener("loadedmetadata", function () {
-            const episodeId = amzGetEpisodeId();
-
-            const saved = amzGetSafeStorage(
-                AMZ_PROGRESS_PREFIX + episodeId,
-                null
-            );
-
-            if (!saved) {
-                return;
-            }
-
-            try {
-                const progress = JSON.parse(saved);
-
-                if (
-                    progress &&
-                    Number.isFinite(progress.currentTime) &&
-                    Number.isFinite(video.duration) &&
-                    progress.currentTime > 5 &&
-                    progress.currentTime < video.duration - 5
-                ) {
-                    const resume = window.confirm(
-                        "Continue watching from " +
-                        amzFormatTime(progress.currentTime) +
-                        "?"
-                    );
-
-                    if (resume) {
-                        video.currentTime = progress.currentTime;
-                    }
-                }
-            } catch (error) {
-                console.warn("Could not restore watch progress:", error);
-            }
-        });
-
-        video.addEventListener("timeupdate", function () {
-            const now = Date.now();
-
-            if (
-                !amzProgressTimer ||
-                now - amzProgressTimer >= 5000
-            ) {
-                amzProgressTimer = now;
-                amzSaveWatchProgress();
-            }
-        });
-
-        video.addEventListener("pause", amzSaveWatchProgress);
-        video.addEventListener("ended", function () {
-            try {
-                localStorage.removeItem(
-                    AMZ_PROGRESS_PREFIX + amzGetEpisodeId()
-                );
-            } catch (error) {
-                console.warn(error);
-            }
-        });
-
-        window.addEventListener("beforeunload", amzSaveWatchProgress);
-    }
-
-    function amzFormatTime(seconds) {
-        if (!Number.isFinite(seconds) || seconds < 0) {
-            return "00:00";
-        }
-
-        const total = Math.floor(seconds);
-        const hours = Math.floor(total / 3600);
-        const minutes = Math.floor((total % 3600) / 60);
-        const secs = total % 60;
-
-        function pad(number) {
-            return number < 10 ? "0" + number : String(number);
-        }
-
-        if (hours > 0) {
-            return (
-                pad(hours) + ":" +
-                pad(minutes) + ":" +
-                pad(secs)
-            );
-        }
-
-        return pad(minutes) + ":" + pad(secs);
-    }
-
-
-    /* -------------------------
-       EPISODE NAVIGATION
-    ------------------------- */
-
-    function amzGetEpisodeList() {
-        if (Array.isArray(window.animeEpisodes)) {
-            return window.animeEpisodes;
-        }
-
-        if (
-            window.currentAnime &&
-            Array.isArray(window.currentAnime.episodes)
-        ) {
-            return window.currentAnime.episodes;
-        }
-
-        return [];
-    }
-
-    function amzGetCurrentEpisodeIndex(episodes) {
-        const params = new URLSearchParams(window.location.search);
-
-        const currentId =
-            params.get("episode") ||
-            params.get("id") ||
-            params.get("ep");
-
-        if (currentId !== null) {
-            const byId = episodes.findIndex(function (episode) {
-                return String(episode.id) === String(currentId);
-            });
-
-            if (byId !== -1) {
-                return byId;
-            }
-
-            const numericId = Number(currentId);
-
-            if (
-                Number.isInteger(numericId) &&
-                numericId >= 0 &&
-                numericId < episodes.length
-            ) {
-                return numericId;
-            }
-        }
-
-        return -1;
-    }
-
-    function amzNavigateEpisode(direction) {
-        const episodes = amzGetEpisodeList();
-
-        if (!episodes.length) {
-            console.warn(
-                "Episode list is not available. " +
-                "Set window.animeEpisodes to your episode data."
-            );
-
-            return;
-        }
-
-        const currentIndex = amzGetCurrentEpisodeIndex(episodes);
-
-        if (currentIndex === -1) {
-            console.warn("Could not identify the current episode.");
-            return;
-        }
-
-        const nextIndex = currentIndex + direction;
-
-        if (nextIndex < 0 || nextIndex >= episodes.length) {
-            return;
-        }
-
-        const episode = episodes[nextIndex];
-
-        if (!episode) {
-            return;
-        }
-
-        /*
-         * Supported episode properties:
-         * id, title, url, videoUrl, streamUrl
-         */
-
-        const episodeId =
-            episode.id !== undefined
-                ? episode.id
-                : nextIndex;
-
-        const episodeTitle =
-            episode.title ||
-            episode.name ||
-            ("Episode " + (nextIndex + 1));
-
-        const episodeUrl =
-            episode.pageUrl ||
-            episode.watchUrl ||
-            (
-                "watch.html?episode=" +
-                encodeURIComponent(episodeId)
-            );
-
-        const videoUrl =
-            episode.url ||
-            episode.videoUrl ||
-            episode.streamUrl ||
-            "";
-
-        /*
-         * If the episode has a page URL, open that page.
-         * Otherwise, load its stream in the current player.
-         */
-
-        if (episode.pageUrl || episode.watchUrl) {
-            window.location.href = episodeUrl;
-            return;
-        }
-
-        if (videoUrl && window.AMZPlayer) {
-            const video = amzFindVideo();
-
-            if (video) {
-                video.pause();
-                video.currentTime = 0;
-            }
-
-            const params = new URLSearchParams();
-
-            params.set("episode", String(episodeId));
-
-            if (episodeTitle) {
-                params.set("title", episodeTitle);
-            }
-
-            if (window.history && window.history.pushState) {
-                window.history.pushState(
-                    { episodeId: episodeId },
-                    "",
-                    "?" + params.toString()
-                );
-            }
-
-            window.AMZPlayer.init(videoUrl);
-
-            const titleElement = amzFindElement([
-                "episodeTitle",
-                "watchTitle",
-                "videoTitle"
-            ]);
-
-            if (titleElement) {
-                titleElement.textContent = episodeTitle;
-            }
-
-            return;
-        }
-
-        window.location.href = episodeUrl;
-    }
-
-    function amzSetupEpisodeButtons() {
-        const previousButton = amzFindElement([
-            "prevEpisodeBtn",
-            "previousEpisodeBtn",
-            "prevEpisode"
-        ]);
-
-        const nextButton = amzFindElement([
-            "nextEpisodeBtn",
-            "nextEpisode"
-        ]);
-
-        if (
-            previousButton &&
-            previousButton.dataset.amzEpisodeBound !== "1"
-        ) {
-            previousButton.dataset.amzEpisodeBound = "1";
-
-            previousButton.addEventListener("click", function () {
-                amzNavigateEpisode(-1);
-            });
-        }
-
-        if (
-            nextButton &&
-            nextButton.dataset.amzEpisodeBound !== "1"
-        ) {
-            nextButton.dataset.amzEpisodeBound = "1";
-
-            nextButton.addEventListener("click", function () {
-                amzNavigateEpisode(1);
-            });
-        }
-    }
-
-
-    /* -------------------------
-       COMMENTS
-       Local browser storage only
-    ------------------------- */
-
-    function amzGetCommentsKey() {
-        return AMZ_COMMENTS_PREFIX + amzGetEpisodeId();
-    }
-
-    function amzReadComments() {
-        try {
-            const saved = amzGetSafeStorage(
-                amzGetCommentsKey(),
-                "[]"
-            );
-
-            const comments = JSON.parse(saved);
-
-            return Array.isArray(comments) ? comments : [];
-        } catch (error) {
-            console.warn("Could not read comments:", error);
-
-            return [];
-        }
-    }
-
-    function amzWriteComments(comments) {
-        return amzSetSafeStorage(
-            amzGetCommentsKey(),
-            JSON.stringify(comments)
-        );
-    }
-
-    function amzRenderComments() {
-        const list = amzFindElement([
-            "commentsList",
-            "commentList",
-            "commentsContainer"
-        ]);
-
-        const count = amzFindElement([
-            "commentsCount",
-            "commentCount"
-        ]);
-
-        if (!list) {
-            return;
-        }
-
-        const comments = amzReadComments();
-
-        list.replaceChildren();
-
-        if (count) {
-            count.textContent = String(comments.length);
-        }
-
-        if (!comments.length) {
-            const empty = document.createElement("div");
-
-            empty.textContent = "No comments yet.";
-            empty.style.padding = "16px";
-            empty.style.color = "#999999";
-            empty.style.textAlign = "center";
-
-            list.appendChild(empty);
-
-            return;
-        }
-
-        comments.slice().reverse().forEach(function (comment) {
-            const card = document.createElement("div");
-
-            card.className = "amz-comment-card";
-            card.style.padding = "12px";
-            card.style.marginBottom = "10px";
-            card.style.borderRadius = "10px";
-            card.style.background = "#171923";
-
-            const name = document.createElement("div");
-
-            name.textContent = comment.name || "Viewer";
-            name.style.fontWeight = "600";
-            name.style.marginBottom = "5px";
-
-            const message = document.createElement("div");
-
-            /*
-             * textContent prevents comments from being interpreted
-             * as HTML or executable markup.
-             */
-            message.textContent = comment.message || "";
-            message.style.whiteSpace = "pre-wrap";
-            message.style.overflowWrap = "anywhere";
-
-            const date = document.createElement("small");
-
-            date.textContent = comment.date || "";
-            date.style.display = "block";
-            date.style.marginTop = "8px";
-            date.style.color = "#999999";
-
-            card.appendChild(name);
-            card.appendChild(message);
-            card.appendChild(date);
-
-            list.appendChild(card);
-        });
-    }
-
-    function amzSetupComments() {
-        const form = amzFindElement([
-            "commentForm",
-            "commentsForm"
-        ]);
-
-        const input = amzFindElement([
-            "commentInput",
-            "commentText",
-            "commentMessage"
-        ]);
-
-        const nameInput = amzFindElement([
-            "commentName",
-            "displayName",
-            "usernameInput"
-        ]);
-
-        if (
-            form &&
-            input &&
-            form.dataset.amzCommentBound !== "1"
-        ) {
-            form.dataset.amzCommentBound = "1";
-
-            form.addEventListener("submit", function (event) {
-                event.preventDefault();
-
-                const message = input.value.trim();
-
-                const name = nameInput
-                    ? nameInput.value.trim()
-                    : "";
-
-                if (!message) {
-                    alert("Please enter a comment.");
-                    return;
-                }
-
-                if (message.length > 1000) {
-                    alert("Comment must be 1000 characters or fewer.");
-                    return;
-                }
-
-                const comments = amzReadComments();
-
-                comments.push({
-                    name: name.slice(0, 40) || "Viewer",
-                    message: message,
-                    date: new Date().toLocaleString()
-                });
-
-                if (!amzWriteComments(comments)) {
-                    alert("Could not save the comment in this browser.");
-                    return;
-                }
-
-                input.value = "";
-
-                amzRenderComments();
-            });
-        }
-
-        amzRenderComments();
-    }
-
-
-    /* -------------------------
-       OPTIONAL AUTO-NEXT
-    ------------------------- */
-
-    function amzSetupAutoNext() {
-        const video = amzFindVideo();
-
-        if (!video || video.dataset.amzAutoNextBound === "1") {
-            return;
-        }
-
-        video.dataset.amzAutoNextBound = "1";
-
-        video.addEventListener("ended", function () {
-            const checkbox = amzFindElement([
-                "autoNextToggle",
-                "autoNextCheckbox"
-            ]);
-
-            const enabled = checkbox
-                ? checkbox.checked
-                : false;
-
-            if (enabled) {
-                amzNavigateEpisode(1);
-            }
-        });
-    }
-
-
-    /* -------------------------
-       CLEANUP
-    ------------------------- */
-
-    function amzCleanup() {
-        if (amzProgressTimer) {
-            clearInterval(amzProgressTimer);
-            amzProgressTimer = null;
-        }
-
-        amzSaveWatchProgress();
-    }
-
-
-    /* -------------------------
-       INITIALIZE PART 4
-    ------------------------- */
-
-    function amzInitializePart4() {
-        const video = amzFindVideo();
-
-        if (!video) {
-            return;
-        }
-
-        if (amzProgressVideo === video) {
-            return;
-        }
-
-        amzProgressVideo = video;
-
-        amzRestoreWatchProgress();
-        amzSetupEpisodeButtons();
-        amzSetupComments();
-        amzSetupAutoNext();
-
-        window.addEventListener("pagehide", amzCleanup);
-    }
-
-    window.AMZExtras = {
-        init: amzInitializePart4,
-        saveProgress: amzSaveWatchProgress,
-        restoreProgress: amzRestoreWatchProgress,
-        navigateEpisode: amzNavigateEpisode,
-        renderComments: amzRenderComments
-    };
-
-    if (document.readyState === "loading") {
-        document.addEventListener(
-            "DOMContentLoaded",
-            amzInitializePart4
-        );
-    } else {
-        amzInitializePart4();
-    }
-
-})();
+});
+
+window.deleteComment = (animeId, commentKey) => {
+    showCustomConfirm("Are you sure you want to delete this comment permanently?", () => {
+        database.ref(`comments/${animeId}/${commentKey}`).remove();
+    });
+};
