@@ -28,6 +28,7 @@ let activeSubtitleUrl = null;
 let hls = null; 
 let audioHls = null; 
 let isMutedByUser = false; 
+let isHiddenAudioActive = false; // 🔥 Naya variable: Track karne ke liye ki hidden audio chal raha hai ya nahi
 
 // ================= 2. SPLASH SCREEN & INITIAL LOAD =================
 document.addEventListener('DOMContentLoaded', () => {
@@ -492,11 +493,42 @@ if (document.getElementById('customVideo') && database) {
 
         hls.on(Hls.Events.MANIFEST_PARSED, function() {
             
-            // 1. QUALITY TRACKS
+            // 🔥 1. QUALITY TRACKS FIX 🔥
             const qualityOptions = document.getElementById('qualityOptions');
             qualityOptions.innerHTML = '';
             
-            if (videoData.qualities && Object.keys(videoData.qualities).length > 0) {
+            // Pehle check karo ki HLS Master Link me levels (qualities) hain ya nahi
+            if (hls.levels && hls.levels.length > 1) {
+                // Auto Button
+                const autoBtn = document.createElement('button');
+                autoBtn.innerText = 'Auto';
+                autoBtn.className = `setting-btn ${hls.autoLevelEnabled ? 'active' : ''}`;
+                autoBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    hls.currentLevel = -1; 
+                    Array.from(qualityOptions.children).forEach(c => c.classList.remove('active'));
+                    autoBtn.classList.add('active');
+                    setTimeout(closeAllMenus, 300);
+                };
+                qualityOptions.appendChild(autoBtn);
+
+                // Individual Levels (720p, 1080p, etc.)
+                hls.levels.forEach((level, index) => {
+                    const btn = document.createElement('button');
+                    btn.innerText = level.height ? `${level.height}p` : `Level ${index + 1}`;
+                    btn.className = `setting-btn ${hls.currentLevel === index ? 'active' : ''}`;
+                    btn.onclick = (e) => {
+                        e.stopPropagation();
+                        hls.currentLevel = index; 
+                        Array.from(qualityOptions.children).forEach(c => c.classList.remove('active'));
+                        btn.classList.add('active');
+                        setTimeout(closeAllMenus, 300);
+                    };
+                    qualityOptions.appendChild(btn);
+                });
+            } 
+            // Fallback: Agar HLS me levels nahi hain, toh Firebase wali qualities use karo (Hidden Audio logic)
+            else if (videoData.qualities && Object.keys(videoData.qualities).length > 0) {
                 Object.keys(videoData.qualities).forEach(q => {
                     const btn = document.createElement('button');
                     btn.innerText = q;
@@ -526,23 +558,15 @@ if (document.getElementById('customVideo') && database) {
                 });
             }
 
-            // 2. AUDIO TRACKS
+            // 🔥 2. AUDIO TRACKS FIX 🔥
             const audioOptions = document.getElementById('audioOptions');
             audioOptions.innerHTML = '';
-            let hasHlsAudio = false;
+            isHiddenAudioActive = false;
 
+            // Pehle check karo ki HLS Master link me audio tracks hain ya nahi
             if (hls.audioTracks && hls.audioTracks.length > 0) {
-                hasHlsAudio = true;
                 video.muted = false; 
                 
-                // Cleanup hidden audio if active
-                if (audioHls) { audioHls.destroy(); audioHls = null; }
-                if(hiddenAudioPlayer) {
-                    hiddenAudioPlayer.pause();
-                    hiddenAudioPlayer.removeAttribute('src');
-                    hiddenAudioPlayer.load();
-                }
-
                 hls.audioTracks.forEach((track, index) => {
                     const btn = document.createElement('button');
                     btn.innerText = track.name || track.lang || `Audio ${index + 1}`;
@@ -557,9 +581,10 @@ if (document.getElementById('customVideo') && database) {
                     audioOptions.appendChild(btn);
                 });
             } 
-            
-            if (!hasHlsAudio && videoData.audios && Object.keys(videoData.audios).length > 0) {
-                video.muted = true; 
+            // Fallback: Hidden Audio (Firebase se alag links)
+            else if (videoData.audios && Object.keys(videoData.audios).length > 0) {
+                isHiddenAudioActive = true;
+                video.muted = true; // Video ko mute rakho taaki double sound na aaye
                 let firstAudioUrl = Object.values(videoData.audios)[0]; 
                 
                 audioHls = new Hls({ enableWorker: true, lowLatencyMode: true });
@@ -592,11 +617,11 @@ if (document.getElementById('customVideo') && database) {
                     };
                     audioOptions.appendChild(btn);
                 });
-            } else if (!hasHlsAudio) {
+            } else {
                 audioOptions.innerHTML = '<p style="font-size:14px; color:#888; padding:15px;">No Audio Tracks</p>';
             }
 
-            // 3. SUBTITLES
+            // 3. SUBTITLE RENDER
             const subtitleOptions = document.getElementById('subtitleOptions');
             subtitleOptions.innerHTML = '';
             const offBtn = document.createElement('button');
@@ -635,19 +660,25 @@ if (document.getElementById('customVideo') && database) {
                 });
             }
 
-            // Play Video
+            // 🔥 3. PLAY & MUTE FIX 🔥
             video.play().then(() => {
-                if(hasHlsAudio) {
-                    if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
-                } else {
-                    if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+                // Agar sound ke sath play ho gaya (Autoplay allowed)
+                if (isHiddenAudioActive) {
                     if(hiddenAudioPlayer && hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.play();
+                    if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>'; 
+                } else {
+                    if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
                 }
             }).catch(e => {
+                // Agar browser ne block kiya, toh mute karke play karo
                 video.muted = true;
                 isMutedByUser = true; 
                 if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
                 video.play();
+                
+                if (isHiddenAudioActive && hiddenAudioPlayer && hiddenAudioPlayer.src && audioHls) {
+                    hiddenAudioPlayer.play();
+                }
                 showUnmuteHint();
             });
         });
@@ -800,12 +831,16 @@ if (document.getElementById('customVideo') && database) {
         renderWatchEpisodes(); 
     });
 
+    // 🔥 MUTE BUTTON FIX 🔥
     muteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (hiddenAudioPlayer && hiddenAudioPlayer.src && audioHls) {
+        
+        if (isHiddenAudioActive) {
+            // Agar hidden audio chal raha hai
             hiddenAudioPlayer.muted = !hiddenAudioPlayer.muted;
             isMutedByUser = hiddenAudioPlayer.muted;
         } else {
+            // Agar normal HLS master link chal raha hai
             video.muted = !video.muted;
             isMutedByUser = video.muted;
         }
@@ -814,6 +849,10 @@ if (document.getElementById('customVideo') && database) {
             muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
         } else {
             muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+            // Agar user unmute karta hai aur hidden audio active hai, toh video ko mute hi rakho
+            if (isHiddenAudioActive) {
+                video.muted = true;
+            }
         }
         resetControlTimeout();
     });
