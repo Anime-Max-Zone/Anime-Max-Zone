@@ -25,7 +25,9 @@ let allContentDatabase = [];
 let currentAudio = null;
 let currentQuality = null;
 let activeSubtitleUrl = null;
-let hls = null; // 🔥 HLS Instance ke liye global variable
+let hls = null; // 🔥 Video HLS Instance
+let audioHls = null; // 🔥 Audio HLS Instance
+let isMutedByUser = false; // 🔥 Track mute state
 
 // ================= 2. SPLASH SCREEN & INITIAL LOAD =================
 document.addEventListener('DOMContentLoaded', () => {
@@ -273,6 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ================= 6. WATCH PAGE (PLAYER) =================
 if (document.getElementById('customVideo') && database) {
     const video = document.getElementById('customVideo');
+    const hiddenAudioPlayer = document.getElementById('hiddenAudioPlayer'); // 🔥 Hidden Audio Element
     const videoLoader = document.getElementById('videoLoader');
     const topControls = document.getElementById('topControls'); 
     const controlsBar = document.getElementById('controlsBar'); 
@@ -288,20 +291,18 @@ if (document.getElementById('customVideo') && database) {
     let currentAnimeData = null;
     let activeSeason = "";
     let currentEpKey = "";
-    let isMutedByUser = false; // 🔥 Track mute state
 
     // URL Params
     const urlParams = new URLSearchParams(window.location.search);
     const animeId = urlParams.get('id'); 
 
-    // 🔥 MENU LOGIC (Global function to close all side menus) 🔥
+    // 🔥 MENU LOGIC
     window.closeAllMenus = () => {
         if(audioMenu) audioMenu.classList.remove('active');
         if(subtitleMenu) subtitleMenu.classList.remove('active');
         if(qualityMenu) qualityMenu.classList.remove('active');
     };
 
-    // Open Menus on Button Click
     if(audioIconBtn) audioIconBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         const isActive = audioMenu.classList.contains('active');
@@ -439,23 +440,32 @@ if (document.getElementById('customVideo') && database) {
     }
 
     function setupPlayer(videoData) {
-        closeAllMenus(); // Close any open menu initially
+        closeAllMenus(); 
+
+        // Purana HLS / Audio HLS destroy karo
+        if (hls) { hls.destroy(); hls = null; }
+        if (audioHls) { audioHls.destroy(); audioHls = null; }
+        hiddenAudioPlayer.removeAttribute('src');
+        hiddenAudioPlayer.load();
+        
+        // Video ko mute rakho taaki double sound na aaye
+        video.muted = true; 
 
         // 🔥 CHECK FOR HLS LINK (.m3u8) 🔥
-        let mainUrl = "";
+        let videoUrl = "";
         if (videoData.gdrive_id && videoData.gdrive_id.includes('.m3u8')) {
-            mainUrl = videoData.gdrive_id;
+            videoUrl = videoData.gdrive_id;
         } else if (videoData.qualities && Object.values(videoData.qualities).length > 0) {
             for (let q in videoData.qualities) {
                 if (videoData.qualities[q].includes('.m3u8')) {
-                    mainUrl = videoData.qualities[q];
+                    videoUrl = videoData.qualities[q];
                     break;
                 }
             }
         }
 
-        if (mainUrl && mainUrl.includes('.m3u8') && typeof Hls !== 'undefined' && Hls.isSupported()) {
-            setupHlsPlayer(videoData, mainUrl);
+        if (videoUrl && videoUrl.includes('.m3u8') && typeof Hls !== 'undefined' && Hls.isSupported()) {
+            setupHlsPlayer(videoData, videoUrl);
             return; 
         }
 
@@ -475,7 +485,7 @@ if (document.getElementById('customVideo') && database) {
                     Array.from(audioOptions.children).forEach(c => c.classList.remove('active'));
                     btn.classList.add('active');
                     loadSpecificTrack(videoData, lang, null); 
-                    setTimeout(closeAllMenus, 300); // Close menu
+                    setTimeout(closeAllMenus, 300);
                 };
                 audioOptions.appendChild(btn);
             });
@@ -494,7 +504,7 @@ if (document.getElementById('customVideo') && database) {
                     Array.from(qualityOptions.children).forEach(c => c.classList.remove('active'));
                     btn.classList.add('active');
                     loadSpecificTrack(videoData, null, q); 
-                    setTimeout(closeAllMenus, 300); // Close menu
+                    setTimeout(closeAllMenus, 300);
                 };
                 qualityOptions.appendChild(btn);
             });
@@ -504,7 +514,6 @@ if (document.getElementById('customVideo') && database) {
         const subtitleOptions = document.getElementById('subtitleOptions');
         subtitleOptions.innerHTML = '';
         
-        // 🔥 OFF BUTTON
         const offBtn = document.createElement('button');
         offBtn.innerText = 'Off';
         offBtn.className = `setting-btn ${!activeSubtitleUrl ? 'active' : ''}`;
@@ -535,7 +544,7 @@ if (document.getElementById('customVideo') && database) {
                     }
                     Array.from(subtitleOptions.children).forEach(c => c.classList.remove('active'));
                     btn.classList.add('active');
-                    setTimeout(closeAllMenus, 300); // Close menu
+                    setTimeout(closeAllMenus, 300);
                 };
                 subtitleOptions.appendChild(btn);
             });
@@ -550,69 +559,87 @@ if (document.getElementById('customVideo') && database) {
         loadSpecificTrack(videoData, defaultAudio, defaultQuality);
     }
 
-    // 🔥 NETFLIX JAISA HLS PLAYER (m3u8) 🔥
-    function setupHlsPlayer(videoData, url) {
-        if (hls) {
-            hls.destroy(); 
+    // 🔥 NETFLIX JAISA HLS PLAYER (m3u8) WITH HIDDEN AUDIO 🔥
+    function setupHlsPlayer(videoData, videoUrl) {
+        
+        hls = new Hls({ enableWorker: true, lowLatencyMode: true, backBufferLength: 90 });
+        hls.loadSource(videoUrl);
+        hls.attachMedia(video);
+
+        // Audio Link Setup
+        let audioUrl = "";
+        if (videoData.audios && Object.values(videoData.audios).length > 0) {
+            // Default to first audio link
+            audioUrl = Object.values(videoData.audios)[0]; 
         }
 
-        if(videoLoader) videoLoader.style.display = 'block';
+        if (audioUrl) {
+            audioHls = new Hls({ enableWorker: true, lowLatencyMode: true });
+            audioHls.loadSource(audioUrl);
+            audioHls.attachMedia(hiddenAudioPlayer);
+        }
 
-        hls = new Hls({
-            enableWorker: true,
-            lowLatencyMode: true,
-            backBufferLength: 90
-        });
-
-        hls.loadSource(url);
-        hls.attachMedia(video);
+        // Video + Audio Sync
+        video.addEventListener('play', () => { if(hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.play(); });
+        video.addEventListener('pause', () => { if(hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.pause(); });
+        video.addEventListener('seeked', () => { if(hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.currentTime = video.currentTime; });
 
         hls.on(Hls.Events.MANIFEST_PARSED, function() {
             
-            // 🔥 1. QUALITY TRACKS RENDER KARO
+            // 1. QUALITY TRACKS
             const qualityOptions = document.getElementById('qualityOptions');
             qualityOptions.innerHTML = '';
             
-            // Auto Button
-            const autoBtn = document.createElement('button');
-            autoBtn.innerText = 'Auto';
-            autoBtn.className = `setting-btn ${hls.autoLevelEnabled ? 'active' : ''}`;
-            autoBtn.onclick = (e) => {
-                e.stopPropagation();
-                hls.currentLevel = -1; 
-                Array.from(qualityOptions.children).forEach(c => c.classList.remove('active'));
-                autoBtn.classList.add('active');
-                setTimeout(closeAllMenus, 300);
-            };
-            qualityOptions.appendChild(autoBtn);
+            if (videoData.qualities && Object.keys(videoData.qualities).length > 0) {
+                Object.keys(videoData.qualities).forEach(q => {
+                    const btn = document.createElement('button');
+                    btn.innerText = q;
+                    btn.className = `setting-btn ${currentQuality === q ? 'active' : ''}`;
+                    btn.onclick = (e) => { 
+                        e.stopPropagation(); 
+                        currentQuality = q; 
+                        Array.from(qualityOptions.children).forEach(c => c.classList.remove('active'));
+                        btn.classList.add('active');
+                        
+                        // Naya video load karo (Audio wahi rahega)
+                        const newVideoUrl = videoData.qualities[q];
+                        if(hls) { hls.destroy(); }
+                        hls = new Hls({ enableWorker: true });
+                        hls.loadSource(newVideoUrl);
+                        hls.attachMedia(video);
+                        
+                        setTimeout(closeAllMenus, 300);
+                    };
+                    qualityOptions.appendChild(btn);
+                });
+            }
 
-            // Individual Levels
-            hls.levels.forEach((level, index) => {
-                const btn = document.createElement('button');
-                btn.innerText = level.height ? `${level.height}p` : `Level ${index + 1}`;
-                btn.className = `setting-btn ${hls.currentLevel === index ? 'active' : ''}`;
-                btn.onclick = (e) => {
-                    e.stopPropagation();
-                    hls.currentLevel = index; 
-                    Array.from(qualityOptions.children).forEach(c => c.classList.remove('active'));
-                    btn.classList.add('active');
-                    setTimeout(closeAllMenus, 300);
-                };
-                qualityOptions.appendChild(btn);
-            });
-
-            // 🔥 2. AUDIO TRACKS RENDER KARO
+            // 2. AUDIO TRACKS (From Firebase - Hidden Audio Logic)
             const audioOptions = document.getElementById('audioOptions');
             audioOptions.innerHTML = '';
             
-            if (hls.audioTracks && hls.audioTracks.length > 0) {
-                hls.audioTracks.forEach((track, index) => {
+            if (videoData.audios && Object.keys(videoData.audios).length > 0) {
+                Object.keys(videoData.audios).forEach(lang => {
                     const btn = document.createElement('button');
-                    btn.innerText = track.name || track.lang || `Audio ${index + 1}`;
-                    btn.className = `setting-btn ${hls.audioTrack === index ? 'active' : ''}`;
+                    btn.innerText = lang;
+                    btn.className = `setting-btn ${currentAudio === lang ? 'active' : ''}`;
                     btn.onclick = (e) => {
                         e.stopPropagation();
-                        hls.audioTrack = index; 
+                        currentAudio = lang;
+                        
+                        // Nayi audio stream load karo
+                        const newAudioUrl = videoData.audios[lang];
+                        if (audioHls) audioHls.destroy();
+                        
+                        audioHls = new Hls({ enableWorker: true });
+                        audioHls.loadSource(newAudioUrl);
+                        audioHls.attachMedia(hiddenAudioPlayer);
+                        
+                        audioHls.on(Hls.Events.MANIFEST_PARSED, () => {
+                            hiddenAudioPlayer.currentTime = video.currentTime;
+                            hiddenAudioPlayer.play();
+                        });
+
                         Array.from(audioOptions.children).forEach(c => c.classList.remove('active'));
                         btn.classList.add('active');
                         setTimeout(closeAllMenus, 300);
@@ -623,11 +650,10 @@ if (document.getElementById('customVideo') && database) {
                 audioOptions.innerHTML = '<p style="font-size:14px; color:#888; padding:15px;">No Audio Tracks</p>';
             }
 
-            // 🔥 3. SUBTITLE RENDER
+            // 3. SUBTITLE RENDER
             const subtitleOptions = document.getElementById('subtitleOptions');
             subtitleOptions.innerHTML = '';
             
-            // OFF BUTTON
             const offBtn = document.createElement('button');
             offBtn.innerText = 'Off';
             offBtn.className = `setting-btn ${!activeSubtitleUrl ? 'active' : ''}`;
@@ -662,19 +688,14 @@ if (document.getElementById('customVideo') && database) {
                     };
                     subtitleOptions.appendChild(btn);
                 });
-            } else { 
-                if(subtitleOptions.children.length === 1) {
-                    subtitleOptions.innerHTML += '<p style="font-size:14px; color:#888; padding:15px;">No Subtitles</p>'; 
-                }
             }
 
-            // Play Video (Try with sound first)
+            // Play Video
             video.play().then(() => {
                 if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
             }).catch(e => {
-                console.log("Autoplay with sound blocked by browser, muting...", e);
                 video.muted = true;
-                isMutedByUser = true; // Update state
+                isMutedByUser = true; 
                 if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
                 video.play();
                 showUnmuteHint();
@@ -685,15 +706,12 @@ if (document.getElementById('customVideo') && database) {
             if (data.fatal) {
                 switch (data.type) {
                     case Hls.ErrorTypes.NETWORK_ERROR:
-                        console.log("Network error, trying to recover...");
                         hls.startLoad();
                         break;
                     case Hls.ErrorTypes.MEDIA_ERROR:
-                        console.log("Media error, trying to recover...");
                         hls.recoverMediaError();
                         break;
                     default:
-                        console.log("Fatal error, destroying HLS.");
                         hls.destroy();
                         break;
                 }
@@ -716,17 +734,15 @@ if (document.getElementById('customVideo') && database) {
         }
 
         if(url) playVideoUrl(url);
-        closeAllMenus(); // Close menu on change
+        closeAllMenus(); 
     }
 
     // Purana MP4 Play Logic (State Restore)
     function playVideoUrl(url) {
         if(!url) return;
         
-        if (hls) {
-            hls.destroy();
-            hls = null;
-        }
+        if (hls) { hls.destroy(); hls = null; }
+        if (audioHls) { audioHls.destroy(); audioHls = null; }
 
         const previousTime = video.currentTime;
         const wasMuted = isMutedByUser;
@@ -776,7 +792,6 @@ if (document.getElementById('customVideo') && database) {
                     playPromise.then(_ => {
                         if(muteBtn) muteBtn.innerHTML = wasMuted ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
                     }).catch(e => {
-                        console.log("Autoplay blocked, muting...", e);
                         video.muted = true;
                         isMutedByUser = true;
                         if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
@@ -833,12 +848,23 @@ if (document.getElementById('customVideo') && database) {
         renderWatchEpisodes(); 
     });
 
-    video.addEventListener('volumechange', () => {
-        if(video.muted || video.volume === 0) {
-            if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+    // 🔥 Mute Button logic update for Hidden Audio
+    muteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (hiddenAudioPlayer.src && audioHls) {
+            hiddenAudioPlayer.muted = !hiddenAudioPlayer.muted;
+            isMutedByUser = hiddenAudioPlayer.muted;
         } else {
-            if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+            video.muted = !video.muted;
+            isMutedByUser = video.muted;
         }
+        
+        if(isMutedByUser) {
+            muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+        } else {
+            muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+        }
+        resetControlTimeout();
     });
 
     playPauseBtn.addEventListener('click', (e) => {
@@ -871,16 +897,21 @@ if (document.getElementById('customVideo') && database) {
     seekBar.addEventListener('input', (e) => {
         e.stopPropagation();
         video.currentTime = video.duration * (seekBar.value / 100);
+        if(hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.currentTime = video.currentTime;
     });
     
-    skipForwardBtn.addEventListener('click', (e) => { e.stopPropagation(); video.currentTime += 10; resetControlTimeout(); });
-    skipBackBtn.addEventListener('click', (e) => { e.stopPropagation(); video.currentTime -= 10; resetControlTimeout(); });
+    skipForwardBtn.addEventListener('click', (e) => { 
+        e.stopPropagation(); 
+        video.currentTime += 10; 
+        if(hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.currentTime = video.currentTime;
+        resetControlTimeout(); 
+    });
     
-    muteBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        video.muted = !video.muted;
-        isMutedByUser = video.muted; // Save state
-        resetControlTimeout();
+    skipBackBtn.addEventListener('click', (e) => { 
+        e.stopPropagation(); 
+        video.currentTime -= 10; 
+        if(hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.currentTime = video.currentTime;
+        resetControlTimeout(); 
     });
 
     fullscreenBtn.addEventListener('click', async (e) => {
@@ -909,7 +940,7 @@ if (document.getElementById('customVideo') && database) {
         if (!video.paused) {
             controlsBar.classList.add('hidden');
             topControls.classList.add('hidden');
-            closeAllMenus(); // Hide menus when controls hide
+            closeAllMenus(); 
         }
     }
 
@@ -934,9 +965,11 @@ if (document.getElementById('customVideo') && database) {
         if (tapLength < 300 && tapLength > 0) {
             if (action === 'left') {
                 video.currentTime = Math.max(0, video.currentTime - 10);
+                if(hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.currentTime = video.currentTime;
                 overlay.querySelector('.tap-feedback').innerHTML = '<i class="fa-solid fa-backward"></i> 10s';
             } else if (action === 'right') {
                 video.currentTime = Math.min(video.duration, video.currentTime + 10);
+                if(hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.currentTime = video.currentTime;
                 overlay.querySelector('.tap-feedback').innerHTML = '10s <i class="fa-solid fa-forward"></i>';
             } else if (action === 'center') {
                 togglePlayPause();
