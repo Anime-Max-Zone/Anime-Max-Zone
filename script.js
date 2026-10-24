@@ -435,8 +435,115 @@ if (document.getElementById('customVideo') && database) {
         });
     }
 
+    // ================= SUBTITLE HELPERS =================
+    let customSubBlobUrl = null;
+
+    function srtToVtt(text) {
+        text = text.replace(/\r+/g, '').replace(/^\uFEFF/, '').trim();
+        if (text.startsWith('WEBVTT')) return text;
+        return 'WEBVTT\n\n' + text.replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, '$1.$2');
+    }
+
+    function removeCustomSubtitle() {
+        const old = document.getElementById('subtitleTrack');
+        if (old) old.remove();
+        if (customSubBlobUrl) { URL.revokeObjectURL(customSubBlobUrl); customSubBlobUrl = null; }
+    }
+
+    async function showCustomSubtitle(url) {
+        removeCustomSubtitle();
+        let trackSrc = url;
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const text = await res.text();
+            customSubBlobUrl = URL.createObjectURL(new Blob([srtToVtt(text)], { type: 'text/vtt' }));
+            trackSrc = customSubBlobUrl;
+        } catch (err) {
+            console.warn('Subtitle fetch failed, direct link try ho raha hai:', err);
+        }
+        if (activeSubtitleUrl !== url) return; // beech me user ne subtitle badal di
+
+        const trackEl = document.createElement('track');
+        trackEl.id = 'subtitleTrack';
+        trackEl.kind = 'subtitles';
+        trackEl.label = 'Subtitles';
+        trackEl.srclang = 'en';
+        trackEl.src = trackSrc;
+        trackEl.default = true;
+        video.appendChild(trackEl);
+        // NOTE: mode TextTrack par hota hai (trackEl.track), <track> element par nahi
+        trackEl.track.mode = 'showing';
+    }
+
+    function renderSubtitleMenu(videoData) {
+        const subtitleOptions = document.getElementById('subtitleOptions');
+        if (!subtitleOptions) return;
+        subtitleOptions.innerHTML = '';
+
+        const setActive = (btn) => {
+            Array.from(subtitleOptions.children).forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+        };
+        const hlsSubIndex = (hls && !activeSubtitleUrl) ? hls.subtitleTrack : -1;
+
+        // Off
+        const offBtn = document.createElement('button');
+        offBtn.innerText = 'Off';
+        offBtn.className = `setting-btn ${(!activeSubtitleUrl && hlsSubIndex === -1) ? 'active' : ''}`;
+        offBtn.onclick = (e) => {
+            e.stopPropagation();
+            activeSubtitleUrl = null;
+            removeCustomSubtitle();
+            if (hls) hls.subtitleTrack = -1;
+            setActive(offBtn);
+            setTimeout(closeAllMenus, 300);
+        };
+        subtitleOptions.appendChild(offBtn);
+
+        // Firebase wale subtitles
+        if (videoData && videoData.subtitles && Object.keys(videoData.subtitles).length > 0) {
+            Object.keys(videoData.subtitles).forEach(sub => {
+                const subUrl = videoData.subtitles[sub];
+                const btn = document.createElement('button');
+                btn.innerText = sub;
+                btn.className = `setting-btn ${activeSubtitleUrl === subUrl ? 'active' : ''}`;
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    activeSubtitleUrl = subUrl;
+                    if (hls) hls.subtitleTrack = -1; // double subtitle na aaye
+                    showCustomSubtitle(subUrl);
+                    setActive(btn);
+                    setTimeout(closeAllMenus, 300);
+                };
+                subtitleOptions.appendChild(btn);
+            });
+        }
+
+        // m3u8 ke andar wale subtitles
+        if (hls && hls.subtitleTracks && hls.subtitleTracks.length > 0) {
+            hls.subtitleTracks.forEach((track, index) => {
+                const btn = document.createElement('button');
+                btn.innerText = track.name || track.lang || `Subtitle ${index + 1}`;
+                btn.className = `setting-btn ${hlsSubIndex === index ? 'active' : ''}`;
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    activeSubtitleUrl = null;
+                    removeCustomSubtitle();
+                    hls.subtitleDisplay = true;
+                    hls.subtitleTrack = index;
+                    setActive(btn);
+                    setTimeout(closeAllMenus, 300);
+                };
+                subtitleOptions.appendChild(btn);
+            });
+        }
+    }
+
     function setupPlayer(videoData) {
         closeAllMenus(); 
+        removeCustomSubtitle();
+        hideTapToPlay();
 
         if (hls) { hls.destroy(); hls = null; }
         if (audioHls) { audioHls.destroy(); audioHls = null; }
@@ -466,6 +573,7 @@ if (document.getElementById('customVideo') && database) {
         }
 
         // MP4 Fallback
+        renderSubtitleMenu(videoData);
         const audioOptions = document.getElementById('audioOptions');
         if (videoData.audios && Object.keys(videoData.audios).length > 0) {
             audioOptions.innerHTML = '';
@@ -622,64 +730,23 @@ if (document.getElementById('customVideo') && database) {
             }
 
             // 3. SUBTITLE RENDER
-            const subtitleOptions = document.getElementById('subtitleOptions');
-            subtitleOptions.innerHTML = '';
-            const offBtn = document.createElement('button');
-            offBtn.innerText = 'Off';
-            offBtn.className = `setting-btn ${!activeSubtitleUrl ? 'active' : ''}`;
-            offBtn.onclick = (e) => {
-                e.stopPropagation();
-                activeSubtitleUrl = null;
-                const track = document.getElementById('subtitleTrack');
-                if(track) { track.mode = 'disabled'; track.style.display = 'none'; }
-                Array.from(subtitleOptions.children).forEach(c => c.classList.remove('active'));
-                offBtn.classList.add('active');
-                setTimeout(closeAllMenus, 300);
-            };
-            subtitleOptions.appendChild(offBtn);
-
-            if (videoData.subtitles && Object.keys(videoData.subtitles).length > 0) {
-                Object.keys(videoData.subtitles).forEach(sub => {
-                    const btn = document.createElement('button');
-                    btn.innerText = sub;
-                    btn.className = `setting-btn ${activeSubtitleUrl === videoData.subtitles[sub] ? 'active' : ''}`;
-                    btn.onclick = (e) => { 
-                        e.stopPropagation();
-                        activeSubtitleUrl = videoData.subtitles[sub]; 
-                        const track = document.getElementById('subtitleTrack');
-                        if(track) { 
-                            track.src = activeSubtitleUrl; 
-                            track.style.display = 'block'; 
-                            track.mode = 'showing'; 
-                        }
-                        Array.from(subtitleOptions.children).forEach(c => c.classList.remove('active'));
-                        btn.classList.add('active');
-                        setTimeout(closeAllMenus, 300);
-                    };
-                    subtitleOptions.appendChild(btn);
-                });
-            }
+            renderSubtitleMenu(videoData);
 
             // 🔥 3. PLAY & MUTE FIX 🔥
             video.play().then(() => {
-                // Agar sound ke sath play ho gaya (Autoplay allowed)
                 if (isHiddenAudioActive) {
-                    if(hiddenAudioPlayer && hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.play();
-                    if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>'; 
+                    if (hiddenAudioPlayer && hiddenAudioPlayer.src && audioHls) {
+                        hiddenAudioPlayer.muted = false;
+                        hiddenAudioPlayer.play().then(() => {
+                            if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+                        }).catch(() => { showTapToPlay(); });
+                    }
                 } else {
                     if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
                 }
             }).catch(e => {
-                // Agar browser ne block kiya, toh mute karke play karo
-                video.muted = true;
-                isMutedByUser = true; 
-                if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
-                video.play();
-                
-                if (isHiddenAudioActive && hiddenAudioPlayer && hiddenAudioPlayer.src && audioHls) {
-                    hiddenAudioPlayer.play();
-                }
-                showUnmuteHint();
+                // Refresh par browser sound ke saath autoplay block karta hai
+                if (e && e.name === 'NotAllowedError') showTapToPlay();
             });
         });
 
@@ -713,6 +780,11 @@ if (document.getElementById('customVideo') && database) {
                 };
                 audioOptions.appendChild(btn);
             });
+        });
+
+        // 🔥 SUBTITLE FIX: m3u8 ke andar ke subtitle tracks bhi menu me dikhao 🔥
+        hls.on(Hls.Events.SUBTITLE_TRACKS_UPDATED, function() {
+            renderSubtitleMenu(videoData);
         });
 
         hls.on(Hls.Events.ERROR, function (event, data) {
@@ -759,6 +831,7 @@ if (document.getElementById('customVideo') && database) {
         
         if (hls) { hls.destroy(); hls = null; }
         if (audioHls) { audioHls.destroy(); audioHls = null; }
+        isHiddenAudioActive = false;
 
         const previousTime = video.currentTime;
         const wasMuted = isMutedByUser;
@@ -790,17 +863,7 @@ if (document.getElementById('customVideo') && database) {
             video.muted = wasMuted;
             video.volume = currentVolume;
 
-            const track = document.getElementById('subtitleTrack');
-            if (track) {
-                if (activeSubtitleUrl) {
-                    track.src = activeSubtitleUrl;
-                    track.style.display = 'block';
-                    track.mode = 'showing';
-                } else {
-                    track.style.display = 'none';
-                    track.mode = 'disabled';
-                }
-            }
+            if (activeSubtitleUrl) showCustomSubtitle(activeSubtitleUrl); else removeCustomSubtitle();
             
             if (wasPlaying) {
                 let playPromise = video.play();
@@ -808,17 +871,50 @@ if (document.getElementById('customVideo') && database) {
                     playPromise.then(_ => {
                         if(muteBtn) muteBtn.innerHTML = wasMuted ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
                     }).catch(e => {
-                        video.muted = true;
-                        isMutedByUser = true;
-                        if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
-                        video.play();
-                        showUnmuteHint();
+                        if (e && e.name === 'NotAllowedError') showTapToPlay();
                     });
                 }
             }
             
             video.onloadedmetadata = null; 
         };
+    }
+
+    // 🔥 NO AUTO-MUTE FIX: autoplay block ho to mute nahi karte, "Tap to Play" dikhate hain 🔥
+    function showTapToPlay() {
+        // Sound ON rakho, video ruka rahe jab tak user tap na kare
+        video.pause();
+        if (hiddenAudioPlayer) hiddenAudioPlayer.pause();
+        if (isHiddenAudioActive && hiddenAudioPlayer) {
+            video.muted = true;               // sound hidden audio se aayegi
+            hiddenAudioPlayer.muted = false;
+        } else {
+            video.muted = false;
+        }
+        isMutedByUser = false;
+        if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+        if (videoLoader) videoLoader.style.display = 'none';
+
+        let overlay = document.getElementById('tapToPlayOverlay');
+        if (!overlay && playerWrapper) {
+            overlay = document.createElement('div');
+            overlay.id = 'tapToPlayOverlay';
+            overlay.style.cssText = 'position:absolute; inset:0; z-index:20; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; background:rgba(0,0,0,0.55); color:#fff; cursor:pointer;';
+            overlay.innerHTML = '<i class="fa-solid fa-circle-play" style="font-size:64px; color:#a855f7;"></i><span style="font-size:14px; font-weight:600;">Tap to Play</span>';
+            overlay.addEventListener('click', (e) => {
+                e.stopPropagation();
+                hideTapToPlay();
+                video.play().catch(() => {});
+                if (isHiddenAudioActive && hiddenAudioPlayer && hiddenAudioPlayer.src) hiddenAudioPlayer.play().catch(() => {});
+            });
+            playerWrapper.appendChild(overlay);
+        }
+        if (overlay) overlay.style.display = 'flex';
+    }
+
+    function hideTapToPlay() {
+        const overlay = document.getElementById('tapToPlayOverlay');
+        if (overlay) overlay.style.display = 'none';
     }
 
     function showUnmuteHint() {
@@ -851,7 +947,7 @@ if (document.getElementById('customVideo') && database) {
     const centerFeedbackIcon = document.getElementById('centerFeedbackIcon');
 
     video.addEventListener('waiting', () => { if(videoLoader) videoLoader.style.display = 'block'; });
-    video.addEventListener('playing', () => { if(videoLoader) videoLoader.style.display = 'none'; });
+    video.addEventListener('playing', () => { if(videoLoader) videoLoader.style.display = 'none'; hideTapToPlay(); });
 
     video.addEventListener('play', () => {
         if(playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
