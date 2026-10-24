@@ -288,6 +288,7 @@ if (document.getElementById('customVideo') && database) {
     let currentAnimeData = null;
     let activeSeason = "";
     let currentEpKey = "";
+    let isMutedByUser = false; // 🔥 Track mute state
 
     // URL Params
     const urlParams = new URLSearchParams(window.location.search);
@@ -499,13 +500,30 @@ if (document.getElementById('customVideo') && database) {
             });
         } else { qualityOptions.innerHTML = '<p style="font-size:14px; color:#888; padding:15px;">No Quality</p>'; }
 
+        // Subtitle (MP4 Fallback)
         const subtitleOptions = document.getElementById('subtitleOptions');
+        subtitleOptions.innerHTML = '';
+        
+        // 🔥 OFF BUTTON
+        const offBtn = document.createElement('button');
+        offBtn.innerText = 'Off';
+        offBtn.className = `setting-btn ${!activeSubtitleUrl ? 'active' : ''}`;
+        offBtn.onclick = (e) => {
+            e.stopPropagation();
+            activeSubtitleUrl = null;
+            const track = document.getElementById('subtitleTrack');
+            if(track) { track.mode = 'disabled'; track.style.display = 'none'; }
+            Array.from(subtitleOptions.children).forEach(c => c.classList.remove('active'));
+            offBtn.classList.add('active');
+            setTimeout(closeAllMenus, 300);
+        };
+        subtitleOptions.appendChild(offBtn);
+
         if (videoData.subtitles && Object.keys(videoData.subtitles).length > 0) {
-            subtitleOptions.innerHTML = '';
             Object.keys(videoData.subtitles).forEach(sub => {
                 const btn = document.createElement('button');
                 btn.innerText = sub;
-                btn.className = 'setting-btn';
+                btn.className = `setting-btn ${activeSubtitleUrl === videoData.subtitles[sub] ? 'active' : ''}`;
                 btn.onclick = (e) => { 
                     e.stopPropagation();
                     activeSubtitleUrl = videoData.subtitles[sub]; 
@@ -521,7 +539,11 @@ if (document.getElementById('customVideo') && database) {
                 };
                 subtitleOptions.appendChild(btn);
             });
-        } else { subtitleOptions.innerHTML = '<p style="font-size:14px; color:#888; padding:15px;">No Subtitles</p>'; }
+        } else { 
+            if(subtitleOptions.children.length === 1) {
+                subtitleOptions.innerHTML += '<p style="font-size:14px; color:#888; padding:15px;">No Subtitles</p>'; 
+            }
+        }
 
         const defaultAudio = currentAudio || Object.keys(videoData.audios || {})[0] || null;
         const defaultQuality = currentQuality || Object.keys(videoData.qualities || {})[0] || null;
@@ -535,7 +557,6 @@ if (document.getElementById('customVideo') && database) {
         }
 
         if(videoLoader) videoLoader.style.display = 'block';
-        video.muted = false;
 
         hls = new Hls({
             enableWorker: true,
@@ -604,12 +625,28 @@ if (document.getElementById('customVideo') && database) {
 
             // 🔥 3. SUBTITLE RENDER
             const subtitleOptions = document.getElementById('subtitleOptions');
+            subtitleOptions.innerHTML = '';
+            
+            // OFF BUTTON
+            const offBtn = document.createElement('button');
+            offBtn.innerText = 'Off';
+            offBtn.className = `setting-btn ${!activeSubtitleUrl ? 'active' : ''}`;
+            offBtn.onclick = (e) => {
+                e.stopPropagation();
+                activeSubtitleUrl = null;
+                const track = document.getElementById('subtitleTrack');
+                if(track) { track.mode = 'disabled'; track.style.display = 'none'; }
+                Array.from(subtitleOptions.children).forEach(c => c.classList.remove('active'));
+                offBtn.classList.add('active');
+                setTimeout(closeAllMenus, 300);
+            };
+            subtitleOptions.appendChild(offBtn);
+
             if (videoData.subtitles && Object.keys(videoData.subtitles).length > 0) {
-                subtitleOptions.innerHTML = '';
                 Object.keys(videoData.subtitles).forEach(sub => {
                     const btn = document.createElement('button');
                     btn.innerText = sub;
-                    btn.className = 'setting-btn';
+                    btn.className = `setting-btn ${activeSubtitleUrl === videoData.subtitles[sub] ? 'active' : ''}`;
                     btn.onclick = (e) => { 
                         e.stopPropagation();
                         activeSubtitleUrl = videoData.subtitles[sub]; 
@@ -625,12 +662,19 @@ if (document.getElementById('customVideo') && database) {
                     };
                     subtitleOptions.appendChild(btn);
                 });
-            } else { subtitleOptions.innerHTML = '<p style="font-size:14px; color:#888; padding:15px;">No Subtitles</p>'; }
+            } else { 
+                if(subtitleOptions.children.length === 1) {
+                    subtitleOptions.innerHTML += '<p style="font-size:14px; color:#888; padding:15px;">No Subtitles</p>'; 
+                }
+            }
 
-            // Play Video
-            video.play().catch(e => {
-                console.log("Autoplay blocked, muting...", e);
+            // Play Video (Try with sound first)
+            video.play().then(() => {
+                if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+            }).catch(e => {
+                console.log("Autoplay with sound blocked by browser, muting...", e);
                 video.muted = true;
+                isMutedByUser = true; // Update state
                 if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
                 video.play();
                 showUnmuteHint();
@@ -685,7 +729,7 @@ if (document.getElementById('customVideo') && database) {
         }
 
         const previousTime = video.currentTime;
-        const wasMuted = video.muted;
+        const wasMuted = isMutedByUser;
         const currentVolume = video.volume;
         const wasPlaying = !video.paused; 
         
@@ -734,6 +778,7 @@ if (document.getElementById('customVideo') && database) {
                     }).catch(e => {
                         console.log("Autoplay blocked, muting...", e);
                         video.muted = true;
+                        isMutedByUser = true;
                         if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
                         video.play();
                         showUnmuteHint();
@@ -834,6 +879,7 @@ if (document.getElementById('customVideo') && database) {
     muteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         video.muted = !video.muted;
+        isMutedByUser = video.muted; // Save state
         resetControlTimeout();
     });
 
