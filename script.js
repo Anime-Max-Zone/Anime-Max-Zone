@@ -439,8 +439,11 @@ if (document.getElementById('customVideo') && database) {
 
         if (hls) { hls.destroy(); hls = null; }
         if (audioHls) { audioHls.destroy(); audioHls = null; }
-        hiddenAudioPlayer.removeAttribute('src');
-        hiddenAudioPlayer.load();
+        if(hiddenAudioPlayer) {
+            hiddenAudioPlayer.pause();
+            hiddenAudioPlayer.removeAttribute('src');
+            hiddenAudioPlayer.load();
+        }
         
         video.muted = false; 
 
@@ -487,25 +490,6 @@ if (document.getElementById('customVideo') && database) {
         hls.loadSource(videoUrl);
         hls.attachMedia(video);
 
-        let audioUrl = "";
-        if (videoData.audios && Object.values(videoData.audios).length > 0) {
-            audioUrl = Object.values(videoData.audios)[0]; 
-        }
-
-        if (audioUrl) {
-            audioHls = new Hls({ enableWorker: true, lowLatencyMode: true });
-            audioHls.loadSource(audioUrl);
-            audioHls.attachMedia(hiddenAudioPlayer);
-            
-            // Agar hidden audio use ho raha hai, toh main video ko mute karo
-            video.muted = true; 
-        }
-
-        // Sync Events
-        video.addEventListener('play', () => { if(hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.play(); });
-        video.addEventListener('pause', () => { if(hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.pause(); });
-        video.addEventListener('seeked', () => { if(hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.currentTime = video.currentTime; });
-
         hls.on(Hls.Events.MANIFEST_PARSED, function() {
             
             // 1. QUALITY TRACKS
@@ -523,11 +507,18 @@ if (document.getElementById('customVideo') && database) {
                         Array.from(qualityOptions.children).forEach(c => c.classList.remove('active'));
                         btn.classList.add('active');
                         
-                        const newVideoUrl = videoData.qualities[q];
+                        const previousTime = video.currentTime;
+                        const wasPlaying = !video.paused;
+
                         if(hls) { hls.destroy(); }
                         hls = new Hls({ enableWorker: true });
-                        hls.loadSource(newVideoUrl);
+                        hls.loadSource(videoData.qualities[q]);
                         hls.attachMedia(video);
+                        
+                        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                            if (previousTime > 0) video.currentTime = previousTime;
+                            if (wasPlaying) video.play();
+                        });
                         
                         setTimeout(closeAllMenus, 300);
                     };
@@ -542,6 +533,16 @@ if (document.getElementById('customVideo') && database) {
 
             if (hls.audioTracks && hls.audioTracks.length > 0) {
                 hasHlsAudio = true;
+                video.muted = false; 
+                
+                // Cleanup hidden audio if active
+                if (audioHls) { audioHls.destroy(); audioHls = null; }
+                if(hiddenAudioPlayer) {
+                    hiddenAudioPlayer.pause();
+                    hiddenAudioPlayer.removeAttribute('src');
+                    hiddenAudioPlayer.load();
+                }
+
                 hls.audioTracks.forEach((track, index) => {
                     const btn = document.createElement('button');
                     btn.innerText = track.name || track.lang || `Audio ${index + 1}`;
@@ -558,6 +559,13 @@ if (document.getElementById('customVideo') && database) {
             } 
             
             if (!hasHlsAudio && videoData.audios && Object.keys(videoData.audios).length > 0) {
+                video.muted = true; 
+                let firstAudioUrl = Object.values(videoData.audios)[0]; 
+                
+                audioHls = new Hls({ enableWorker: true, lowLatencyMode: true });
+                audioHls.loadSource(firstAudioUrl);
+                audioHls.attachMedia(hiddenAudioPlayer);
+                
                 Object.keys(videoData.audios).forEach(lang => {
                     const btn = document.createElement('button');
                     btn.innerText = lang;
@@ -575,7 +583,7 @@ if (document.getElementById('customVideo') && database) {
                         
                         audioHls.on(Hls.Events.MANIFEST_PARSED, () => {
                             hiddenAudioPlayer.currentTime = video.currentTime;
-                            hiddenAudioPlayer.play();
+                            if(!video.paused) hiddenAudioPlayer.play();
                         });
 
                         Array.from(audioOptions.children).forEach(c => c.classList.remove('active'));
@@ -627,8 +635,14 @@ if (document.getElementById('customVideo') && database) {
                 });
             }
 
+            // Play Video
             video.play().then(() => {
-                if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+                if(hasHlsAudio) {
+                    if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+                } else {
+                    if(muteBtn) muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+                    if(hiddenAudioPlayer && hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.play();
+                }
             }).catch(e => {
                 video.muted = true;
                 isMutedByUser = true; 
@@ -648,6 +662,17 @@ if (document.getElementById('customVideo') && database) {
             }
         });
     }
+
+    // Global Event Listeners for Hidden Audio (To avoid multiple listeners on Quality change)
+    video.addEventListener('play', () => { 
+        if(hiddenAudioPlayer && hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.play(); 
+    });
+    video.addEventListener('pause', () => { 
+        if(hiddenAudioPlayer && hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.pause(); 
+    });
+    video.addEventListener('seeked', () => { 
+        if(hiddenAudioPlayer && hiddenAudioPlayer.src && audioHls) hiddenAudioPlayer.currentTime = video.currentTime; 
+    });
 
     function loadSpecificTrack(videoData, audioLang, qualityName) {
         if (audioLang !== null) currentAudio = audioLang;
